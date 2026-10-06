@@ -4,9 +4,10 @@
 import { createEffect, createMemo, createSignal, Show, type Accessor } from "solid-js";
 import { View } from "@pocketjs/framework/components";
 import { BTN } from "@pocketjs/framework/input";
-import { onButtonPress } from "@pocketjs/framework/lifecycle";
+import { onButtonPress, onFrame } from "@pocketjs/framework/lifecycle";
 import { VirtualList, type VirtualListHandle } from "@pocketjs/framework/virtual-list";
 import { onAnalogRows, onRepeat, onTapOrHold } from "../input.ts";
+import { SHOULDERS_UP, stepShoulders } from "../input-timing.ts";
 import { currentId } from "../player/reducer.ts";
 import type { Session } from "../session.ts";
 import { AQUA } from "../theme/aqua.ts";
@@ -66,14 +67,28 @@ export function Explorer(props: { session: Session; store: ExplorerStore; search
   onRepeat(BTN.LEFT, () => move(-page()), active);
   onRepeat(BTN.RIGHT, () => move(page()), active);
   onAnalogRows(move, active);
-  onButtonPress(BTN.LTRIGGER, () => dispatch({ type: "tab", delta: -1 }), { active });
-  onButtonPress(BTN.RTRIGGER, () => dispatch({ type: "tab", delta: 1 }), { active });
   onButtonPress(BTN.CROSS, () => dispatch({ type: "back" }), { active });
-  onButtonPress(BTN.SQUARE, () => {
-    const lib = library();
-    const id = playingId();
-    if (lib && id >= 0) dispatch({ type: "reveal", id, library: lib });
-  }, { active });
+  // L / R step tabs; held with Y they skip songs (the path without ZL / ZR on an
+  // Old 3DS); a Y tap alone reveals the playing song when it is released.
+  let shoulders = SHOULDERS_UP;
+  onFrame((buttons) => {
+    if (!active()) {
+      shoulders = { mask: buttons, chorded: false };
+      return;
+    }
+    const step = stepShoulders(shoulders, buttons, { y: BTN.SQUARE, l: BTN.LTRIGGER, r: BTN.RTRIGGER });
+    shoulders = step.state;
+    for (const event of step.events) {
+      if (event === "tabPrev") dispatch({ type: "tab", delta: -1 });
+      else if (event === "tabNext") dispatch({ type: "tab", delta: 1 });
+      else if (event === "prev" || event === "next") props.session.dispatch({ type: event });
+      else {
+        const lib = library();
+        const id = playingId();
+        if (lib && id >= 0) dispatch({ type: "reveal", id, library: lib });
+      }
+    }
+  });
   onButtonPress(BTN.CIRCLE, () => {
     const lib = library();
     const row = rows()[focus()];

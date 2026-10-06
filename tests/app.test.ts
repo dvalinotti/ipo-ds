@@ -171,6 +171,23 @@ test("holding X rescans: playback continues and a removed file drops from the qu
   expect(opens(rig.host).at(-1)).toBe("open(16)");
 }, 120_000);
 
+test("holding Y with L / R skips songs without ZL / ZR, and leaves the tab alone", async () => {
+  const rig = await boot();
+  press(rig, A); // Aerodynamic; next in the list is Around the World
+  frames(rig, 3);
+  frames(rig, 2, { buttons: Y });
+  frames(rig, 1, { buttons: Y | BTN.RTRIGGER });
+  frames(rig, 2, { buttons: Y });
+  frames(rig, 3);
+  expect(opens(rig.host)).toEqual(["open(1)", "open(7)"]);
+  expect(screenText(rig.world, "primary")).toContain("Song Name");
+  expect(selectedRow(rig.world)).toContain("Aerodynamic");
+  frames(rig, 2, { buttons: Y });
+  frames(rig, 1, { buttons: Y | BTN.LTRIGGER });
+  frames(rig, 3);
+  expect(opens(rig.host).at(-1)).toBe("open(1)");
+}, 120_000);
+
 test("Y jumps back to the playing song", async () => {
   const rig = await boot();
   press(rig, A);

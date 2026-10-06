@@ -42,3 +42,41 @@ export function stepAnalog(accumulated: number, deflection: number): { accumulat
   const rows = Math.trunc(total + Math.sign(total) * 1e-9);
   return { accumulated: total - rows, rows };
 }
+
+export type ShoulderEvent = "tabPrev" | "tabNext" | "prev" | "next" | "reveal";
+
+export interface ShoulderState {
+  /** Last frame's held mask (press edges are bits newly set this frame). */
+  mask: number;
+  /** L or R was pressed during the current Y hold, so its release is not a reveal. */
+  chorded: boolean;
+}
+
+export const SHOULDERS_UP: ShoulderState = { mask: 0, chorded: false };
+
+/**
+ * One frame of Y / L / R. L or R alone steps tabs. Held with Y they skip to
+ * the previous / next song: the skip path for consoles without ZL / ZR (the
+ * Old 3DS). A Y press with neither is a "reveal", fired on release.
+ */
+export function stepShoulders(
+  state: ShoulderState,
+  buttons: number,
+  bits: { y: number; l: number; r: number },
+): { state: ShoulderState; events: ShoulderEvent[] } {
+  const pressed = buttons & ~state.mask;
+  const yDown = (buttons & bits.y) !== 0;
+  const yWas = (state.mask & bits.y) !== 0;
+  const events: ShoulderEvent[] = [];
+  let chorded = yWas ? state.chorded : false;
+  if (yDown) {
+    if (pressed & bits.l) { events.push("prev"); chorded = true; }
+    if (pressed & bits.r) { events.push("next"); chorded = true; }
+  } else {
+    if (yWas && !chorded) events.push("reveal");
+    if (pressed & bits.l) events.push("tabPrev");
+    if (pressed & bits.r) events.push("tabNext");
+    chorded = false;
+  }
+  return { state: { mask: buttons, chorded }, events };
+}
