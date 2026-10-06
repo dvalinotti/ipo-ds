@@ -2,6 +2,7 @@ import { expect, test } from "bun:test";
 import { localMedia } from "@pocketjs/framework/localmedia";
 import { createSimLocalMedia, type SimLocalTrack } from "../runtime/hosts/sim/localmedia.ts";
 import { createPlayerController } from "../app/player/controller.ts";
+import { currentId } from "../app/player/reducer.ts";
 
 const song = (file: string, extra: Partial<SimLocalTrack> = {}): SimLocalTrack => ({ file, durationMs: 1000, ...extra });
 
@@ -59,4 +60,23 @@ test("seek and toggle reach the host", () => {
   expect(player.state().status.positionMs).toBe(5000);
   player.dispatch({ type: "toggle" });
   expect(player.state().status.phase).toBe("paused");
+});
+
+test("the frame that auto-advances already shows the next song's snapshot", () => {
+  const { host, player } = setup([song("a.mp3"), song("b.mp3")]);
+  player.dispatch({ type: "playFrom", ids: [0, 1], startId: 0 });
+  for (let i = 0; i < 50 && !host.log.includes("open(1)"); i++) {
+    host.advance(100);
+    player.poll();
+  }
+  expect(currentId(player.state())).toBe(1);
+  expect(player.state().status).toMatchObject({ trackId: 1, phase: "loading" });
+});
+
+test("an id the host refuses to open is skipped like a failed song", () => {
+  const { host, player, frames } = setup([song("a.mp3"), song("b.mp3")]);
+  player.dispatch({ type: "playFrom", ids: [0, 5, 1], startId: 0 });
+  frames(15);
+  expect(host.log.filter((entry) => entry.startsWith("open"))).toEqual(["open(0)", "open(5)", "open(1)"]);
+  expect(player.state().status).toMatchObject({ trackId: 1, phase: "playing" });
 });

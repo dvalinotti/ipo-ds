@@ -75,3 +75,12 @@ test("the library status line covers no host, scanning, empty and counted", () =
   expect(libraryLine(true, false, 1)).toBe("1 track");
   expect(libraryLine(true, false, 312)).toBe("312 tracks");
 });
+
+test("normalize strips decomposed accents and folds the rest of Latin Extended-A", () => {
+  expect(normalize("Hoppípolla")).toBe("hoppipolla");
+  expect(normalize("İstanbul")).toBe("istanbul");
+  expect(normalize("Ĳsselmeer")).toBe("ijsselmeer");
+  const library = buildLibrary([{ id: 0, file: "h.mp3", title: "Hoppípolla", artist: "Sigur Rós", album: "Takk", track: 1, durationMs: 1, hasArt: false }]);
+  expect(ids(rows(library, { kind: "songs" }, "hoppipolla"))).toEqual([0]);
+  expect(ids(rows(library, { kind: "artists" }, "sigur ros"))).toEqual(["sigur ros"]);
+});

@@ -37,3 +37,11 @@ test("an empty music folder is reported", async () => {
   for (let frame = 0; frame < 3; frame++) world.step();
   expect(screenText(world, "primary")).toContain("No music found in sdmc:/music/");
 }, 120_000);
+
+test("a track list the host garbles is reported instead of failing the frame", async () => {
+  const host = createSimLocalMedia([{ file: "a.mp3", durationMs: 1000 }]);
+  const world = await bootApp({ localmedia: { ...host.ns, tracks: () => '[{"id":0,"durationMs":1.5}' } });
+  for (let frame = 0; frame < 3; frame++) world.step();
+  expect(world.failure).toBeNull();
+  expect(screenText(world, "primary")).toContain("Could not read the music library");
+}, 120_000);
