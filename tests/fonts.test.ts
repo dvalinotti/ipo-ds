@@ -25,3 +25,8 @@ test("every character the app's source can show is baked by app/fonts.json", () 
   }
   expect([...missing]).toEqual([]);
 });
+
+test("typographic quotes and dashes common in tags are baked", () => {
+  const fonts = JSON.parse(readFileSync(join(ROOT, "app/fonts.json"), "utf8")) as { characters: string };
+  for (const ch of "‘’“”–—") expect(fonts.characters).toContain(ch);
+});

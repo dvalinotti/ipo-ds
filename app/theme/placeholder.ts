@@ -13,7 +13,13 @@ export function placeholderArt(album: string, hueCount: number): PlaceholderArt 
   hash ^= hash >>> 13;
   hash = Math.imul(hash, 0xc2b2ae35) >>> 0;
   hash ^= hash >>> 16;
-  const letters = [...album.trim()];
-  const initials = letters.length === 0 ? "♪" : letters[0]!.toUpperCase() + (letters[1] ?? "").toLowerCase();
+  // Initials come from letters and digits only: punctuation ("(What's…",
+  // "...And…") and combining marks are skipped. A letter whose case mapping
+  // expands (ß → SS) keeps its own form so initials stay two characters.
+  const letters = [...album].filter((ch) => /[\p{L}\p{N}]/u.test(ch));
+  const fold = (ch: string, mapped: string) => ([...mapped].length === 1 ? mapped : ch);
+  const initials = letters.length === 0
+    ? "♪"
+    : fold(letters[0]!, letters[0]!.toUpperCase()) + (letters[1] ? fold(letters[1], letters[1].toLowerCase()) : "");
   return { hue: (hash >>> 0) % hueCount, initials };
 }

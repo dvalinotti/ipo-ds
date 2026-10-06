@@ -39,9 +39,9 @@ export const AQUA: Theme = {
     color === "red" ? "w-[10] h-[10] rounded-[5] border border-[#00000059] bg-gradient-to-b from-[#ffb3a8] to-[#e0443a]"
     : color === "amber" ? "w-[10] h-[10] rounded-[5] border border-[#00000059] bg-gradient-to-b from-[#ffe2a1] to-[#e3a21a]"
     : "w-[10] h-[10] rounded-[5] border border-[#00000059] bg-gradient-to-b from-[#c9f0a8] to-[#4fa83a]",
-  lcdStatus: "w-[160] h-[30] ml-[4] flex-col items-center justify-center rounded-[6] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
-  lcdTitle: "text-xs font-bold text-[#2b2b2b]",
-  lcdLine: "text-xs text-[#4a4c3f]",
+  lcdStatus: "w-[160] h-[30] ml-[4] px-[6] flex-col items-center justify-center overflow-hidden rounded-[6] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
+  lcdTitle: "w-full text-center text-xs font-bold text-[#2b2b2b]",
+  lcdLine: "w-full text-center text-xs text-[#4a4c3f]",
   tabs: "flex-row items-center ml-[6] gap-[2]",
   tab: (active) => active
     ? "h-[20] px-[8] items-center justify-center rounded-[4] bg-gradient-to-b from-[#b9dcff] via-[#5aa7f0] to-[#1c6fd1] border border-[#1a4f99]"
@@ -49,12 +49,12 @@ export const AQUA: Theme = {
   tabText: (active) => (active ? "text-xs text-white" : "text-xs text-[#2b2b2b]"),
   hint: "text-xs text-[#4a4a4a]",
 
-  header: "w-full h-[16] shrink-0 flex-row items-center bg-gradient-to-b from-[#ffffff] via-[#e7e7e7] to-[#d4d4d4]",
+  header: "w-full h-[15] shrink-0 flex-row items-center bg-gradient-to-b from-[#ffffff] via-[#e7e7e7] to-[#d4d4d4]",
   headerRule: "w-full h-[1] shrink-0 bg-[#a5a5a5]",
   headerLeft: (sorted) => sorted
-    ? "w-[242] h-[16] pl-[22] flex-row items-center gap-[4] bg-gradient-to-b from-[#d9ebff] via-[#a9cdf6] to-[#8fbbef]"
-    : "w-[242] h-[16] pl-[22] flex-row items-center gap-[4]",
-  headerRight: "flex-1 h-[16] flex-row items-center",
+    ? "w-[242] h-[15] pl-[22] flex-row items-center gap-[4] bg-gradient-to-b from-[#d9ebff] via-[#a9cdf6] to-[#8fbbef]"
+    : "w-[242] h-[15] pl-[22] flex-row items-center gap-[4]",
+  headerRight: "flex-1 h-[15] flex-row items-center",
   sortIcon: "theme/icons/sort-up-ink.svg",
   headerText: "text-xs text-[#2b2b2b]",
 
@@ -86,16 +86,16 @@ export const AQUA: Theme = {
 
   strip: "w-full h-[20] shrink-0 flex-row items-center px-[6] gap-[6] bg-gradient-to-b from-[#d6d6d6] to-[#c2c2c2]",
   stripRule: "w-full h-[1] shrink-0 bg-[#8a8a8a]",
-  searchField: "flex-1 h-[16] flex-row items-center px-[8] gap-[4] rounded-[8] border border-[#7d7d7d] bg-white",
+  searchField: "flex-1 h-[16] flex-row items-center px-[8] gap-[4] overflow-hidden rounded-[8] border border-[#7d7d7d] bg-white",
   searchLabel: "text-xs text-[#6a6a6a]",
   searchQuery: "text-xs text-black",
-  searchCount: "text-xs text-[#2b2b2b]",
+  searchCount: "shrink-0 text-xs text-[#2b2b2b]",
   crumb: "w-full h-[20] shrink-0 flex-row items-center px-[8] gap-[6] bg-gradient-to-b from-[#e9ecd5] to-[#d9ddc0]",
   crumbRule: "w-full h-[1] shrink-0 bg-[#8a8c78]",
   crumbLink: "text-xs text-[#1c6fd1]",
   crumbText: "text-xs text-[#2b2b2b]",
-  crumbDetail: "text-xs text-[#2b2b2b]",
-  spacer: "flex-1",
+  crumbLeaf: "flex-1 overflow-hidden",
+  crumbDetail: "shrink-0 text-xs text-[#2b2b2b]",
 
   panel: "w-full flex-1 flex-col items-center justify-center gap-[4] bg-white",
   panelTitle: "text-sm font-bold text-[#2b2b2b]",
@@ -108,10 +108,10 @@ export const AQUA: Theme = {
     ? "absolute left-[8] top-[8] w-[76] h-[76] rounded-[38] border-[2] border-[#f4f6e6] opacity-85"
     : "absolute left-[22] top-[22] w-[48] h-[48] rounded-[24] border-[2] border-[#f4f6e6] opacity-85"),
   hub: "w-[32] h-[32] rounded-[16] items-center justify-center bg-[#f4f6e6]",
-  infoLcd: "absolute left-[118] top-[10] w-[192] h-[100] flex-col items-center px-[8] pt-[6] rounded-[10] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
-  infoTitle: "text-base font-bold text-[#1f2018]",
-  infoArtist: "text-xs text-[#3c3e31] mt-[3]",
-  infoAlbum: "text-xs text-[#6a6c5a] mt-[1]",
+  infoLcd: "absolute left-[118] top-[10] w-[192] h-[100] flex-col items-center px-[8] pt-[6] overflow-hidden rounded-[10] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
+  infoTitle: "w-full text-center text-base font-bold text-[#1f2018]",
+  infoArtist: "w-full text-center text-xs text-[#3c3e31] mt-[3]",
+  infoAlbum: "w-full text-center text-xs text-[#6a6c5a] mt-[1]",
   infoStatus: "flex-row items-center gap-[6] mt-[8]",
   infoStatusText: "text-xs text-[#3c3e31]",
   infoFlagText: "text-xs font-bold text-[#1c6fd1]",

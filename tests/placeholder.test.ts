@@ -27,3 +27,16 @@ test("the hue is an index into however many hues the theme has", () => {
     expect(hue).toBeLessThan(count);
   }
 });
+
+test("initials come from letters and digits only; punctuation-only names show ♪", () => {
+  expect(placeholderArt("(What’s the Story) Morning Glory?", 6).initials).toBe("Wh");
+  expect(placeholderArt("...And Justice for All", 6).initials).toBe("An");
+  expect(placeholderArt("...", 6).initials).toBe("♪");
+  expect(placeholderArt("!!!", 6).initials).toBe("♪");
+  expect(placeholderArt("1999", 6).initials).toBe("19");
+});
+
+test("initials skip combining marks and never grow past two characters", () => {
+  expect(placeholderArt("Éclat", 6).initials).toBe("Ec");
+  expect(placeholderArt("ßeta", 6).initials).toBe("ße");
+});

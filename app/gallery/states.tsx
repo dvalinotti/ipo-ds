@@ -73,6 +73,8 @@ function Top(props: {
 }
 
 function SunsetCover() {
+  // Logged so tests can count how many cover trees ArtFrame builds.
+  console.log("cover-built");
   return (
     <View class="relative w-[92] h-[92] overflow-hidden bg-gradient-to-b from-[#f6d27a] via-[#e8743b] to-[#5b2a6e]">
       <View class="absolute left-[26] top-[16] w-[40] h-[40] rounded-[20] bg-[#fff1c4]" />
@@ -166,6 +168,40 @@ export const STATES: readonly GalleryState[] = [
     name: "empty",
     top: () => <Top tab="Songs" line="0 songs" body={<StatePanel title="No music found" lines={["Copy .mp3 files to the /music folder on your SD card,", "then press Ⓧ to scan again."]} />} legend={[{ key: "X", label: "Scan again", primary: true }]} />,
     bottom: () => <Idle />,
+  },
+  {
+    // Not a mockup state: over-long strings, curly quotes and a punctuation-led
+    // album, so clipping and initials stay pinned for Plan 3's real data.
+    name: "stress",
+    top: () => (
+      <Top
+        tab="Albums"
+        line="Rescanning sdmc:/music/ after a card swap · 2,048 files"
+        strip={
+          <>
+            <SearchStrip query="the masterplan live at knebworth 1996 remastered" count={1} />
+            <Breadcrumb root="Albums" leaf="(What’s the Story) Morning Glory? (Remastered Deluxe Edition)" detail="Oasis · 12 songs" />
+          </>
+        }
+        header={["#  Song Name", "Time"]}
+        rows={[["Don’t Look Back in Anger", "4:48", "4"], ["Wonderwall", "4:18", "3"], ["Champagne Supernova – Extended Remastered Version", "7:31", "12"]]}
+        selected={1}
+        playing={2}
+        legend={SONGS_LEGEND}
+      />
+    ),
+    bottom: () => (
+      <NowPlaying
+        album="(What’s the Story) Morning Glory? (Remastered Deluxe Edition)"
+        title="Champagne Supernova – Extended Remastered Version"
+        artist="Oasis featuring Paul Weller on lead guitar and backing vocals"
+        position="12 of 12"
+        elapsed="6:58"
+        remaining="-0:33"
+        fraction={1.4}
+        playing
+      />
+    ),
   },
   {
     // Last: the open keyboard is modal and takes L/R while it is up.

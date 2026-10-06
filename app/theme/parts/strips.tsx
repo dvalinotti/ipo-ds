@@ -28,8 +28,9 @@ export function Breadcrumb(props: { root: string; leaf: string; detail: string; 
       <View class={t().crumb}>
         <Text class={t().crumbLink}>{props.root}</Text>
         <Text class={t().crumbText}>›</Text>
-        <Text class={t().crumbText}>{props.leaf}</Text>
-        <View class={t().spacer} />
+        <View class={t().crumbLeaf}>
+          <Text class={t().crumbText}>{props.leaf}</Text>
+        </View>
         <Text class={t().crumbDetail}>{props.detail}</Text>
       </View>
       <View class={t().crumbRule} />

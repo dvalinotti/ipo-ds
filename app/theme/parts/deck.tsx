@@ -1,7 +1,7 @@
 // The bottom screen's Now Playing deck: art frame, info LCD, seek capsule and
 // transport buttons. Presentational only: Plan 3 wires the seek gesture and
 // the handlers.
-import { Show } from "solid-js";
+import { children, Show } from "solid-js";
 import { Image, Text, View } from "@pocketjs/framework/components";
 import type { JSX as SolidJSX } from "solid-js";
 import { AQUA } from "../aqua.ts";
@@ -27,10 +27,13 @@ export function PlaceholderArt(props: { album: string; theme?: Theme }) {
 /** 100×100 white-matted frame. Children are the embedded cover; without them the placeholder for `album` shows. */
 export function ArtFrame(props: { album: string; children?: SolidJSX.Element; theme?: Theme }) {
   const t = () => props.theme ?? AQUA;
+  // Resolve the children once: each read of props.children builds the tree again,
+  // and a copy built only for the `when` test is never inserted, so its nodes leak.
+  const cover = children(() => props.children);
   return (
     <View class={t().artFrame}>
-      <Show when={props.children} fallback={<PlaceholderArt album={props.album} theme={props.theme} />}>
-        {props.children}
+      <Show when={cover()} fallback={<PlaceholderArt album={props.album} theme={props.theme} />}>
+        {cover()}
       </Show>
     </View>
   );

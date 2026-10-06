@@ -16,6 +16,10 @@ beforeAll(async () => {
   world = await bootGallery();
   for (let frame = 0; frame < 6; frame++) world.step();
 }, 180_000);
+
+test("ArtFrame builds its embedded cover once (a second, never-inserted tree would leak native nodes)", () => {
+  expect(world.logs.filter((log) => log.text === "cover-built")).toHaveLength(1);
+});
 afterAll(disposeGuest);
 
 /** R advances one state; the tests visit states in GALLERY_STATES order (search, with its modal keyboard, last). */
@@ -40,6 +44,8 @@ test("main: songs with a selected and a playing row; Now Playing with embedded a
   expect(backgroundOf(selected)).toBe(SELECTED_ROW);
   expect(textColorOf(selected)).toBe(WHITE);
   expect(backgroundOf(pathTo(world, "primary", "Aerodynamic"))).toBe(ODD_ROW);
+  // Eight 21 px rows: the list body (row → cell → Text → run) is exactly 168 px tall.
+  expect(pathTo(world, "primary", "Aerodynamic").at(-5)!.rect![3]).toBe(168);
   expectAll(screenText(world, "auxiliary"), ["One More Time", "Daft Punk", "3 of 12", "1:42", "-3:58", "DISCOVERY"]);
 });
 
@@ -74,6 +80,27 @@ test("empty library: guidance and a single Scan again hint", () => {
   show("empty");
   expectAll(screenText(world, "primary"), ["0 songs", "No music found", "then press Ⓧ to scan again.", "Scan again"]);
   expect(screenText(world, "auxiliary")).toContain("Nothing playing");
+});
+
+/** A text run's <Text> element (path[-2]) lies inside the box that holds it (path[-3]). */
+function expectInside(path: ReturnType<typeof pathTo>): void {
+  const [x, , w] = path[path.length - 2]!.rect!;
+  const [bx, , bw] = path[path.length - 3]!.rect!;
+  expect(x).toBeGreaterThanOrEqual(bx);
+  expect(x + w).toBeLessThanOrEqual(bx + bw);
+}
+
+test("stress: over-long LCD lines, query and breadcrumb clip in place; curly quotes and punctuation-led albums", () => {
+  show("stress");
+  expectInside(pathTo(world, "primary", "Rescanning sdmc:/music/ after a card swap · 2,048 files"));
+  for (const right of ["1 found", "Oasis · 12 songs"]) {
+    const [x, , w] = pathTo(world, "primary", right).at(-2)!.rect!;
+    expect(x + w).toBeLessThanOrEqual(400);
+  }
+  expect(screenText(world, "primary")).toContain("Don’t Look Back in Anger");
+  expectInside(pathTo(world, "auxiliary", "Champagne Supernova – Extended Remastered Version"));
+  expectInside(pathTo(world, "auxiliary", "Oasis featuring Paul Weller on lead guitar and backing vocals"));
+  expect(pathTo(world, "auxiliary", "Wh").length).toBeGreaterThan(0);
 });
 
 test("search: query strip with results; the classic keyboard on the bottom screen", () => {

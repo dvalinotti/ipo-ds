@@ -76,8 +76,9 @@ export interface Theme {
   crumbRule: string;
   crumbLink: string;
   crumbText: string;
+  /** Holds the leaf: takes the free width and clips a long name. */
+  crumbLeaf: string;
   crumbDetail: string;
-  spacer: string;
 
   panel: string;
   panelTitle: string;
