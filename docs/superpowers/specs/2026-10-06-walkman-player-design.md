@@ -27,7 +27,7 @@ showing title/artist/album and embedded cover art.
   filtering the current view.
 - Search entry: the **PocketJS on-screen keyboard** on the bottom screen.
 - v1 playback: **queue from the visible list**, **shuffle**, **repeat**.
-- v2 (deferred): **lid-closed playback**, **resume on launch**.
+- v2 (deferred): **lid-closed playback**, **resume on launch**, **theme switching**.
 - Text coverage: **Latin + accented characters**.
 - Aesthetic: early-2000s, **undecided** — explored with mockups in its own stage.
 - Framework changes live in a **personal PocketJS fork** pinned by the
@@ -46,7 +46,7 @@ showing title/artist/album and embedded cover art.
 - Volume is the 3DS hardware slider; no software volume UI.
 
 ### Out of scope for v1
-Lid-closed playback, resume-on-launch / any persistence, formats other than
+Lid-closed playback, resume-on-launch / any persistence, theme switching, formats other than
 MP3, subfolder scanning, folder.jpg art, playlists, CJK text, Old 3DS support,
 streaming/companion playback.
 
@@ -344,7 +344,7 @@ with Stages 3–5.
 | 6 | Native playback: scan, ID3, duration, minimp3 → NDSP, seek, status | fork | real library plays/seeks/auto-advances in Azahar and on New 3DS |
 | 7 | Native album art: APIC → stb_image → RGB565 texture, release | fork + ds-man | covers display on device; no leaks across 50+ changes |
 | 8 | Hardening: scan time, CPU, memory, underruns, corrupt files, Azahar e2e capture | both | device checklist passes |
-| v2 | Lid-closed playback (APT sleep hooks), resume-on-launch (persistence) | both | — |
+| v2 | Lid-closed playback (APT sleep hooks), resume-on-launch (persistence), theme switching (second theme + setting) | both | — |
 
 ## 9. Risks
 

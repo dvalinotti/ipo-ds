@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=2640">
+<title>Ds Man — Aqua states</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 2640px; height: 2160px; background: #1c1c1f; overflow: hidden; }
+  body { position: relative; font-family: "Inter", Arial, sans-serif; }
+  .screen { position: absolute; transform: scale(2); transform-origin: top left; overflow: hidden; }
+  .top { left: 40px; top: 40px; width: 400px; height: 240px; }
+  .bottom { left: 120px; top: 560px; width: 320px; height: 240px; }
+  .cap { position: absolute; color: #77777f; font: 11px/1 -apple-system, sans-serif; letter-spacing: .04em; }
+  .abs { position: absolute; }
+  .row { display: flex; align-items: center; }
+  .metal { background: linear-gradient(to bottom, #d6d6d6, #c2c2c2 50%, #a8a8a8); }
+  .aqua { background: linear-gradient(to bottom, #b9dcff, #5aa7f0 50%, #1c6fd1); border: 1px solid #1a4f99; color: #fff; }
+  .graphite { background: linear-gradient(to bottom, #ffffff, #e2e2e2 50%, #c4c4c4); border: 1px solid #7d7d7d; color: #2b2b2b; }
+
+  /* top */
+  .bar { left: 0; top: 0; width: 400px; height: 34px; padding: 0 6px; gap: 6px; border-bottom: 1px solid #6e6e6e; }
+  .lights { gap: 4px; }
+  .light { width: 10px; height: 10px; border-radius: 5px; border: 1px solid rgba(0,0,0,.35); }
+  .lcd { width: 160px; height: 30px; border-radius: 6px; border: 1px solid #7d7f6e; background: linear-gradient(to bottom, #f4f6e6, #e9ecd5 50%, #d9ddc0); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .lcd .a { font-size: 12px; line-height: 13px; font-weight: 700; color: #2b2b2b; }
+  .lcd .b { font-size: 12px; line-height: 13px; color: #4a4c3f; }
+  .seg { gap: 0; margin-left: auto; }
+  .sg { height: 20px; padding: 0 8px; font-size: 12px; line-height: 18px; }
+  .sg:first-child { border-radius: 10px 0 0 10px; }
+  .sg:last-child { border-radius: 0 10px 10px 0; }
+  .lr { font-size: 12px; color: #4a4a4a; width: 12px; text-align: center; }
+  .hdr { left: 0; top: 35px; width: 400px; height: 16px; background: linear-gradient(to bottom, #ffffff, #e7e7e7 50%, #d4d4d4); border-bottom: 1px solid #a5a5a5; }
+  .hdr span { font-size: 12px; color: #2b2b2b; padding-left: 22px; line-height: 15px; }
+  .hdr .sort { background: linear-gradient(to bottom, #d9ebff, #a9cdf6 50%, #8fbbef); height: 15px; }
+  .li { position: absolute; left: 0; width: 386px; height: 21px; font-size: 12px; color: #000; }
+  .li .n { width: 22px; text-align: center; color: #1c6fd1; font-size: 12px; }
+  .li .t { width: 220px; white-space: nowrap; overflow: hidden; }
+  .li .a { flex: 1; color: #2b2b2b; white-space: nowrap; overflow: hidden; }
+  .li.odd { background: #edf3fe; }
+  .li.even { background: #ffffff; }
+  .li.sel { background: #3875d7; }
+  .li.sel .t, .li.sel .a, .li.sel .n { color: #fff; }
+  .sb { left: 386px; top: 52px; width: 14px; height: 168px; background: linear-gradient(to right, #d4d4d4, #f1f1f1 50%, #d4d4d4); border-left: 1px solid #a5a5a5; }
+  .sbt { left: 1px; top: 18px; width: 11px; height: 44px; border-radius: 6px; }
+  .foot { left: 0; top: 220px; width: 400px; height: 20px; padding: 0 8px; gap: 12px; border-top: 1px solid #6e6e6e; font-size: 12px; color: #2b2b2b; }
+  .kb { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 7px; margin-right: 4px; font-size: 12px; font-weight: 700; }
+
+  /* bottom */
+  .art { left: 10px; top: 10px; width: 100px; height: 100px; padding: 3px; background: #fff; border: 1px solid #7d7d7d; }
+  .cover { width: 92px; height: 92px; position: relative; overflow: hidden; background: linear-gradient(to bottom, #12204a, #3d66c4 50%, #9bc3ff); }
+  .cover .r1 { position: absolute; left: 8px; top: 8px; width: 76px; height: 76px; border-radius: 38px; border: 2px solid #e9ecd5; }
+  .cover .r2 { position: absolute; left: 22px; top: 22px; width: 48px; height: 48px; border-radius: 24px; border: 2px solid #e9ecd5; }
+  .cover .r3 { position: absolute; left: 38px; top: 38px; width: 16px; height: 16px; border-radius: 8px; background: #e9ecd5; }
+  .blcd { left: 118px; top: 10px; width: 192px; height: 100px; border-radius: 10px; border: 1px solid #7d7f6e; background: linear-gradient(to bottom, #f4f6e6, #e9ecd5 50%, #d9ddc0); padding: 6px 8px; }
+  .blcd .ti { font-size: 16px; font-weight: 700; color: #1f2018; text-align: center; white-space: nowrap; overflow: hidden; }
+  .blcd .ar { font-size: 12px; color: #3c3e31; text-align: center; margin-top: 3px; }
+  .blcd .al { font-size: 12px; color: #6a6c5a; text-align: center; margin-top: 1px; }
+  .blcd .st { margin-top: 8px; justify-content: center; gap: 6px; font-size: 12px; color: #3c3e31; }
+  .blcd .st b { color: #1c6fd1; }
+  .seek { left: 10px; top: 120px; width: 300px; height: 30px; gap: 8px; padding: 0 8px; border-radius: 15px; border: 1px solid #7d7f6e; background: linear-gradient(to bottom, #f4f6e6, #e9ecd5 50%, #d9ddc0); }
+  .tm { width: 34px; font-size: 12px; font-weight: 700; color: #1f2018; }
+  .trk { flex: 1; height: 8px; border-radius: 4px; background: #c9cbb3; border: 1px solid #8a8c78; position: relative; }
+  .fill { position: absolute; left: 0; top: 0; width: 30%; height: 6px; border-radius: 3px; background: #4a4c3f; }
+  .knob { position: absolute; left: 30%; top: -6px; margin-left: -9px; width: 18px; height: 18px; border-radius: 9px; }
+  .trans { left: 10px; top: 160px; width: 300px; height: 72px; justify-content: center; gap: 10px; }
+  .rb { width: 42px; height: 42px; border-radius: 21px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .rb.sm { width: 34px; height: 34px; border-radius: 17px; font-size: 14px; }
+  .rb.play { width: 64px; height: 64px; border-radius: 32px; font-size: 24px; }
+
+  .cell { position: absolute; width: 880px; height: 1080px; }
+  .label { position: absolute; left: 40px; top: 12px; color: #c9c9cf; font: 700 14px/1 "Inter", sans-serif; }
+  .search { left: 0; top: 35px; width: 400px; height: 20px; padding: 0 6px; gap: 6px; background: linear-gradient(to bottom, #d6d6d6, #c2c2c2); border-bottom: 1px solid #8a8a8a; }
+  .sfield { flex: 1; height: 16px; border-radius: 8px; background: #fff; border: 1px solid #7d7d7d; padding: 0 8px; font-size: 12px; line-height: 14px; color: #000; }
+  .sfield i { font-style: normal; color: #6a6a6a; }
+  .found { font-size: 12px; color: #2b2b2b; }
+  .crumb { left: 0; top: 35px; width: 400px; height: 20px; padding: 0 8px; gap: 6px; font-size: 12px; color: #2b2b2b; background: linear-gradient(to bottom, #e9ecd5, #d9ddc0); border-bottom: 1px solid #8a8c78; }
+  .crumb b { color: #1c6fd1; }
+  .num { width: 22px; text-align: right; padding-right: 6px; color: #6a6a6a; font-size: 12px; }
+  .li.sel .num, .li.sel .cnt { color: #fff; }
+  .cnt { width: 60px; text-align: right; padding-right: 8px; color: #6a6a6a; font-size: 12px; }
+  .center { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .msg { font-size: 14px; font-weight: 700; color: #2b2b2b; }
+  .sub { font-size: 12px; color: #4a4a4a; margin-top: 4px; }
+  .barber { width: 220px; height: 12px; border-radius: 6px; border: 1px solid #1a4f99; margin-top: 10px; overflow: hidden; position: relative; background: #fff; }
+  .barber .f { position: absolute; left: 0; top: 0; height: 10px; width: 46%; background: linear-gradient(to bottom, #b9dcff, #5aa7f0 50%, #1c6fd1); }
+  .osk-field { left: 8px; top: 8px; width: 304px; height: 24px; border-radius: 12px; background: #fff; border: 1px solid #7d7d7d; padding: 0 10px; font-size: 14px; line-height: 22px; color: #000; }
+  .osk-field .caret { display: inline-block; width: 1px; height: 14px; background: #1c6fd1; vertical-align: -2px; }
+  .krow { position: absolute; left: 0; width: 320px; justify-content: center; gap: 3px; }
+  .key { width: 28px; height: 30px; border-radius: 5px; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+  .key.wide { width: 46px; font-size: 12px; }
+  .key.space { width: 140px; font-size: 12px; }
+  .key.done { width: 74px; font-size: 12px; font-weight: 700; }
+  .osk-legend { left: 0; top: 214px; width: 320px; height: 20px; justify-content: center; gap: 10px; font-size: 12px; color: #2b2b2b; }
+  .idle { left: 10px; top: 10px; width: 300px; height: 140px; border-radius: 10px; border: 1px solid #7d7f6e; background: linear-gradient(to bottom, #f4f6e6, #e9ecd5 50%, #d9ddc0); }
+  .rb.dim { opacity: .45; }
+  .ph { width: 92px; height: 92px; position: relative; overflow: hidden; }
+  .ph .r1 { position: absolute; left: 8px; top: 8px; width: 76px; height: 76px; border-radius: 38px; border: 2px solid #f4f6e6; opacity: .85; }
+  .ph .r2 { position: absolute; left: 22px; top: 22px; width: 48px; height: 48px; border-radius: 24px; border: 2px solid #f4f6e6; opacity: .85; }
+  .ph .hub { position: absolute; left: 30px; top: 30px; width: 32px; height: 32px; border-radius: 16px; background: #f4f6e6; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+  .sheet { position: absolute; left: 40px; top: 40px; width: 800px; height: 1000px; border-radius: 12px; background: linear-gradient(to bottom, #d6d6d6, #c2c2c2 50%, #a8a8a8); }
+  .sw { position: absolute; width: 220px; display: flex; flex-direction: column; align-items: center; }
+  .sw .frame { padding: 6px; background: #fff; border: 2px solid #7d7d7d; transform: scale(2); transform-origin: top center; margin-bottom: 110px; }
+  .sw .nm { font: 700 24px/1.2 "Inter", sans-serif; color: #2b2b2b; }
+  .sw .hx { font: 18px/1.2 "Inter", sans-serif; color: #4a4a4a; margin-top: 4px; }
+</style>
+</head>
+<body>
+<div id="sd-root" style="position:relative;width:2640px;height:2160px;background:#1c1c1f;overflow:hidden">
+<div class="cell" style="left:0px;top:0px"><div class="label">Search active · OSK on the bottom screen</div><div class="screen top metal">
+      <div class="abs row bar metal">
+        <div class="row lights"><div class="light" style="background:linear-gradient(to bottom,#ffb3a8,#e0443a)"></div><div class="light" style="background:linear-gradient(to bottom,#ffe2a1,#e3a21a)"></div><div class="light" style="background:linear-gradient(to bottom,#c9f0a8,#4fa83a)"></div></div>
+        <div class="lcd" style="margin-left:10px"><div class="a">Ds Man</div><div class="b">142 songs · 9.6 hrs</div></div>
+        <div class="row seg"><span class="lr">L</span><div class="sg aqua">Songs</div><div class="sg graphite">Artists</div><div class="sg graphite">Albums</div><span class="lr">R</span></div>
+      </div>
+      <div class="abs row search"><div class="sfield"><i>Search:</i> daft</div><span class="found">4 found</span></div>
+      <div class="abs row hdr" style="top:56px"><span class="sort" style="width:242px">Song Name ▴</span><span>Artist</span></div>
+      <div class="abs" style="left:0;top:72px;width:400px;height:148px;background:#fff"></div>
+      <div class="li row odd" style="top:72px"><span class="n"></span><span class="t" style="">Aerodynamic</span><span class="a">Daft Punk</span></div>
+<div class="li row even" style="top:93px"><span class="n"></span><span class="t" style="">Around the World</span><span class="a">Daft Punk</span></div>
+<div class="li row sel" style="top:114px"><span class="n"></span><span class="t" style="">Digital Love</span><span class="a">Daft Punk</span></div>
+<div class="li row even" style="top:135px"><span class="n">♪</span><span class="t" style="">One More Time</span><span class="a">Daft Punk</span></div>
+
+      <div class="abs row foot metal"><span class="row"><span class="kb aqua">A</span>Play</span><span class="row"><span class="kb graphite">X</span>Edit search</span><span class="row"><span class="kb graphite">B</span>Clear</span><span class="row"><span class="kb graphite">Y</span>Now Playing</span></div>
+    </div><div class="cap" style="left:40px; top:526px">TOP · 400×240</div><div class="screen bottom metal">
+      <div class="abs osk-field">daft<span class="caret"></span></div>
+      <div class="abs row krow" style="top:42px"><div class="key graphite">q</div><div class="key graphite">w</div><div class="key graphite">e</div><div class="key graphite">r</div><div class="key graphite">t</div><div class="key graphite">y</div><div class="key graphite">u</div><div class="key graphite">i</div><div class="key graphite">o</div><div class="key graphite">p</div></div>
+      <div class="abs row krow" style="top:76px"><div class="key graphite">a</div><div class="key graphite">s</div><div class="key graphite">d</div><div class="key graphite">f</div><div class="key graphite">g</div><div class="key graphite">h</div><div class="key graphite">j</div><div class="key graphite">k</div><div class="key graphite">l</div></div>
+      <div class="abs row krow" style="top:110px"><div class="key graphite">z</div><div class="key graphite">x</div><div class="key graphite">c</div><div class="key graphite">v</div><div class="key graphite">b</div><div class="key graphite">n</div><div class="key graphite">m</div><div class="key wide graphite">⌫</div></div>
+      <div class="abs row krow" style="top:144px"><div class="key wide graphite">123</div><div class="key space graphite">space</div><div class="key done aqua">Done</div></div>
+      <div class="abs row krow" style="top:180px"><div class="key wide graphite">é ñ ü</div><div class="key wide graphite">.,'</div><div class="key wide graphite">Clear</div></div>
+      <div class="abs row osk-legend"><span>Ⓨ ⌫</span><span>Ⓧ space</span><span>START done</span><span>Ⓑ close</span></div>
+    </div><div class="cap" style="left:120px; top:1046px">BOTTOM · 320×240 · touch</div></div>
+<div class="cell" style="left:880px;top:0px"><div class="label">Artists tab · idle Now Playing</div><div class="screen top metal">
+      <div class="abs row bar metal">
+        <div class="row lights"><div class="light" style="background:linear-gradient(to bottom,#ffb3a8,#e0443a)"></div><div class="light" style="background:linear-gradient(to bottom,#ffe2a1,#e3a21a)"></div><div class="light" style="background:linear-gradient(to bottom,#c9f0a8,#4fa83a)"></div></div>
+        <div class="lcd" style="margin-left:10px"><div class="a">Ds Man</div><div class="b">142 songs · 9.6 hrs</div></div>
+        <div class="row seg"><span class="lr">L</span><div class="sg graphite">Songs</div><div class="sg aqua">Artists</div><div class="sg graphite">Albums</div><span class="lr">R</span></div>
+      </div>
+      <div class="abs row hdr" style="top:35px"><span class="sort" style="width:242px">Artist ▴</span><span style="flex:1;padding-left:0;padding-right:22px;text-align:right">Songs</span></div><div class="li row odd" style="top:52px"><span class="n"></span><span class="t" style="flex:1">Beyoncé</span><span class="cnt">3</span></div>
+<div class="li row even" style="top:73px"><span class="n"></span><span class="t" style="flex:1">Daft Punk</span><span class="cnt">12</span></div>
+<div class="li row odd" style="top:94px"><span class="n"></span><span class="t" style="flex:1">Gorillaz</span><span class="cnt">9</span></div>
+<div class="li row sel" style="top:115px"><span class="n"></span><span class="t" style="flex:1">Queen</span><span class="cnt">14</span></div>
+<div class="li row odd" style="top:136px"><span class="n"></span><span class="t" style="flex:1">Radiohead</span><span class="cnt">22</span></div>
+<div class="li row even" style="top:157px"><span class="n"></span><span class="t" style="flex:1">Sigur Rós</span><span class="cnt">7</span></div>
+<div class="li row odd" style="top:178px"><span class="n"></span><span class="t" style="flex:1">The Strokes</span><span class="cnt">11</span></div>
+<div class="li row even" style="top:199px"><span class="n"></span><span class="t" style="flex:1">Unknown Artist</span><span class="cnt">2</span></div>
+<div class="abs sb" style="top:52px;height:168px"><div class="abs sbt aqua" style="top:4px;height:60px"></div></div>
+      <div class="abs row foot metal"><span class="row"><span class="kb aqua">A</span>Open</span><span class="row"><span class="kb graphite">X</span>Search</span><span class="row"><span class="kb graphite">B</span>Back</span><span class="row"><span class="kb graphite">Y</span>Now Playing</span></div>
+    </div><div class="cap" style="left:40px; top:526px">TOP · 400×240</div><div class="screen bottom metal">
+      <div class="abs idle center"><div class="msg">Nothing playing</div><div class="sub">Pick a song above and press Ⓐ</div></div>
+      <div class="abs row seek"><span class="tm">--:--</span><div class="trk"></div><span class="tm" style="text-align:right">--:--</span></div>
+      <div class="abs row trans"><div class="rb sm graphite dim">⤮</div><div class="rb graphite dim">⏮</div><div class="rb play graphite dim">▶</div><div class="rb graphite dim">⏭</div><div class="rb sm graphite dim">↻</div></div>
+    </div><div class="cap" style="left:120px; top:1046px">BOTTOM · 320×240 · touch</div></div>
+<div class="cell" style="left:1760px;top:0px"><div class="label">Album drill-down · Now Playing with generated placeholder art</div><div class="screen top metal">
+      <div class="abs row bar metal">
+        <div class="row lights"><div class="light" style="background:linear-gradient(to bottom,#ffb3a8,#e0443a)"></div><div class="light" style="background:linear-gradient(to bottom,#ffe2a1,#e3a21a)"></div><div class="light" style="background:linear-gradient(to bottom,#c9f0a8,#4fa83a)"></div></div>
+        <div class="lcd" style="margin-left:10px"><div class="a">Ds Man</div><div class="b">142 songs · 9.6 hrs</div></div>
+        <div class="row seg"><span class="lr">L</span><div class="sg graphite">Songs</div><div class="sg graphite">Artists</div><div class="sg aqua">Albums</div><span class="lr">R</span></div>
+      </div>
+      <div class="abs row crumb"><b>Albums</b><span>›</span><span>Discovery</span><span style="margin-left:auto">Daft Punk · 14 songs</span></div>
+      <div class="abs row hdr" style="top:56px"><span class="sort" style="width:242px;padding-left:0"><span style="display:inline-block;width:22px;padding-left:0;text-align:center">#</span>Song Name ▴</span><span style="padding-left:0">Time</span></div>
+      <div class="li row odd" style="top:72px"><span class="num">1</span><span class="t" style="">One More Time</span><span class="a">5:20</span></div>
+<div class="li row sel" style="top:93px"><span class="num">2</span><span class="t" style="">Aerodynamic</span><span class="a">3:27</span></div>
+<div class="li row odd" style="top:114px"><span class="num">3</span><span class="t" style="">Digital Love</span><span class="a">4:58</span></div>
+<div class="li row even" style="top:135px"><span class="num">4</span><span class="t" style="">Harder, Better, Faster…</span><span class="a">3:44</span></div>
+<div class="li row odd" style="top:156px"><span class="num">5</span><span class="t" style="">Crescendolls</span><span class="a">3:31</span></div>
+<div class="li row even" style="top:177px"><span class="num">6</span><span class="t" style="">Nightvision</span><span class="a">1:44</span></div>
+<div class="li row odd" style="top:198px"><span class="num">7</span><span class="t" style="">Superheroes</span><span class="a">3:57</span></div>
+
+      <div class="abs sb" style="top:72px;height:148px"><div class="abs sbt aqua" style="top:4px;height:52px"></div></div>
+      <div class="abs row foot metal"><span class="row"><span class="kb aqua">A</span>Play</span><span class="row"><span class="kb graphite">X</span>Search</span><span class="row"><span class="kb graphite">B</span>Albums</span><span class="row"><span class="kb graphite">Y</span>Now Playing</span></div>
+    </div><div class="cap" style="left:40px; top:526px">TOP · 400×240</div><div class="screen bottom metal">
+      <div class="abs art"><div class="ph" style="background:linear-gradient(to bottom,#12204a,#5aa7f0)"><div class="r1"></div><div class="r2"></div><div class="hub" style="color:#12204a">Di</div></div></div>
+      <div class="abs blcd"><div class="ti">Aerodynamic</div><div class="ar">Daft Punk</div><div class="al">Discovery</div><div class="row st"><span>2 of 14</span><b>⤮</b><b>↻</b></div></div>
+      <div class="abs row seek"><span class="tm">0:12</span><div class="trk"><div class="fill" style="width:5%"></div><div class="knob aqua" style="left:5%"></div></div><span class="tm" style="text-align:right">-3:31</span></div>
+      <div class="abs row trans"><div class="rb sm aqua">⤮</div><div class="rb graphite">⏮</div><div class="rb play aqua">❚❚</div><div class="rb graphite">⏭</div><div class="rb sm aqua">↻</div></div>
+    </div><div class="cap" style="left:120px; top:1046px">BOTTOM · 320×240 · touch</div></div>
+<div class="cell" style="left:0px;top:1080px"><div class="label">Scanning the library</div><div class="screen top metal">
+      <div class="abs row bar metal">
+        <div class="row lights"><div class="light" style="background:linear-gradient(to bottom,#ffb3a8,#e0443a)"></div><div class="light" style="background:linear-gradient(to bottom,#ffe2a1,#e3a21a)"></div><div class="light" style="background:linear-gradient(to bottom,#c9f0a8,#4fa83a)"></div></div>
+        <div class="lcd" style="margin-left:10px"><div class="a">Ds Man</div><div class="b">Scanning…</div></div>
+        <div class="row seg"><span class="lr">L</span><div class="sg aqua">Songs</div><div class="sg graphite">Artists</div><div class="sg graphite">Albums</div><span class="lr">R</span></div>
+      </div>
+      <div class="abs center" style="left:0;top:35px;width:400px;height:185px;background:#fff"><div class="msg">Scanning your music…</div><div class="sub">sdmc:/music/ · 87 of 142 files</div><div class="barber"><div class="f"></div></div></div>
+      <div class="abs row foot metal"><span class="row"><span class="kb graphite">Y</span>Now Playing</span></div>
+    </div><div class="cap" style="left:40px; top:526px">TOP · 400×240</div><div class="screen bottom metal">
+      <div class="abs idle center"><div class="msg">Nothing playing</div><div class="sub">Pick a song above and press Ⓐ</div></div>
+      <div class="abs row seek"><span class="tm">--:--</span><div class="trk"></div><span class="tm" style="text-align:right">--:--</span></div>
+      <div class="abs row trans"><div class="rb sm graphite dim">⤮</div><div class="rb graphite dim">⏮</div><div class="rb play graphite dim">▶</div><div class="rb graphite dim">⏭</div><div class="rb sm graphite dim">↻</div></div>
+    </div><div class="cap" style="left:120px; top:1046px">BOTTOM · 320×240 · touch</div></div>
+<div class="cell" style="left:880px;top:1080px"><div class="label">Empty library</div><div class="screen top metal">
+      <div class="abs row bar metal">
+        <div class="row lights"><div class="light" style="background:linear-gradient(to bottom,#ffb3a8,#e0443a)"></div><div class="light" style="background:linear-gradient(to bottom,#ffe2a1,#e3a21a)"></div><div class="light" style="background:linear-gradient(to bottom,#c9f0a8,#4fa83a)"></div></div>
+        <div class="lcd" style="margin-left:10px"><div class="a">Ds Man</div><div class="b">0 songs</div></div>
+        <div class="row seg"><span class="lr">L</span><div class="sg aqua">Songs</div><div class="sg graphite">Artists</div><div class="sg graphite">Albums</div><span class="lr">R</span></div>
+      </div>
+      <div class="abs center" style="left:0;top:35px;width:400px;height:185px;background:#fff"><div class="msg">No music found</div><div class="sub">Copy .mp3 files to the /music folder on your SD card,</div><div class="sub">then press Ⓧ to scan again.</div></div>
+      <div class="abs row foot metal"><span class="row"><span class="kb aqua">X</span>Scan again</span></div>
+    </div><div class="cap" style="left:40px; top:526px">TOP · 400×240</div><div class="screen bottom metal">
+      <div class="abs idle center"><div class="msg">Nothing playing</div><div class="sub">Pick a song above and press Ⓐ</div></div>
+      <div class="abs row seek"><span class="tm">--:--</span><div class="trk"></div><span class="tm" style="text-align:right">--:--</span></div>
+      <div class="abs row trans"><div class="rb sm graphite dim">⤮</div><div class="rb graphite dim">⏮</div><div class="rb play graphite dim">▶</div><div class="rb graphite dim">⏭</div><div class="rb sm graphite dim">↻</div></div>
+    </div><div class="cap" style="left:120px; top:1046px">BOTTOM · 320×240 · touch</div></div>
+<div class="cell" style="left:1760px;top:1080px"><div class="sheet"></div><div class="abs" style="left:80px;top:70px;font:700 28px/1 Inter,sans-serif;color:#2b2b2b">Generated placeholder art</div><div class="abs" style="left:80px;top:110px;font:18px/1.3 Inter,sans-serif;color:#3a3a3a;width:720px">Album name hashed to one of six Aqua hues · vertical gradient · two cream rings · hub with the album’s first two letters. Shown at 2× (on device: 92×92 inside the 100×100 frame).</div><div class="sw" style="left:80px;top:200px"><div class="frame"><div class="ph" style="background:linear-gradient(to bottom,#12204a,#5aa7f0)"><div class="r1"></div><div class="r2"></div><div class="hub" style="color:#12204a">Di</div></div></div><div class="nm">Discovery</div><div class="hx">blue · #12204a → #5aa7f0</div></div><div class="sw" style="left:330px;top:200px"><div class="frame"><div class="ph" style="background:linear-gradient(to bottom,#0f3b3a,#5fc4b4)"><div class="r1"></div><div class="r2"></div><div class="hub" style="color:#0f3b3a">Ta</div></div></div><div class="nm">Takk...</div><div class="hx">teal · #0f3b3a → #5fc4b4</div></div><div class="sw" style="left:580px;top:200px"><div class="frame"><div class="ph" style="background:linear-gradient(to bottom,#3a1640,#c98ad8)"><div class="r1"></div><div class="r2"></div><div class="hub" style="color:#3a1640">De</div></div></div><div class="nm">Demon Days</div><div class="hx">plum · #3a1640 → #c98ad8</div></div><div class="sw" style="left:80px;top:600px"><div class="frame"><div class="ph" style="background:linear-gradient(to bottom,#4a2a08,#f0b860)"><div class="r1"></div><div class="r2"></div><div class="hub" style="color:#4a2a08">Is</div></div></div><div class="nm">Is This It</div><div class="hx">amber · #4a2a08 → #f0b860</div></div><div class="sw" style="left:330px;top:600px"><div class="frame"><div class="ph" style="background:linear-gradient(to bottom,#173a14,#86cf72)"><div class="r1"></div><div class="r2"></div><div class="hub" style="color:#173a14">Ok</div></div></div><div class="nm">OK Computer</div><div class="hx">green · #173a14 → #86cf72</div></div><div class="sw" style="left:580px;top:600px"><div class="frame"><div class="ph" style="background:linear-gradient(to bottom,#2b2b2b,#a8a8a8)"><div class="r1"></div><div class="r2"></div><div class="hub" style="color:#2b2b2b">Un</div></div></div><div class="nm">Unknown Album</div><div class="hx">graphite · #2b2b2b → #a8a8a8</div></div></div>
+</div>
+</body>
+</html>
