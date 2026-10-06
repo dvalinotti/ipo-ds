@@ -10,7 +10,12 @@
       "requires": [
         "text.glyphs.baked",
         "input.buttons",
-        "display.auxiliary"
+        "display.auxiliary",
+        "input.touch.auxiliary"
+      ],
+      "enhances": [
+        "input.analog.left",
+        "media.local"
       ]
     }
   },
@@ -20,14 +25,20 @@
     "framework": "solid",
     "viewport": {
       "fixed": {
-        "logical": [400, 240],
+        "logical": [
+          400,
+          240
+        ],
         "presentation": "native"
       }
     },
     "surfaces": {
       "auxiliary": {
         "fixed": {
-          "logical": [320, 240],
+          "logical": [
+            320,
+            240
+          ],
           "presentation": "native"
         }
       }

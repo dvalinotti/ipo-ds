@@ -11,7 +11,11 @@ mkdirSync(resolve(root, "dist"), { recursive: true });
 const planPath = resolve(root, "dist/plan.json");
 writeFileSync(planPath, JSON.stringify(plan, null, 2));
 await build3ds([`--plan=${planPath}`, `--project-root=${root}`, ...process.argv.slice(2)]);
-for (const ext of ["3dsx", "pocket", "cia"]) {
-  const from = resolve(root, `runtime/dist/3ds/${plan.app.output}.${ext}`);
-  if (existsSync(from)) copyFileSync(from, resolve(root, `dist/${plan.app.output}.${ext}`));
+// A caller that names its own package directory (the test harness) keeps the
+// products there; copying runtime/dist/3ds would publish a stale build.
+if (!process.argv.some((a) => a.startsWith("--package-outdir="))) {
+  for (const ext of ["3dsx", "pocket", "cia"]) {
+    const from = resolve(root, `runtime/dist/3ds/${plan.app.output}.${ext}`);
+    if (existsSync(from)) copyFileSync(from, resolve(root, `dist/${plan.app.output}.${ext}`));
+  }
 }
