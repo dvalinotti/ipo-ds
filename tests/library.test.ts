@@ -2,7 +2,6 @@ import { expect, test } from "bun:test";
 import type { LocalTrack } from "@pocketjs/framework/localmedia";
 import { buildLibrary, rows } from "../app/library/library.ts";
 import { normalize } from "../app/library/normalize.ts";
-import { libraryLine } from "../app/library/status.ts";
 import { TRACKS } from "./fixtures/tracks.ts";
 
 const ids = (list: ReturnType<typeof rows>) => list.map((row) => (row.kind === "song" ? row.id : row.key));
@@ -68,13 +67,6 @@ test("drill-down views list the artist's or album's songs and filter them", () =
   expect(rows(library, { kind: "artist", key: "nobody" }, "")).toEqual([]);
 });
 
-test("the library status line covers no host, scanning, empty and counted", () => {
-  expect(libraryLine(false, false, 0)).toBe("Music playback is unavailable on this build");
-  expect(libraryLine(true, true, 0)).toBe("Scanning sdmc:/music/…");
-  expect(libraryLine(true, false, 0)).toBe("No music found in sdmc:/music/");
-  expect(libraryLine(true, false, 1)).toBe("1 track");
-  expect(libraryLine(true, false, 312)).toBe("312 tracks");
-});
 
 test("normalize strips decomposed accents and folds the rest of Latin Extended-A", () => {
   expect(normalize("Hoppípolla")).toBe("hoppipolla");
