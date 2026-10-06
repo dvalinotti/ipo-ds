@@ -21,6 +21,8 @@ export interface Theme {
   name: string;
   /** The framework Osk theme the search keyboard uses. */
   osk: "dark" | "light" | "classic";
+  /** Key height (logical px) that lets the keyboard fill the bottom screen below the search field. */
+  oskKeyHeight: number;
 
   topScreen: string;
   bottomScreen: string;
@@ -35,6 +37,8 @@ export interface Theme {
   /** The bordered box that joins the tabs into one segmented control. */
   tabGroup: string;
   tab(active: boolean): string;
+  /** The group's rounded border, drawn over the segments so their square corners do not cover it. */
+  tabFrame: string;
   /** 1 px rule between adjacent segments. */
   tabDivider: string;
   tabText(active: boolean): string;
@@ -76,6 +80,9 @@ export interface Theme {
   searchLabel: string;
   searchQuery: string;
   searchCount: string;
+  /** The search field shown above the on-screen keyboard (bottom screen). */
+  keyboardField: string;
+  keyboardFieldText: string;
   crumb: string;
   crumbRule: string;
   crumbLink: string;
@@ -87,6 +94,8 @@ export interface Theme {
   panel: string;
   panelTitle: string;
   panelText: string;
+  /** A panel line that holds a key badge between two runs of text. */
+  panelKeyLine: string;
   progressTrack: string;
   progressFill: string;
 

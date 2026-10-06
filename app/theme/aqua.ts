@@ -29,6 +29,7 @@ const LARGE_ICONS: Record<"play" | "pause", Record<"white" | "ink", string>> = {
 export const AQUA: Theme = {
   name: "aqua",
   osk: "classic",
+  oskKeyHeight: 43,
 
   topScreen: "w-full h-full flex-col bg-[#c2c2c2] overflow-hidden",
   bottomScreen: "relative w-full h-full bg-gradient-to-b from-[#d6d6d6] via-[#c2c2c2] to-[#a8a8a8] overflow-hidden",
@@ -43,7 +44,8 @@ export const AQUA: Theme = {
   lcdTitle: "w-full leading-[13] text-center text-xs font-bold text-[#2b2b2b]",
   lcdLine: "w-full leading-[13] text-center text-xs text-[#4a4c3f]",
   tabs: "flex-row items-center ml-[6] gap-[3]",
-  tabGroup: "h-[20] p-[1] flex-row items-center rounded-[4] border border-[#7d7d7d] bg-[#7d7d7d] overflow-hidden",
+  tabGroup: "relative h-[20] p-[1] flex-row items-center rounded-[4] bg-[#7d7d7d] overflow-hidden",
+  tabFrame: "absolute left-[0] top-[0] w-full h-full rounded-[4] border border-[#7d7d7d]",
   tab: (active) => active
     ? "h-[18] px-[8] items-center justify-center bg-gradient-to-b from-[#b9dcff] via-[#5aa7f0] to-[#1c6fd1]"
     : "h-[18] px-[8] items-center justify-center bg-gradient-to-b from-[#ffffff] via-[#e2e2e2] to-[#c4c4c4]",
@@ -92,6 +94,8 @@ export const AQUA: Theme = {
   searchLabel: "text-xs text-[#6a6a6a]",
   searchQuery: "text-xs text-black",
   searchCount: "shrink-0 text-xs text-[#2b2b2b]",
+  keyboardField: "w-full h-[20] flex-row items-center px-[10] overflow-hidden rounded-[10] border border-[#7d7d7d] bg-white",
+  keyboardFieldText: "text-sm text-black",
   crumb: "w-full h-[20] shrink-0 flex-row items-center px-[8] gap-[6] bg-gradient-to-b from-[#e9ecd5] to-[#d9ddc0]",
   crumbRule: "w-full h-[1] shrink-0 bg-[#8a8c78]",
   crumbLink: "text-xs text-[#1c6fd1]",
@@ -102,6 +106,7 @@ export const AQUA: Theme = {
   panel: "w-full flex-1 flex-col items-center justify-center gap-[4] bg-white",
   panelTitle: "text-sm font-bold text-[#2b2b2b]",
   panelText: "text-xs text-[#4a4a4a]",
+  panelKeyLine: "flex-row items-center gap-[4]",
   progressTrack: "w-[220] h-[12] mt-[6] p-[1] rounded-[6] border border-[#1a4f99] bg-white overflow-hidden",
   progressFill: "h-[10] rounded-[5] bg-gradient-to-b from-[#b9dcff] via-[#5aa7f0] to-[#1c6fd1]",
 

@@ -46,6 +46,7 @@ export function SegmentedTabs(props: { active: Tab; theme?: Theme }) {
             </>
           )}
         </For>
+        <View class={t().tabFrame} />
       </View>
       <Text class={t().hint}>R</Text>
     </View>

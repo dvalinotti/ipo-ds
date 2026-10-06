@@ -21,6 +21,16 @@ export function SearchStrip(props: { query: string; count: number; theme?: Theme
   );
 }
 
+/** The query and caret above the on-screen keyboard. */
+export function KeyboardField(props: { text: string; theme?: Theme }) {
+  const t = () => props.theme ?? AQUA;
+  return (
+    <View class={t().keyboardField}>
+      <Text class={t().keyboardFieldText}>{props.text}</Text>
+    </View>
+  );
+}
+
 export function Breadcrumb(props: { root: string; leaf: string; detail: string; theme?: Theme }) {
   const t = () => props.theme ?? AQUA;
   return (

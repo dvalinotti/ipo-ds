@@ -108,7 +108,7 @@ The gallery cycles in this order. Search is last because the open keyboard is mo
 4. **Scanning:** LCD `Scanning…`, state panel with progress; idle Now Playing.
 5. **Empty library:** `No music found` + guidance; idle Now Playing.
 6. **Stress (not a mockup state):** over-long LCD lines, query, breadcrumb and title, curly quotes, a punctuation-led album. It pins clipping and initials for Plan 3's real data.
-7. **Search active:** search strip `Search: daft` + `4 found`; the framework keyboard (`classic`) fills the bottom screen. The query shows in the top strip, so the bottom screen has no separate field.
+7. **Search active:** search strip `Search: daft` + `4 found`; an Aqua search field (`KeyboardField`, query + caret) sits above the framework keyboard (`classic`, `oskKeyHeight` 43), which fills the rest of the bottom screen.
 
 Footer legends follow the mockups. For example search shows `Ⓐ Play Ⓧ Edit search Ⓑ Clear Ⓨ Now Playing`, scanning shows only `Ⓨ Now Playing`, and empty shows `Ⓧ Scan again`.
 

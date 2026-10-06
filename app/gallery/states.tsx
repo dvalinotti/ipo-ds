@@ -8,7 +8,7 @@ import { AQUA } from "../theme/aqua.ts";
 import { ArtFrame, InfoLcd, SeekCapsule, TransportRow } from "../theme/parts/deck.tsx";
 import { ColumnHeader, ListRow, Scrollbar } from "../theme/parts/list.tsx";
 import { IdlePanel, StatePanel } from "../theme/parts/panels.tsx";
-import { Breadcrumb, FooterLegend, SearchStrip, type LegendItem } from "../theme/parts/strips.tsx";
+import { Breadcrumb, FooterLegend, KeyboardField, SearchStrip, type LegendItem } from "../theme/parts/strips.tsx";
 import { Toolbar } from "../theme/parts/toolbar.tsx";
 import type { RowKind, Tab } from "../theme/theme.ts";
 import type { GalleryStateName } from "./names.ts";
@@ -113,7 +113,11 @@ function SearchKeyboard() {
   onMount(() => osk.open());
   return (
     <View class={AQUA.bottomScreen}>
-      <Osk osk={osk} surface="auxiliary" theme={AQUA.osk} />
+      {/* The keyboard docks itself at the foot of the screen; the field sits in the band above it. */}
+      <View class="absolute left-[8] top-[3] w-[304]">
+        <KeyboardField text={osk.display("|")} />
+      </View>
+      <Osk osk={osk} surface="auxiliary" theme={AQUA.osk} keyHeight={AQUA.oskKeyHeight} />
     </View>
   );
 }
@@ -166,7 +170,7 @@ export const STATES: readonly GalleryState[] = [
   },
   {
     name: "empty",
-    top: () => <Top tab="Songs" line="0 songs" body={<StatePanel title="No music found" lines={["Copy .mp3 files to the /music folder on your SD card,", "then press Ⓧ to scan again."]} />} legend={[{ key: "X", label: "Scan again", primary: true }]} />,
+    top: () => <Top tab="Songs" line="0 songs" body={<StatePanel title="No music found" lines={["Copy .mp3 files to the /music folder on your SD card,", ["then press", "X", "to scan again."]]} />} legend={[{ key: "X", label: "Scan again", primary: true }]} />,
     bottom: () => <Idle />,
   },
   {
