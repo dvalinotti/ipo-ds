@@ -1,0 +1,150 @@
+// Ds Man's Aqua / iTunes 4 theme: every slot is a complete class literal so the
+// build can compile it; state variants pick between literals.
+import type { IconInk, IconName, PlaceholderHue, Theme, TransportKind } from "./theme.ts";
+
+
+const HUES: readonly PlaceholderHue[] = [
+  { name: "blue", cover: "relative w-[92] h-[92] items-center justify-center overflow-hidden bg-gradient-to-b from-[#12204a] to-[#5aa7f0]", hubText: "text-xs font-bold text-[#12204a]" },
+  { name: "teal", cover: "relative w-[92] h-[92] items-center justify-center overflow-hidden bg-gradient-to-b from-[#0f3b3a] to-[#5fc4b4]", hubText: "text-xs font-bold text-[#0f3b3a]" },
+  { name: "plum", cover: "relative w-[92] h-[92] items-center justify-center overflow-hidden bg-gradient-to-b from-[#3a1640] to-[#c98ad8]", hubText: "text-xs font-bold text-[#3a1640]" },
+  { name: "amber", cover: "relative w-[92] h-[92] items-center justify-center overflow-hidden bg-gradient-to-b from-[#4a2a08] to-[#f0b860]", hubText: "text-xs font-bold text-[#4a2a08]" },
+  { name: "green", cover: "relative w-[92] h-[92] items-center justify-center overflow-hidden bg-gradient-to-b from-[#173a14] to-[#86cf72]", hubText: "text-xs font-bold text-[#173a14]" },
+  { name: "graphite", cover: "relative w-[92] h-[92] items-center justify-center overflow-hidden bg-gradient-to-b from-[#2b2b2b] to-[#a8a8a8]", hubText: "text-xs font-bold text-[#2b2b2b]" },
+];
+
+const ICONS: Record<IconName, Record<IconInk, string>> = {
+  shuffle: { white: "theme/icons/shuffle-white.svg", ink: "theme/icons/shuffle-ink.svg", blue: "theme/icons/shuffle-blue.svg" },
+  repeat: { white: "theme/icons/repeat-white.svg", ink: "theme/icons/repeat-ink.svg", blue: "theme/icons/repeat-blue.svg" },
+  prev: { white: "theme/icons/prev-white.svg", ink: "theme/icons/prev-ink.svg", blue: "theme/icons/prev-ink.svg" },
+  next: { white: "theme/icons/next-white.svg", ink: "theme/icons/next-ink.svg", blue: "theme/icons/next-ink.svg" },
+  play: { white: "theme/icons/play-white.svg", ink: "theme/icons/play-ink.svg", blue: "theme/icons/play-ink.svg" },
+  pause: { white: "theme/icons/pause-white.svg", ink: "theme/icons/pause-ink.svg", blue: "theme/icons/pause-ink.svg" },
+};
+
+const LARGE_ICONS: Record<"play" | "pause", Record<"white" | "ink", string>> = {
+  play: { white: "theme/icons/play-lg-white.svg", ink: "theme/icons/play-lg-ink.svg" },
+  pause: { white: "theme/icons/pause-lg-white.svg", ink: "theme/icons/pause-lg-ink.svg" },
+};
+
+export const AQUA: Theme = {
+  name: "aqua",
+  osk: "classic",
+
+  topScreen: "w-full h-full flex-col bg-[#c2c2c2] overflow-hidden",
+  bottomScreen: "relative w-full h-full bg-gradient-to-b from-[#d6d6d6] via-[#c2c2c2] to-[#a8a8a8] overflow-hidden",
+
+  toolbar: "w-full h-[34] shrink-0 flex-row items-center px-[6] gap-[6] bg-gradient-to-b from-[#d6d6d6] via-[#c2c2c2] to-[#a8a8a8]",
+  toolbarRule: "w-full h-[1] shrink-0 bg-[#6e6e6e]",
+  light: (color) =>
+    color === "red" ? "w-[10] h-[10] rounded-[5] border border-[#00000059] bg-gradient-to-b from-[#ffb3a8] to-[#e0443a]"
+    : color === "amber" ? "w-[10] h-[10] rounded-[5] border border-[#00000059] bg-gradient-to-b from-[#ffe2a1] to-[#e3a21a]"
+    : "w-[10] h-[10] rounded-[5] border border-[#00000059] bg-gradient-to-b from-[#c9f0a8] to-[#4fa83a]",
+  lcdStatus: "w-[160] h-[30] ml-[4] flex-col items-center justify-center rounded-[6] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
+  lcdTitle: "text-xs font-bold text-[#2b2b2b]",
+  lcdLine: "text-xs text-[#4a4c3f]",
+  tabs: "flex-row items-center ml-[6] gap-[2]",
+  tab: (active) => active
+    ? "h-[20] px-[8] items-center justify-center rounded-[4] bg-gradient-to-b from-[#b9dcff] via-[#5aa7f0] to-[#1c6fd1] border border-[#1a4f99]"
+    : "h-[20] px-[8] items-center justify-center rounded-[4] bg-gradient-to-b from-[#ffffff] via-[#e2e2e2] to-[#c4c4c4] border border-[#7d7d7d]",
+  tabText: (active) => (active ? "text-xs text-white" : "text-xs text-[#2b2b2b]"),
+  hint: "text-xs text-[#4a4a4a]",
+
+  header: "w-full h-[16] shrink-0 flex-row items-center bg-gradient-to-b from-[#ffffff] via-[#e7e7e7] to-[#d4d4d4]",
+  headerRule: "w-full h-[1] shrink-0 bg-[#a5a5a5]",
+  headerLeft: (sorted) => sorted
+    ? "w-[242] h-[16] pl-[22] flex-row items-center gap-[4] bg-gradient-to-b from-[#d9ebff] via-[#a9cdf6] to-[#8fbbef]"
+    : "w-[242] h-[16] pl-[22] flex-row items-center gap-[4]",
+  headerRight: "flex-1 h-[16] flex-row items-center",
+  sortIcon: "theme/icons/sort-up-ink.svg",
+  headerText: "text-xs text-[#2b2b2b]",
+
+  listBody: "w-full flex-1 flex-col relative bg-white overflow-hidden",
+  row: (kind) =>
+    kind === "selected" ? "w-full h-[21] flex-row items-center bg-[#3875d7]"
+    : kind === "odd" ? "w-full h-[21] flex-row items-center bg-[#edf3fe]"
+    : "w-full h-[21] flex-row items-center bg-white",
+  rowLead: "w-[22] h-[21] items-center justify-center",
+  rowTitleCell: "w-[214] h-[21] mr-[6] flex-col justify-center overflow-hidden",
+  rowDetailCell: "flex-1 h-[21] flex-col justify-center overflow-hidden",
+  rowCountCell: "w-[60] h-[21] pr-[22] flex-col items-end justify-center",
+  rowTitle: (kind) => (kind === "selected" ? "text-xs text-white" : "text-xs text-black"),
+  rowDetail: (kind) => (kind === "selected" ? "text-xs text-white" : "text-xs text-[#2b2b2b]"),
+  rowMuted: (kind) => (kind === "selected" ? "text-xs text-white" : "text-xs text-[#6a6a6a]"),
+  rowMarker: (kind) => (kind === "selected" ? "text-xs text-white" : "text-xs text-[#1c6fd1]"),
+
+  scrollTrack: "absolute right-[0] top-[0] w-[14] h-full bg-gradient-to-r from-[#d4d4d4] via-[#f1f1f1] to-[#d4d4d4]",
+  scrollThumb: "absolute left-[1] w-[11] rounded-[6] bg-gradient-to-b from-[#b9dcff] via-[#5aa7f0] to-[#1c6fd1] border border-[#1a4f99]",
+
+  footer: "w-full h-[20] shrink-0 flex-row items-center px-[8] gap-[12] bg-gradient-to-b from-[#d6d6d6] via-[#c2c2c2] to-[#a8a8a8]",
+  footerRule: "w-full h-[1] shrink-0 bg-[#6e6e6e]",
+  footerItem: "flex-row items-center gap-[4]",
+  footerText: "text-xs text-[#2b2b2b]",
+  badge: (primary) => primary
+    ? "w-[14] h-[14] rounded-[7] items-center justify-center bg-gradient-to-b from-[#b9dcff] via-[#5aa7f0] to-[#1c6fd1] border border-[#1a4f99]"
+    : "w-[14] h-[14] rounded-[7] items-center justify-center bg-gradient-to-b from-[#ffffff] via-[#e2e2e2] to-[#c4c4c4] border border-[#7d7d7d]",
+  badgeText: (primary) => (primary ? "text-xs font-bold text-white" : "text-xs font-bold text-[#2b2b2b]"),
+
+  strip: "w-full h-[20] shrink-0 flex-row items-center px-[6] gap-[6] bg-gradient-to-b from-[#d6d6d6] to-[#c2c2c2]",
+  stripRule: "w-full h-[1] shrink-0 bg-[#8a8a8a]",
+  searchField: "flex-1 h-[16] flex-row items-center px-[8] gap-[4] rounded-[8] border border-[#7d7d7d] bg-white",
+  searchLabel: "text-xs text-[#6a6a6a]",
+  searchQuery: "text-xs text-black",
+  searchCount: "text-xs text-[#2b2b2b]",
+  crumb: "w-full h-[20] shrink-0 flex-row items-center px-[8] gap-[6] bg-gradient-to-b from-[#e9ecd5] to-[#d9ddc0]",
+  crumbRule: "w-full h-[1] shrink-0 bg-[#8a8c78]",
+  crumbLink: "text-xs text-[#1c6fd1]",
+  crumbText: "text-xs text-[#2b2b2b]",
+  crumbDetail: "text-xs text-[#2b2b2b]",
+  spacer: "flex-1",
+
+  panel: "w-full flex-1 flex-col items-center justify-center gap-[4] bg-white",
+  panelTitle: "text-sm font-bold text-[#2b2b2b]",
+  panelText: "text-xs text-[#4a4a4a]",
+  progressTrack: "w-[220] h-[12] mt-[6] rounded-[6] border border-[#1a4f99] bg-white overflow-hidden",
+  progressFill: "h-[10] bg-gradient-to-b from-[#b9dcff] via-[#5aa7f0] to-[#1c6fd1]",
+
+  artFrame: "absolute left-[10] top-[10] w-[100] h-[100] p-[3] border border-[#7d7d7d] bg-white",
+  ring: (size) => (size === "outer"
+    ? "absolute left-[8] top-[8] w-[76] h-[76] rounded-[38] border-[2] border-[#f4f6e6] opacity-85"
+    : "absolute left-[22] top-[22] w-[48] h-[48] rounded-[24] border-[2] border-[#f4f6e6] opacity-85"),
+  hub: "w-[32] h-[32] rounded-[16] items-center justify-center bg-[#f4f6e6]",
+  infoLcd: "absolute left-[118] top-[10] w-[192] h-[100] flex-col items-center px-[8] pt-[6] rounded-[10] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
+  infoTitle: "text-base font-bold text-[#1f2018]",
+  infoArtist: "text-xs text-[#3c3e31] mt-[3]",
+  infoAlbum: "text-xs text-[#6a6c5a] mt-[1]",
+  infoStatus: "flex-row items-center gap-[6] mt-[8]",
+  infoStatusText: "text-xs text-[#3c3e31]",
+  infoFlagText: "text-xs font-bold text-[#1c6fd1]",
+
+  seekCapsule: "absolute left-[10] top-[120] w-[300] h-[30] flex-row items-center px-[8] gap-[8] rounded-[15] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
+  seekTime: "w-[34] text-xs font-bold text-[#1f2018]",
+  seekTimeRight: "w-[34] text-xs font-bold text-[#1f2018] text-right",
+  seekTrack: "w-[200] h-[8] relative rounded-[4] border border-[#8a8c78] bg-[#c9cbb3]",
+  seekFill: "absolute left-[0] top-[0] h-[6] rounded-[3] bg-[#4a4c3f]",
+  seekKnob: "absolute top-[-6] w-[18] h-[18] rounded-[9] bg-gradient-to-b from-[#b9dcff] via-[#5aa7f0] to-[#1c6fd1] border border-[#1a4f99]",
+
+  transportRow: "absolute left-[10] top-[160] w-[300] h-[72] flex-row items-center justify-center gap-[10]",
+  transport: (kind, on, enabled) => transportClass(kind, on, enabled),
+
+  idlePanel: "absolute left-[10] top-[10] w-[300] h-[100] flex-col items-center justify-center gap-[4] rounded-[10] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
+
+  placeholderHues: HUES,
+  icon: (name, ink) => ICONS[name][ink],
+  iconLarge: (name, ink) => LARGE_ICONS[name][ink],
+};
+
+function transportClass(kind: TransportKind, on: boolean, enabled: boolean): string {
+  const big = kind === "play" || kind === "pause";
+  const small = kind === "shuffle" || kind === "repeat";
+  const aqua = big || (small && on);
+  if (!enabled) {
+    return big ? "w-[64] h-[64] rounded-[32] items-center justify-center opacity-45 bg-gradient-to-b from-[#ffffff] via-[#e2e2e2] to-[#c4c4c4] border border-[#7d7d7d]"
+      : small ? "w-[34] h-[34] rounded-[17] items-center justify-center opacity-45 bg-gradient-to-b from-[#ffffff] via-[#e2e2e2] to-[#c4c4c4] border border-[#7d7d7d]"
+      : "w-[42] h-[42] rounded-[21] items-center justify-center opacity-45 bg-gradient-to-b from-[#ffffff] via-[#e2e2e2] to-[#c4c4c4] border border-[#7d7d7d]";
+  }
+  if (big) return "w-[64] h-[64] rounded-[32] items-center justify-center bg-gradient-to-b from-[#b9dcff] via-[#5aa7f0] to-[#1c6fd1] border border-[#1a4f99]";
+  if (small) return aqua
+    ? "w-[34] h-[34] rounded-[17] items-center justify-center bg-gradient-to-b from-[#b9dcff] via-[#5aa7f0] to-[#1c6fd1] border border-[#1a4f99]"
+    : "w-[34] h-[34] rounded-[17] items-center justify-center bg-gradient-to-b from-[#ffffff] via-[#e2e2e2] to-[#c4c4c4] border border-[#7d7d7d]";
+  return "w-[42] h-[42] rounded-[21] items-center justify-center bg-gradient-to-b from-[#ffffff] via-[#e2e2e2] to-[#c4c4c4] border border-[#7d7d7d]";
+}
