@@ -1,33 +1,18 @@
-// Builds the ds-man guest once per test process (--pocket-only: no Docker)
-// and boots it on the sim's WASM core with the 3DS geometry.
-import { mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
-import { bootBundle, type BundleWorld, type SimNode } from "../../runtime/hosts/sim/sim.ts";
+// Boots the ds-man app or the theme gallery in the PocketJS sim (bundles are
+// built once per test process by scripts/sim.ts) and reads what a screen shows.
+import type { BundleWorld, SimNode } from "../../runtime/hosts/sim/sim.ts";
+import { bootBuilt, buildBundle, disposeBundles } from "../../scripts/sim.ts";
 
-const ROOT = resolve(import.meta.dir, "../..");
-let built: { dir: string; js: string; pak: string } | null = null;
+export function bootApp(extraGlobals?: Record<string, unknown>): Promise<BundleWorld> {
+  return bootBuilt(buildBundle("pocket.json"), extraGlobals);
+}
 
-function buildGuest() {
-  if (built) return built;
-  const dir = mkdtempSync(join(tmpdir(), "ds-man-guest-"));
-  const run = Bun.spawnSync(
-    [process.execPath, "scripts/build.ts", "--pocket-only", `--outdir=${join(dir, "guest")}`, `--package-outdir=${dir}`],
-    { cwd: ROOT, stdout: "pipe", stderr: "pipe" },
-  );
-  if (run.exitCode !== 0) throw new Error(`ds-man guest build failed\n${run.stdout}${run.stderr}`);
-  built = { dir, js: join(dir, "guest", "ds-man-main.js"), pak: join(dir, "guest", "ds-man-main.pak") };
-  return built;
+export function bootGallery(): Promise<BundleWorld> {
+  return bootBuilt(buildBundle("gallery.pocket.json"));
 }
 
 export function disposeGuest(): void {
-  if (built) rmSync(built.dir, { recursive: true, force: true });
-  built = null;
-}
-
-export async function bootApp(extraGlobals?: Record<string, unknown>): Promise<BundleWorld> {
-  const { js, pak } = buildGuest();
-  return bootBundle({ js, pak, extraGlobals, viewport: { width: 400, height: 240, auxiliary: [320, 240] } });
+  disposeBundles();
 }
 
 function flat(node: SimNode | null, out: SimNode[] = []): SimNode[] {
@@ -40,4 +25,33 @@ function flat(node: SimNode | null, out: SimNode[] = []): SimNode[] {
 /** Every text on a surface, concatenated in tree order. */
 export function screenText(world: BundleWorld, surface: "primary" | "auxiliary" = "primary"): string {
   return flat(world.tree(surface)).map((node) => node.text).join("");
+}
+
+/** Path from the surface root to the first node whose own text is exactly `text`. */
+export function pathTo(world: BundleWorld, surface: "primary" | "auxiliary", text: string): SimNode[] {
+  const walk = (node: SimNode, path: SimNode[]): SimNode[] | null => {
+    const here = [...path, node];
+    if (node.text === text) return here;
+    for (const child of node.children) {
+      const found = walk(child, here);
+      if (found) return found;
+    }
+    return null;
+  };
+  const root = world.tree(surface);
+  const path = root ? walk(root, []) : null;
+  if (!path) throw new Error(`no node with text ${JSON.stringify(text)} on ${surface}`);
+  return path;
+}
+
+/** Background of the nearest ancestor that paints one, as the core holds it (0xAABBGGRR). */
+export function backgroundOf(path: readonly SimNode[]): number {
+  for (let i = path.length - 1; i >= 0; i--) if (path[i]!.bgColor >>> 24 !== 0) return path[i]!.bgColor >>> 0;
+  return 0;
+}
+
+/** Colour of the <Text> element holding a text run (the run's parent), 0xAABBGGRR. */
+export function textColorOf(path: readonly SimNode[]): number {
+  const element = path.length >= 2 && path[path.length - 2]!.type === "text" ? path[path.length - 2]! : path[path.length - 1]!;
+  return element.textColor >>> 0;
 }
