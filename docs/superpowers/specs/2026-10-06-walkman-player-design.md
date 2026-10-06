@@ -108,8 +108,8 @@ export const LOCALMEDIA = Object.freeze({
   maxTracks: 2048,
   artMax: 128,          // longest art edge after downscale, power-of-two texture
 });
-export type LocalPhase = "idle" | "scanning" | "loading" | "playing"
-  | "paused" | "ended" | "error";
+export type LocalPhase = "idle" | "loading" | "playing" | "paused"
+  | "ended" | "error";
 export interface LocalTrack {
   id: number;           // stable for the session (scan order)
   file: string;         // filename relative to root
@@ -123,12 +123,14 @@ export interface LocalStatus {
   trackId: number;      // -1 when none
   positionMs: number;
   durationMs: number;
+  scanning: boolean;    // a scan is running (independent of playback phase)
+  scanGeneration: number; // completed scans; 0 before the first finishes
   underruns: number;
   error: string;
 }
 export interface LocalMediaOps {
-  scan(): boolean;                 // starts async scan; phase → "scanning"
-  tracks(): string;                // JSON LocalTrack[] once scan completes
+  scan(): boolean;                 // starts async scan; status.scanning → true
+  tracks(): string;                // JSON LocalTrack[] of the last completed scan
   open(id: number): boolean;       // stop current, load + play id
   paused(value: boolean): void;
   seek(ms: number): void;
@@ -138,6 +140,13 @@ export interface LocalMediaOps {
   releaseArtwork(handle: number): void;
 }
 ```
+
+**Snapshot rule:** every command updates the status snapshot before it
+returns — `open(id)` reads back `{trackId: id, phase: "loading", positionMs: 0}`,
+`seek(ms)` reads back the clamped position (an `ended` track becomes `paused`),
+`paused(v)` reads back `paused`/`playing`. The worker never publishes state for
+a command that a newer command superseded. This keeps a stale `ended` from a
+previous track from reaching the guest after it opened the next one.
 
 SDK (`framework/src/localmedia.ts`): `localMedia(ops = globalThis.localmedia)`
 returning typed wrappers (parse JSON, clamp volume, validate ids), throwing
@@ -210,7 +219,10 @@ releases. This is what all ds-man headless tests run against.
     restores original order at the current track. `prev` restarts if
     position > 3000 ms, else previous track. On `ended`: repeat one → reopen
     same; otherwise next; at end of order, repeat all → wrap, repeat off →
-    stop on last track at 0:00.
+    stop on last track at 0:00. A status whose `trackId` is not the current
+    track is stored but never acted on. On `error` the reducer skips forward
+    (repeat one does not retry; repeat all wraps); after as many consecutive
+    failures as the queue has tracks, it stops.
   - Shuffle uses an injectable seeded RNG for deterministic tests.
 - **Adapter** (`app/player/host.ts`): executes commands against
   `localMedia()` and feeds `status()` (polled once per frame) back as
