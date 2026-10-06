@@ -29,6 +29,7 @@ Success: headless sim tests drive every behaviour in §4 with scripted buttons a
 | Artist drill-down rows | Title plus album. Album drill-down rows show #, title and time. |
 | Empty library | X tap scans again (search is meaningless without songs). |
 | Time format | `m:ss`; `h:mm:ss` when the duration is an hour or more, with a wider seek-time cell for that case. |
+| Skip without ZL / ZR | **Hold Y + L / R** skips to the previous / next song. The Old 3DS has no ZL / ZR (the host leaves those bits unset). L / R alone still step tabs. A tap of Y alone still reveals the playing song, firing on release so a chord never also reveals. |
 
 ## 3. Architecture
 
@@ -106,9 +107,10 @@ The parts stay presentational.
 | B | `back` |
 | X tap | open search; on the empty library, rescan |
 | X hold 1 s | rescan (`media.scan()`) |
-| Y | `revealPlaying` |
+| Y (tap, fires on release) | `revealPlaying` |
 | L / R | `tab(-1 / +1)` |
-| START / ZL / ZR | player `toggle` / `prev` / `next` (from either screen) |
+| Y held + L / R | player `prev` / `next` (works without ZL / ZR) |
+| START / ZL / ZR | player `toggle` / `prev` / `next` (from either screen; ZL / ZR are New 3DS only) |
 
 Every Explorer handler is inactive while the search keyboard is open.
 

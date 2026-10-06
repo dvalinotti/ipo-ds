@@ -17,6 +17,13 @@ contract shape, the chosen visual direction, the parts kit's class strings.
 | 5 | 8 | `walkman-05-hardening.md` (to write) | Plans 3, 4 | Device checklist on New 3DS + Azahar, scan-time/CPU/memory/underrun budgets, corrupt-file corpus, Azahar e2e capture |
 | — | v2 | — | Plan 5 | Lid-closed playback, resume-on-launch, theme switching |
 
+## Old 3DS support (added 2026-10-06)
+
+The target is now Old **and** New 3DS. The Old 3DS's slower CPU constrains Plans 4 and 5:
+
+- **Plan 4:** audio decoding must not be starved by a slow UI frame. Either run the decoder on the system core (on the Old 3DS, `APT_SetAppCpuTimeLimit` lends apps up to about 80% of it), or run it above the UI thread's priority with at least 1 s of decoded audio queued. Decode album art only while the audio buffer is full. Measure MP3 decode cost on the Old 3DS clock.
+- **Plan 5:** add Old 3DS hardware budgets (UI frame time, decoder load, underruns) alongside the New 3DS ones. Azahar's Old 3DS mode does not model CPU timing, so these need real hardware.
+
 ## Ordering
 
 ```

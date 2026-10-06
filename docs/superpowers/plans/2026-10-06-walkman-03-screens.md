@@ -25,9 +25,9 @@
 
 **Provenance:** this exact file set was built and run before the plan was written. Every task was then rehearsed in order on a clean tree, and the cumulative ds-man test counts below come from that run:
 
-| After task | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
-|---|---|---|---|---|---|---|---|---|---|
-| Tests | 63 | 66 | 69 | 70 | 79 | 83 | 84 | 90 | 90 |
+| After task | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Tests | 63 | 66 | 69 | 70 | 79 | 83 | 84 | 90 | 90 | 92 |
 
 Fork: 12/12 `localmedia` tests, with the typecheck clean.
 
@@ -43,7 +43,8 @@ Fork: 12/12 `localmedia` tests, with the typecheck clean.
   3. **`VirtualList` scrolls itself on held D-pad unless `inputActive` returns false.** The Explorer owns focus and scrolling, so it passes `inputActive={() => false}` and calls `scrollToIndex(focus, "nearest", false)`.
   4. **The `Osk` keyboard slides in and rests at the top of its parent box,** about 206 px tall at key height 43. It needs its own box below the search field, and `oskKeyHeight` 45 fills the 214 px below the field. Tests judge it after about 60 frames, never mid-slide.
   5. **Text measurement uses literal font slots** (`app/theme/fonts.ts`), with a test asserting they equal `fontSlotFor`.
-- 3DS face buttons map by position: **A = `BTN.CIRCLE`, B = `CROSS`, X = `TRIANGLE`, Y = `SQUARE`**. ZL/ZR exist on the New 3DS.
+- 3DS face buttons map by position: **A = `BTN.CIRCLE`, B = `CROSS`, X = `TRIANGLE`, Y = `SQUARE`**.
+- **Target: Old and New 3DS.** ZL/ZR (and the C-stick) exist only on the New 3DS; the host leaves those bits unset on an Old 3DS. Every action needs a path without them, which is why Task 10 adds the Y + L/R skip chord. Keep per-frame work small: the Old 3DS runs the QuickJS guest at 268 MHz with no L2 cache.
 - Timing is in virtual frames at 60 Hz:
   - repeat: 300 ms delay (18 frames), then 80 ms (5 frames);
   - hold: 60 frames;
@@ -56,6 +57,7 @@ Fork: 12/12 `localmedia` tests, with the typecheck clean.
 - **The search keyboard at rest** (after its slide-in) sits below the field and reaches the foot of the screen, in the app and in the gallery. Pinned in Task 8 ("X opens the keyboard…", settled pixel checks) and Task 9 (gallery search test).
 - **Bottom-screen transport buttons answer touch taps,** and disabled ones (idle) ignore them. Pinned in Task 8 ("transport taps…").
 - **Tags with decomposed accents display composed;** an empty card's LCD reads "0 songs", not "0 songs · 0 min". Pinned in Task 3 and Task 8.
+- **On an Old 3DS (no ZL/ZR), holding Y + L/R skips songs** without switching tabs, and a Y + L/R chord never also reveals on release. Pinned in Task 10 (unit and app tests).
 
 ---
 
@@ -2245,8 +2247,190 @@ Run: `bun test ./tests/gallery.test.ts -t search`. Expected: FAIL. The gallery's
 
 ---
 
+### Task 10: Skip songs without ZL / ZR (Y + L / R)
+
+**Files:** Modify (patch) `app/input-timing.ts`, `app/explorer/explorer.tsx`, `tests/input-timing.test.ts`, `tests/app.test.ts`
+
+**Interfaces:**
+- Consumes: Task 6 timing module; Task 8 Explorer.
+- Produces:
+  - `ShoulderEvent = "tabPrev" | "tabNext" | "prev" | "next" | "reveal"`.
+  - `ShoulderState`, `SHOULDERS_UP`.
+  - `stepShoulders(state, buttons, { y, l, r }) → { state, events }`.
+- One `onFrame` handler in the Explorer replaces the separate L, R and Y `onButtonPress` handlers. It is gated by `active` and re-seeded with the live mask while the keyboard is open, so a button held across closing it is not a new press.
+
+- [ ] **Step 1: Apply the test patch**:
+
+```diff
+--- a/tests/input-timing.test.ts
++++ b/tests/input-timing.test.ts
+@@ -1,5 +1,5 @@
+ import { expect, test } from "bun:test";
+-import { HOLD_UP, repeatFires, stepAnalog, stepHold, type HoldState } from "../app/input-timing.ts";
++import { HOLD_UP, repeatFires, SHOULDERS_UP, stepAnalog, stepHold, stepShoulders, type HoldState, type ShoulderEvent } from "../app/input-timing.ts";
+ 
+ test("a held button fires on the down frame, after 300 ms, then every 80 ms", () => {
+   const fired = Array.from({ length: 30 }, (_, frame) => frame).filter((frame) => repeatFires(frame));
+@@ -39,3 +39,22 @@
+   expect(roll(-0.5, 20)).toBe(-2);
+   expect(stepAnalog(0.9, 0)).toEqual({ accumulated: 0, rows: 0 });
+ });
++
++test("L / R alone step tabs; Y held with L / R skips songs; a Y tap alone reveals on release", () => {
++  const BITS = { y: 1, l: 2, r: 4 };
++  const run = (masks: number[]) => {
++    let state = SHOULDERS_UP;
++    const events: ShoulderEvent[] = [];
++    for (const mask of masks) {
++      const step = stepShoulders(state, mask, BITS);
++      state = step.state;
++      events.push(...step.events);
++    }
++    return events;
++  };
++  expect(run([2, 0, 4, 4, 0])).toEqual(["tabPrev", "tabNext"]);
++  expect(run([1, 1, 0])).toEqual(["reveal"]);
++  expect(run([1, 1 | 4, 1, 1 | 2, 1, 0])).toEqual(["next", "prev"]);
++  expect(run([1 | 4, 1, 0])).toEqual(["next"]);
++  expect(run([1, 1 | 4, 4, 0])).toEqual(["next"]);
++});
+--- a/tests/app.test.ts
++++ b/tests/app.test.ts
+@@ -171,6 +171,23 @@
+   expect(opens(rig.host).at(-1)).toBe("open(16)");
+ }, 120_000);
+ 
++test("holding Y with L / R skips songs without ZL / ZR, and leaves the tab alone", async () => {
++  const rig = await boot();
++  press(rig, A); // Aerodynamic; next in the list is Around the World
++  frames(rig, 3);
++  frames(rig, 2, { buttons: Y });
++  frames(rig, 1, { buttons: Y | BTN.RTRIGGER });
++  frames(rig, 2, { buttons: Y });
++  frames(rig, 3);
++  expect(opens(rig.host)).toEqual(["open(1)", "open(7)"]);
++  expect(screenText(rig.world, "primary")).toContain("Song Name");
++  expect(selectedRow(rig.world)).toContain("Aerodynamic");
++  frames(rig, 2, { buttons: Y });
++  frames(rig, 1, { buttons: Y | BTN.LTRIGGER });
++  frames(rig, 3);
++  expect(opens(rig.host).at(-1)).toBe("open(1)");
++}, 120_000);
++
+ test("Y jumps back to the playing song", async () => {
+   const rig = await boot();
+   press(rig, A);
+```
+
+Run: `bun test ./tests/input-timing.test.ts && bun test ./tests/app.test.ts -t "holding Y"`. Expected: FAIL. The unit test reports `Export named 'SHOULDERS_UP' not found`; the app test's Y + R does not open the next song.
+
+- [ ] **Step 2: Apply the implementation patch**:
+
+```diff
+--- a/app/input-timing.ts
++++ b/app/input-timing.ts
+@@ -42,3 +42,41 @@
+   const rows = Math.trunc(total + Math.sign(total) * 1e-9);
+   return { accumulated: total - rows, rows };
+ }
++
++export type ShoulderEvent = "tabPrev" | "tabNext" | "prev" | "next" | "reveal";
++
++export interface ShoulderState {
++  /** Last frame's held mask (press edges are bits newly set this frame). */
++  mask: number;
++  /** L or R was pressed during the current Y hold, so its release is not a reveal. */
++  chorded: boolean;
++}
++
++export const SHOULDERS_UP: ShoulderState = { mask: 0, chorded: false };
++
++/**
++ * One frame of Y / L / R. L or R alone steps tabs. Held with Y they skip to
++ * the previous / next song: the skip path for consoles without ZL / ZR (the
++ * Old 3DS). A Y press with neither is a "reveal", fired on release.
++ */
++export function stepShoulders(
++  state: ShoulderState,
++  buttons: number,
++  bits: { y: number; l: number; r: number },
++): { state: ShoulderState; events: ShoulderEvent[] } {
++  const pressed = buttons & ~state.mask;
++  const yDown = (buttons & bits.y) !== 0;
++  const yWas = (state.mask & bits.y) !== 0;
++  const events: ShoulderEvent[] = [];
++  let chorded = yWas ? state.chorded : false;
++  if (yDown) {
++    if (pressed & bits.l) { events.push("prev"); chorded = true; }
++    if (pressed & bits.r) { events.push("next"); chorded = true; }
++  } else {
++    if (yWas && !chorded) events.push("reveal");
++    if (pressed & bits.l) events.push("tabPrev");
++    if (pressed & bits.r) events.push("tabNext");
++    chorded = false;
++  }
++  return { state: { mask: buttons, chorded }, events };
++}
+--- a/app/explorer/explorer.tsx
++++ b/app/explorer/explorer.tsx
+@@ -4,9 +4,10 @@
+ import { createEffect, createMemo, createSignal, Show, type Accessor } from "solid-js";
+ import { View } from "@pocketjs/framework/components";
+ import { BTN } from "@pocketjs/framework/input";
+-import { onButtonPress } from "@pocketjs/framework/lifecycle";
++import { onButtonPress, onFrame } from "@pocketjs/framework/lifecycle";
+ import { VirtualList, type VirtualListHandle } from "@pocketjs/framework/virtual-list";
+ import { onAnalogRows, onRepeat, onTapOrHold } from "../input.ts";
++import { SHOULDERS_UP, stepShoulders } from "../input-timing.ts";
+ import { currentId } from "../player/reducer.ts";
+ import type { Session } from "../session.ts";
+ import { AQUA } from "../theme/aqua.ts";
+@@ -66,14 +67,28 @@
+   onRepeat(BTN.LEFT, () => move(-page()), active);
+   onRepeat(BTN.RIGHT, () => move(page()), active);
+   onAnalogRows(move, active);
+-  onButtonPress(BTN.LTRIGGER, () => dispatch({ type: "tab", delta: -1 }), { active });
+-  onButtonPress(BTN.RTRIGGER, () => dispatch({ type: "tab", delta: 1 }), { active });
+   onButtonPress(BTN.CROSS, () => dispatch({ type: "back" }), { active });
+-  onButtonPress(BTN.SQUARE, () => {
+-    const lib = library();
+-    const id = playingId();
+-    if (lib && id >= 0) dispatch({ type: "reveal", id, library: lib });
+-  }, { active });
++  // L / R step tabs; held with Y they skip songs (the path without ZL / ZR on an
++  // Old 3DS); a Y tap alone reveals the playing song when it is released.
++  let shoulders = SHOULDERS_UP;
++  onFrame((buttons) => {
++    if (!active()) {
++      shoulders = { mask: buttons, chorded: false };
++      return;
++    }
++    const step = stepShoulders(shoulders, buttons, { y: BTN.SQUARE, l: BTN.LTRIGGER, r: BTN.RTRIGGER });
++    shoulders = step.state;
++    for (const event of step.events) {
++      if (event === "tabPrev") dispatch({ type: "tab", delta: -1 });
++      else if (event === "tabNext") dispatch({ type: "tab", delta: 1 });
++      else if (event === "prev" || event === "next") props.session.dispatch({ type: event });
++      else {
++        const lib = library();
++        const id = playingId();
++        if (lib && id >= 0) dispatch({ type: "reveal", id, library: lib });
++      }
++    }
++  });
+   onButtonPress(BTN.CIRCLE, () => {
+     const lib = library();
+     const row = rows()[focus()];
+```
+
+- [ ] **Step 3: Run the gate.** `bun run test && bun run check`. Expected: 92 pass, 0 fail; no type errors.
+
+- [ ] **Step 4: Commit.** `git add app/input-timing.ts app/explorer/explorer.tsx tests/input-timing.test.ts tests/app.test.ts && git commit -m "feat(explorer): Y + L/R skips songs where ZL/ZR are missing (Old 3DS)"`
+
+---
+
 ## Plan 3 exit gate
 
-- `bun run test` (90), `bun run check`, `bun run 3ds --pocket-only` and `bun run gallery` are green. The fork's `localmedia` tests pass (12).
+- `bun run test` (92), `bun run check`, `bun run 3ds --pocket-only` and `bun run gallery` are green. The fork's `localmedia` tests pass (12).
 - **Manual device pass:** `bun run 3ds` then `open -a Azahar dist/ds-man-main.3dsx`. Without `media.local` (until Plan 4), the Explorer shows "Music playback is unavailable on this build". The gallery build shows the theme.
 - Next: Plan 4 (native `media.local` in the fork, with stable ids, album art and a hostAbi bump), or Plan 5 hardening.

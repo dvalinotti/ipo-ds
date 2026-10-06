@@ -18,7 +18,7 @@ showing title/artist/album and embedded cover art.
 ## 2. Requirements
 
 ### Stated by the user
-- Target hardware: **New 3DS only**.
+- Target hardware: **Old and New 3DS**. Originally New 3DS only; widened on 2026-10-06 after a hardware review. The New 3DS is the primary target; the Old 3DS (268 MHz, no L2 cache, no ZL/ZR/C-stick, 64 MB) must stay usable.
 - Format: **MP3 only**.
 - Library: **hundreds of tracks in one folder**; metadata from tags.
 - Album art: **embedded tag art (ID3 APIC)**, with a **generated placeholder**
@@ -47,7 +47,7 @@ showing title/artist/album and embedded cover art.
 
 ### Out of scope for v1
 Lid-closed playback, resume-on-launch / any persistence, theme switching, formats other than
-MP3, subfolder scanning, folder.jpg art, playlists, CJK text, Old 3DS support,
+MP3, subfolder scanning, folder.jpg art, playlists, CJK text,
 streaming/companion playback.
 
 ## 3. Platform findings that shape the design
