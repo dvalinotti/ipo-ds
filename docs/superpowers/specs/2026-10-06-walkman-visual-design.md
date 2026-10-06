@@ -85,7 +85,7 @@ No other sizes (the `Osk` keyboard sets its own key labels). Text is single-line
 | idle | LCD panel 300×140 with "Nothing playing" (14 bold) and "Pick a song above and press Ⓐ" (12); disabled transport |
 
 ### 3.4 Placeholder art
-`placeholderArt(album)` hashes the album name (FNV-1a over the normalized name) to one of six hues:
+`placeholderArt(album)` hashes the album name (FNV-1a over the normalized name, finished with MurmurHash3's fmix32 so short names spread across hues) to one of six hues:
 
 | Hue | Gradient |
 |---|---|
@@ -101,12 +101,13 @@ No other sizes (the `Osk` keyboard sets its own key labels). Text is single-line
 - The hub ink is the hue's dark colour.
 
 ### 3.5 States the gallery reproduces
+The gallery cycles in this order. Search is last because the open keyboard is modal and takes the L/R buttons.
 1. **Main:** Songs tab, 8 rows, selected and ♪ rows; Now Playing with embedded art.
-2. **Search active:** search strip `Search: daft` + `4 found`; the keyboard on the bottom screen.
-3. **Artists tab:** artist + count rows; idle Now Playing.
-4. **Album drill-down:** breadcrumb `Albums › Discovery`, numbered rows with times; Now Playing with placeholder art.
-5. **Scanning:** LCD `Scanning…`, state panel with progress; idle Now Playing.
-6. **Empty library:** `No music found` + guidance; idle Now Playing.
+2. **Artists tab:** artist + count rows; idle Now Playing.
+3. **Album drill-down:** breadcrumb `Albums › Discovery`, numbered rows with times; Now Playing with placeholder art.
+4. **Scanning:** LCD `Scanning…`, state panel with progress; idle Now Playing.
+5. **Empty library:** `No music found` + guidance; idle Now Playing.
+6. **Search active:** search strip `Search: daft` + `4 found`; the framework keyboard (`classic`) fills the bottom screen. The query shows in the top strip, so the bottom screen has no separate field.
 
 Footer legends follow the mockups. For example search shows `Ⓐ Play Ⓧ Edit search Ⓑ Clear Ⓨ Now Playing`, scanning shows only `Ⓨ Now Playing`, and empty shows `Ⓧ Scan again`.
 
@@ -125,10 +126,13 @@ app/theme/parts/strips.tsx   SearchStrip, Breadcrumb, FooterLegend, KeyBadge
 app/theme/parts/panels.tsx   StatePanel, IdlePanel
 app/theme/parts/deck.tsx     ArtFrame, PlaceholderArt, InfoLcd, SeekCapsule, TransportButton
 app/fonts.json             U+0020–007E, U+00A0–017F, plus ♪ › … ↻ ▶ ⌫ Ⓐ Ⓑ Ⓧ Ⓨ
-gallery/pocket.json        second manifest (same viewports/capabilities as the app), entry gallery/main.tsx
-gallery/main.tsx, gallery/states.tsx  static storyboard of §3.5 built only from parts; L/R flips states
+app/theme/geometry.ts      clampFraction, trackOffset (seek/progress px, clamped for odd host values)
+gallery.pocket.json        second manifest (same viewports/capabilities as the app), entry app/gallery.tsx
+app/gallery.tsx, app/gallery/{names.ts,states.tsx}  static storyboard of §3.5 built only from parts; L/R flips
+                           (the entry lives in app/ because the build reads fonts.json and images beside it)
 scripts/build.ts           accepts --manifest=<path> (default pocket.json)
-scripts/gallery.ts         builds the gallery --pocket-only, steps each state in the sim, writes PNGs
+scripts/sim.ts             builds + boots any manifest in the sim (tests and the gallery script share it)
+scripts/png.ts, scripts/gallery.ts  writes dist/gallery/<n>-<state>-{top,bottom}@2x.png
 ```
 
 **Theme interface.** It is semantic, not visual. Every slot returns a complete class literal, because the build compiles only literal class strings, and variants are functions over booleans or small enums. The slots are:
