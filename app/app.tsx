@@ -1,53 +1,32 @@
-// Ds Man — a walkman-style MP3 player. The top screen browses the library;
-// the bottom screen is the now-playing deck.
-import { createSignal } from "solid-js";
-import { AuxiliarySurface, Text, View } from "@pocketjs/framework/components";
-import { onFrame } from "@pocketjs/framework/lifecycle";
-import { localMedia, type LocalMedia, type LocalTrack } from "@pocketjs/framework/localmedia";
-import { LIBRARY_READ_ERROR, libraryLine } from "./library/status.ts";
-
-/** The host's local media module, or null on a build without media.local. */
-function connect(): LocalMedia | null {
-  try {
-    return localMedia();
-  } catch {
-    return null;
-  }
-}
+// Ds Man — a walkman-style MP3 player. The top screen is the Explorer; the
+// bottom screen is Now Playing, or the search keyboard while it is open.
+import { Show } from "solid-js";
+import { AuxiliarySurface, View } from "@pocketjs/framework/components";
+import { BTN } from "@pocketjs/framework/input";
+import { onButtonPress } from "@pocketjs/framework/lifecycle";
+import { createExplorerStore, Explorer } from "./explorer/explorer.tsx";
+import { NowPlaying } from "./now-playing/now-playing.tsx";
+import { createSearch, SearchKeyboard } from "./search.tsx";
+import { createSession } from "./session.ts";
 
 export default function App() {
-  const media = connect();
-  const [tracks, setTracks] = createSignal<LocalTrack[]>([]);
-  const [scanning, setScanning] = createSignal(media !== null);
-  const [readFailed, setReadFailed] = createSignal(false);
-  if (media) {
-    let generation = 0;
-    media.scan();
-    onFrame(() => {
-      // A frame that throws tears the guest down on the 3DS host, so a host
-      // reply that does not validate becomes an on-screen error instead.
-      try {
-        const status = media.status();
-        setScanning(status.scanning);
-        if (status.scanGeneration !== generation) {
-          generation = status.scanGeneration;
-          setTracks(media.tracks());
-          setReadFailed(false);
-        }
-      } catch {
-        setReadFailed(true);
-      }
-    });
-  }
+  const session = createSession();
+  const store = createExplorerStore();
+  const osk = createSearch(store);
+  const notSearching = () => !osk.isOpen();
+  // Transport from either screen (the keyboard uses START to commit while open).
+  onButtonPress(BTN.START, () => session.dispatch({ type: "toggle" }), { active: notSearching });
+  onButtonPress(BTN.ZL, () => session.dispatch({ type: "prev" }), { active: notSearching });
+  onButtonPress(BTN.ZR, () => session.dispatch({ type: "next" }), { active: notSearching });
   return (
     <>
-      <View class="w-full h-full flex-col items-center justify-center gap-2 bg-slate-950">
-        <Text class="text-xl text-white font-bold">Ds Man</Text>
-        <Text class="text-sm text-slate-400">{readFailed() ? LIBRARY_READ_ERROR : libraryLine(media !== null, scanning(), tracks().length)}</Text>
-      </View>
+      <Explorer session={session} store={store} searching={osk.isOpen} openSearch={() => osk.open()} />
       <AuxiliarySurface>
-        <View class="w-full h-full flex-col items-center justify-center bg-slate-900">
-          <Text class="text-sm text-slate-400">Nothing playing — pick a song above</Text>
+        {/* A wrapping View: AuxiliarySurface does not track a lone reactive child (a bare <Show> renders once). */}
+        <View class="relative w-full h-full flex-col">
+          <Show when={osk.isOpen()} fallback={<NowPlaying session={session} />}>
+            <SearchKeyboard osk={osk} />
+          </Show>
         </View>
       </AuxiliarySurface>
     </>

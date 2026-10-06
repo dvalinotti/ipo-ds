@@ -21,7 +21,7 @@ export interface Theme {
   name: string;
   /** The framework Osk theme the search keyboard uses. */
   osk: "dark" | "light" | "classic";
-  /** Key height (logical px) that lets the keyboard fill the bottom screen below the search field. */
+  /** Key height (logical px) that makes the keyboard panel fill the 214 px below the search field. */
   oskKeyHeight: number;
 
   topScreen: string;
@@ -119,7 +119,11 @@ export interface Theme {
   seekCapsule: string;
   seekTime: string;
   seekTimeRight: string;
+  /** Wider time cells and a shorter track when times read h:mm:ss. */
+  seekTimeWide: string;
+  seekTimeRightWide: string;
   seekTrack: string;
+  seekTrackWide: string;
   seekFill: string;
   seekKnob: string;
 

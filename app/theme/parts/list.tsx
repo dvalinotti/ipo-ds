@@ -3,6 +3,12 @@ import { Show } from "solid-js";
 import { Image, Text, View } from "@pocketjs/framework/components";
 import { AQUA } from "../aqua.ts";
 import type { RowKind, Theme } from "../theme.ts";
+import { FONT_12 } from "../fonts.ts";
+import { Marquee } from "./marquee.tsx";
+
+/** Title cell widths (px): beside a detail column, and spanning the row beside a count. */
+const TITLE_PX = 214;
+const WIDE_TITLE_PX = 318;
 
 /** `lead` labels the rows' lead column ("#" over track numbers); `count` right-aligns the second label over counts. */
 export function ColumnHeader(props: { left: string; right: string; lead?: string; sorted?: boolean; count?: boolean; theme?: Theme }) {
@@ -38,6 +44,8 @@ export interface ListRowProps {
   playing?: boolean;
   /** Title spans the row and `detail` is a right-aligned count (Artists / Albums views). */
   count?: boolean;
+  /** Scroll a title too wide for its cell (the focused row). */
+  marquee?: boolean;
   onPress?: () => void;
   theme?: Theme;
 }
@@ -54,7 +62,9 @@ export function ListRow(props: ListRowProps) {
         fallback={
           <>
             <View class={t().rowTitleCell}>
-              <Text class={t().rowTitle(props.kind)}>{props.title}</Text>
+              <Show when={props.marquee} fallback={<Text class={t().rowTitle(props.kind)}>{props.title}</Text>}>
+                <Marquee text={props.title} class={t().rowTitle(props.kind)} slot={FONT_12} width={TITLE_PX} />
+              </Show>
             </View>
             <View class={t().rowDetailCell}>
               <Text class={t().rowDetail(props.kind)}>{props.detail}</Text>
@@ -63,7 +73,9 @@ export function ListRow(props: ListRowProps) {
         }
       >
         <View class={t().rowWideCell}>
-          <Text class={t().rowTitle(props.kind)}>{props.title}</Text>
+          <Show when={props.marquee} fallback={<Text class={t().rowTitle(props.kind)}>{props.title}</Text>}>
+            <Marquee text={props.title} class={t().rowTitle(props.kind)} slot={FONT_12} width={WIDE_TITLE_PX} />
+          </Show>
         </View>
         <View class={t().rowCountCell}>
           <Text class={t().rowMuted(props.kind)}>{props.detail}</Text>

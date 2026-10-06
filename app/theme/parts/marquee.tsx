@@ -1,0 +1,37 @@
+// Text that fits its box sits still (aligned by its class). Text too wide
+// starts at the left edge and, while active, scrolls to reveal its end on a
+// hold–scroll–hold cycle (geometry.marqueeOffset), restarting when it changes.
+import { createEffect, createMemo, createSignal, on } from "solid-js";
+import { getOps } from "@pocketjs/framework";
+import { Text, View } from "@pocketjs/framework/components";
+import { onFrame } from "@pocketjs/framework/lifecycle";
+import { virtualFrame } from "@pocketjs/framework/clock";
+import { marqueeOffset } from "../geometry.ts";
+
+export function Marquee(props: {
+  text: string;
+  /** The text's class (size, weight, colour, alignment). */
+  class: string;
+  /** Font slot of that class (app/theme/fonts.ts). */
+  slot: number;
+  /** Box width in px. */
+  width: number;
+  active?: boolean;
+}) {
+  const textWidth = createMemo(() => getOps().measureText(props.text, props.slot));
+  const overflow = () => Math.max(0, Math.ceil(textWidth() - props.width));
+  const [start, setStart] = createSignal(virtualFrame());
+  createEffect(on(() => [props.text, props.active] as const, () => setStart(virtualFrame()), { defer: true }));
+  const [offset, setOffset] = createSignal(0);
+  onFrame(() => {
+    const next = overflow() > 0 && (props.active ?? true) ? marqueeOffset(virtualFrame() - start(), overflow()) : 0;
+    if (next !== offset()) setOffset(next);
+  });
+  return (
+    <View class="overflow-hidden" style={{ width: props.width }}>
+      <Text class={props.class} style={{ width: overflow() > 0 ? Math.ceil(textWidth()) : props.width, translateX: offset() }}>
+        {props.text}
+      </Text>
+    </View>
+  );
+}

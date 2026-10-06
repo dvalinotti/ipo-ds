@@ -137,3 +137,14 @@ test("a snapshot from an earlier open of the same song is ignored", () => {
   expect(run(state, { type: "hostStatus", status: status({ trackId: 0, openSerial: 5, phase: "ended" }) }).commands)
     .toEqual([{ type: "open", id: 0 }]);
 });
+
+test("prune drops ids a rescan no longer lists, keeping the current song and its place", () => {
+  let state = playing([0, 1, 2, 3], 2);
+  state = run(state, { type: "prune", ids: [0, 3] }).state;
+  expect(state).toMatchObject({ queue: [0, 2, 3], order: [0, 2, 3], index: 1 });
+  expect(currentId(state)).toBe(2);
+  expect(run(state, { type: "next" }).commands).toEqual([{ type: "open", id: 3 }]);
+  const idle = run(initialPlayer(), { type: "prune", ids: [] });
+  expect(idle.state.index).toBe(-1);
+  expect(idle.commands).toEqual([]);
+});

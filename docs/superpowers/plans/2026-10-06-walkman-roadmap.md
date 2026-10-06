@@ -12,10 +12,17 @@ contract shape, the chosen visual direction, the parts kit's class strings.
 |---|---|---|---|---|
 | 1 | 0, 1, 2 | `2026-10-06-walkman-01-foundations-core.md` | — | Fork pin, font flags, `bootBundle` globals, `media.local` contract + SDK + sim fake, headless harness, library model, player reducer + controller, scanning app shell |
 | 2 | 3 | `2026-10-06-walkman-02-aqua-theme.md` | Plan 1 | 2–3 Superdesign directions at 400×240 + 320×240 → user choice → `app/theme/` tokens, parts kit, pixel font, `app/fonts.json` |
-| 3 | 4, 5 | `walkman-03-screens.md` (to write) | Plans 1, 2 | Explorer (tabs, VirtualList, drill-down, OSK search, held-D-pad repeat, ♪ marker) and Now Playing (transport, scrubber gesture, marquee, placeholder art), all driven by headless tests |
+| 3 | 4, 5 | `2026-10-06-walkman-03-screens.md` | Plans 1, 2 | Explorer (tabs, VirtualList, drill-down, OSK search, held-D-pad repeat, ♪ marker) and Now Playing (transport, scrubber gesture, marquee, placeholder art), all driven by headless tests |
 | 4 | 6, 7 | `walkman-04-native-localmedia.md` (to write) | Plan 1 (contract only) — can run in parallel with Plans 2–3 | `hosts/3ds/src/localmedia.c`: scan, ID3v2/v1, duration, minimp3 → NDSP, seek, snapshot rule; APIC → stb_image → RGB565 texture; `media.local` in the 3DS profile (hostAbi 12); `POCKETJS_LOCALMEDIA` build flag; host-compiled C tests for the tag/frame parsers |
 | 5 | 8 | `walkman-05-hardening.md` (to write) | Plans 3, 4 | Device checklist on New 3DS + Azahar, scan-time/CPU/memory/underrun budgets, corrupt-file corpus, Azahar e2e capture |
 | — | v2 | — | Plan 5 | Lid-closed playback, resume-on-launch, theme switching |
+
+## Old 3DS support (added 2026-10-06)
+
+The target is now Old **and** New 3DS. The Old 3DS's slower CPU constrains Plans 4 and 5:
+
+- **Plan 4:** audio decoding must not be starved by a slow UI frame. Either run the decoder on the system core (on the Old 3DS, `APT_SetAppCpuTimeLimit` lends apps up to about 80% of it), or run it above the UI thread's priority with at least 1 s of decoded audio queued. Decode album art only while the audio buffer is full. Measure MP3 decode cost on the Old 3DS clock.
+- **Plan 5:** add Old 3DS hardware budgets (UI frame time, decoder load, underruns) alongside the New 3DS ones. Azahar's Old 3DS mode does not model CPU timing, so these need real hardware.
 
 ## Ordering
 
