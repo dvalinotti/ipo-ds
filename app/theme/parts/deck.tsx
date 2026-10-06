@@ -4,6 +4,7 @@
 import { children, Show } from "solid-js";
 import { Image, Text, View } from "@pocketjs/framework/components";
 import { createGesture } from "@pocketjs/framework/gesture";
+import { ready, ResourceImage } from "@pocketjs/framework/resource";
 import type { JSX as SolidJSX } from "solid-js";
 import { AQUA } from "../aqua.ts";
 import { trackOffset } from "../geometry.ts";
@@ -40,6 +41,11 @@ export function ArtFrame(props: { album: string; children?: SolidJSX.Element; th
       </Show>
     </View>
   );
+}
+
+/** An uploaded cover texture (128×128) drawn at the art frame's 98×98 interior. */
+export function CoverImage(props: { handle: number }) {
+  return <ResourceImage class="w-[98] h-[98]" state={() => ready({ handle: props.handle, width: 98, height: 98 })} fallback={() => null} />;
 }
 
 export function InfoLcd(props: {

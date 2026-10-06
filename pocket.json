@@ -11,11 +11,11 @@
         "text.glyphs.baked",
         "input.buttons",
         "display.auxiliary",
-        "input.touch.auxiliary"
+        "input.touch.auxiliary",
+        "media.local"
       ],
       "enhances": [
-        "input.analog.left",
-        "media.local"
+        "input.analog.left"
       ]
     }
   },

@@ -370,3 +370,77 @@ test("a tap on the remaining-time label does not seek", async () => {
   touch(rig, 290, 135);
   expect(rig.host.log.filter((entry) => entry.startsWith("seek("))).toEqual([]);
 }, 120_000);
+
+// ---------------------------------------------------------------------------
+// Covers, playback errors and diagnostics (Plan 4)
+// ---------------------------------------------------------------------------
+
+/** Four songs in title order; Bravo has no embedded art. */
+const COVERS: SimLocalTrack[] = [
+  { file: "a.mp3", title: "Alpha", artist: "Ann", album: "One", track: 1, durationMs: 60_000, art: true },
+  { file: "b.mp3", title: "Bravo", artist: "Ann", album: "One", track: 2, durationMs: 60_000 },
+  { file: "c.mp3", title: "Charlie", artist: "Ann", album: "One", track: 3, durationMs: 60_000, art: true },
+  { file: "d.mp3", title: "Delta", artist: "Ann", album: "One", track: 4, durationMs: 60_000, art: true },
+];
+
+/** The cover image node: drawn at the art frame's 98×98 interior. */
+const coverNode = (world: BundleWorld) =>
+  flat(world.tree("auxiliary")).find((node) => node.type === "image" && node.rect?.[2] === 98 && node.rect?.[3] === 98);
+
+const artworkCalls = (host: SimLocalMediaHost) => host.log.filter((entry) => entry.startsWith("artwork("));
+const releases = (host: SimLocalMediaHost) => host.log.filter((entry) => entry.startsWith("releaseArtwork("));
+
+async function bootWith(library: SimLocalTrack[], options: { artworkMs?: number } = {}): Promise<Rig> {
+  const host = createSimLocalMedia(library, options);
+  const rig = { host, world: await bootApp({ localmedia: host.ns }) };
+  frames(rig, 4);
+  expect(rig.world.failure).toBeNull();
+  return rig;
+}
+
+test("a cover replaces the placeholder once its art is ready, and is asked for until then only", async () => {
+  const rig = await bootWith(COVERS, { artworkMs: 200 });
+  press(rig, A); // Alpha
+  expect(coverNode(rig.world)).toBeUndefined(); // pending: the placeholder shows
+  expect(screenText(rig.world, "auxiliary")).toContain("On");
+  frames(rig, 15);
+  expect(coverNode(rig.world)).toBeDefined();
+  expect(rig.host.liveArtwork()).toHaveLength(1);
+  const asked = artworkCalls(rig.host).length;
+  frames(rig, 10);
+  expect(artworkCalls(rig.host)).toHaveLength(asked);
+}, 120_000);
+
+test("a track without art never asks; the previous cover stays until the next resolves, then is released once", async () => {
+  const rig = await bootWith(COVERS, { artworkMs: 200 });
+  press(rig, A); // Alpha
+  frames(rig, 15);
+  const alpha = rig.host.liveArtwork()[0]!;
+  press(rig, BTN.ZR); // Bravo: no art
+  expect(artworkCalls(rig.host)).not.toContain("artwork(1)");
+  expect(coverNode(rig.world)).toBeUndefined();
+  expect(releases(rig.host)).toEqual([`releaseArtwork(${alpha})`]);
+  press(rig, BTN.ZR); // Charlie
+  frames(rig, 15);
+  const charlie = rig.host.liveArtwork()[0]!;
+  press(rig, BTN.ZR); // Delta: pending for 200 ms
+  expect(coverNode(rig.world)).toBeDefined(); // Charlie's cover is still up
+  expect(rig.host.liveArtwork()).toEqual([charlie]);
+  frames(rig, 15);
+  expect(rig.host.liveArtwork()).toHaveLength(1);
+  expect(rig.host.liveArtwork()[0]).not.toBe(charlie);
+  expect(releases(rig.host)).toEqual([`releaseArtwork(${alpha})`, `releaseArtwork(${charlie})`]);
+}, 120_000);
+
+test("fifty track changes leave at most one live cover and release each exactly once", async () => {
+  const rig = await bootWith(COVERS);
+  press(rig, A);
+  for (let i = 0; i < 50; i++) {
+    press(rig, BTN.ZR);
+    frames(rig, 2);
+    expect(rig.host.liveArtwork().length).toBeLessThanOrEqual(1);
+  }
+  const released = releases(rig.host);
+  expect(new Set(released).size).toBe(released.length);
+  expect(rig.host.ns.status()).toContain('"artHandles":1');
+}, 120_000);
