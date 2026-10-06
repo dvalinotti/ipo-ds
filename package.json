@@ -1,0 +1,10 @@
+{
+  "name": "ds-man",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "3ds": "bun scripts/build.ts",
+    "check": "bun runtime/node_modules/typescript/bin/tsc --noEmit"
+  }
+}
