@@ -1,0 +1,60 @@
+// The top screen's toolbar: window lights, the iTunes status LCD and the
+// Songs / Artists / Albums segmented tabs with their L / R hints.
+import { For } from "solid-js";
+import { Text, View } from "@pocketjs/framework/components";
+import { AQUA } from "../aqua.ts";
+import type { Tab, Theme } from "../theme.ts";
+
+export const TABS: readonly Tab[] = ["Songs", "Artists", "Albums"];
+
+export function Lights(props: { theme?: Theme }) {
+  const t = () => props.theme ?? AQUA;
+  return (
+    <View class="flex-row items-center gap-[4]">
+      <View class={t().light("red")} />
+      <View class={t().light("amber")} />
+      <View class={t().light("green")} />
+    </View>
+  );
+}
+
+export function LcdStatus(props: { title: string; line: string; theme?: Theme }) {
+  const t = () => props.theme ?? AQUA;
+  return (
+    <View class={t().lcdStatus}>
+      <Text class={t().lcdTitle}>{props.title}</Text>
+      <Text class={t().lcdLine}>{props.line}</Text>
+    </View>
+  );
+}
+
+export function SegmentedTabs(props: { active: Tab; theme?: Theme }) {
+  const t = () => props.theme ?? AQUA;
+  return (
+    <View class={t().tabs}>
+      <Text class={t().hint}>L</Text>
+      <For each={TABS}>
+        {(tab) => (
+          <View class={t().tab(tab === props.active)}>
+            <Text class={t().tabText(tab === props.active)}>{tab}</Text>
+          </View>
+        )}
+      </For>
+      <Text class={t().hint}>R</Text>
+    </View>
+  );
+}
+
+export function Toolbar(props: { title: string; line: string; active: Tab; theme?: Theme }) {
+  const t = () => props.theme ?? AQUA;
+  return (
+    <>
+      <View class={t().toolbar}>
+        <Lights theme={props.theme} />
+        <LcdStatus title={props.title} line={props.line} theme={props.theme} />
+        <SegmentedTabs active={props.active} theme={props.theme} />
+      </View>
+      <View class={t().toolbarRule} />
+    </>
+  );
+}
