@@ -4,18 +4,22 @@ import { Image, Text, View } from "@pocketjs/framework/components";
 import { AQUA } from "../aqua.ts";
 import type { RowKind, Theme } from "../theme.ts";
 
-export function ColumnHeader(props: { left: string; right: string; sorted?: boolean; theme?: Theme }) {
+/** `lead` labels the rows' lead column ("#" over track numbers); `count` right-aligns the second label over counts. */
+export function ColumnHeader(props: { left: string; right: string; lead?: string; sorted?: boolean; count?: boolean; theme?: Theme }) {
   const t = () => props.theme ?? AQUA;
   return (
     <>
       <View class={t().header}>
         <View class={t().headerLeft(props.sorted ?? true)}>
+          <View class={t().headerLead}>
+            <Text class={t().headerText}>{props.lead ?? ""}</Text>
+          </View>
           <Text class={t().headerText}>{props.left}</Text>
           <Show when={props.sorted ?? true}>
-            <Image class="w-[8] h-[8]" src={t().sortIcon} />
+            <Image class="w-[8] h-[8] ml-[4]" src={t().sortIcon} />
           </Show>
         </View>
-        <View class={t().headerRight}>
+        <View class={props.count ? t().headerRightEnd : t().headerRight}>
           <Text class={t().headerText}>{props.right}</Text>
         </View>
       </View>
@@ -58,7 +62,7 @@ export function ListRow(props: ListRowProps) {
           </>
         }
       >
-        <View class={t().rowDetailCell}>
+        <View class={t().rowWideCell}>
           <Text class={t().rowTitle(props.kind)}>{props.title}</Text>
         </View>
         <View class={t().rowCountCell}>

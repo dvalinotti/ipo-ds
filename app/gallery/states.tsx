@@ -37,6 +37,8 @@ function Top(props: {
   line?: string;
   strip?: SolidJSX.Element;
   header?: [string, string];
+  /** Label over the rows' lead column ("#" for track numbers). */
+  headerLead?: string;
   rows?: readonly Row[];
   selected?: number;
   playing?: number;
@@ -49,7 +51,7 @@ function Top(props: {
     <View class={AQUA.topScreen}>
       <Toolbar title="Ds Man" line={props.line ?? LIBRARY_LINE} active={props.tab} />
       {props.strip}
-      {props.header ? <ColumnHeader left={props.header[0]} right={props.header[1]} /> : null}
+      {props.header ? <ColumnHeader left={props.header[0]} right={props.header[1]} lead={props.headerLead} count={props.count} /> : null}
       {props.body ?? (
         <View class={AQUA.listBody}>
           <For each={props.rows ?? []}>
@@ -154,7 +156,8 @@ export const STATES: readonly GalleryState[] = [
       <Top
         tab="Albums"
         strip={<Breadcrumb root="Albums" leaf="Discovery" detail="Daft Punk · 14 songs" />}
-        header={["#  Song Name", "Time"]}
+        header={["Song Name", "Time"]}
+        headerLead="#"
         rows={[["One More Time", "5:20", "1"], ["Aerodynamic", "3:27", "2"], ["Digital Love", "4:58", "3"], ["Harder, Better, Faster, Stronger (Extended Club Mix)", "3:44", "4"], ["Crescendolls", "3:31", "5"], ["Nightvision", "1:44", "6"], ["Superheroes", "3:57", "7"]]}
         selected={1}
         scroll={[4, 52]}
@@ -187,7 +190,8 @@ export const STATES: readonly GalleryState[] = [
             <Breadcrumb root="Albums" leaf="(What’s the Story) Morning Glory? (Remastered Deluxe Edition)" detail="Oasis · 12 songs" />
           </>
         }
-        header={["#  Song Name", "Time"]}
+        header={["Song Name", "Time"]}
+        headerLead="#"
         rows={[["Don’t Look Back in Anger", "4:48", "4"], ["Wonderwall", "4:18", "3"], ["Champagne Supernova – Extended Remastered Version", "7:31", "12"]]}
         selected={1}
         playing={2}

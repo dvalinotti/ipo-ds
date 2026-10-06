@@ -48,7 +48,11 @@ export interface Theme {
   headerRule: string;
   /** First column (242 wide, holds the sort marker when sorted). */
   headerLeft(sorted: boolean): string;
+  /** The header's 22 px lead column, over the rows' lead (marker / track number). */
+  headerLead: string;
   headerRight: string;
+  /** Right column label aligned with right-aligned counts. */
+  headerRightEnd: string;
   /** Image key of the sort marker shown in a sorted header column. */
   sortIcon: string;
   headerText: string;
@@ -58,6 +62,8 @@ export interface Theme {
   rowLead: string;
   rowTitleCell: string;
   rowDetailCell: string;
+  /** Title cell that spans the row when the second column is a right-aligned count. */
+  rowWideCell: string;
   rowCountCell: string;
   rowTitle(kind: RowKind): string;
   rowDetail(kind: RowKind): string;

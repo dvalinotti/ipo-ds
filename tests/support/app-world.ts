@@ -27,6 +27,19 @@ export function screenText(world: BundleWorld, surface: "primary" | "auxiliary" 
   return flat(world.tree(surface)).map((node) => node.text).join("");
 }
 
+/** Every path from the surface root to a node whose own text is exactly `text`, in tree order. */
+export function pathsTo(world: BundleWorld, surface: "primary" | "auxiliary", text: string): SimNode[][] {
+  const out: SimNode[][] = [];
+  const walk = (node: SimNode, path: SimNode[]): void => {
+    const here = [...path, node];
+    if (node.text === text) out.push(here);
+    for (const child of node.children) walk(child, here);
+  };
+  const root = world.tree(surface);
+  if (root) walk(root, []);
+  return out;
+}
+
 /** Path from the surface root to the first node whose own text is exactly `text`. */
 export function pathTo(world: BundleWorld, surface: "primary" | "auxiliary", text: string): SimNode[] {
   const walk = (node: SimNode, path: SimNode[]): SimNode[] | null => {

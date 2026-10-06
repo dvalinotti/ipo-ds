@@ -56,9 +56,11 @@ export const AQUA: Theme = {
   header: "w-full h-[15] shrink-0 flex-row items-center bg-gradient-to-b from-[#ffffff] via-[#e7e7e7] to-[#d4d4d4]",
   headerRule: "w-full h-[1] shrink-0 bg-[#a5a5a5]",
   headerLeft: (sorted) => sorted
-    ? "w-[242] h-[15] pl-[22] flex-row items-center gap-[4] bg-gradient-to-b from-[#d9ebff] via-[#a9cdf6] to-[#8fbbef]"
-    : "w-[242] h-[15] pl-[22] flex-row items-center gap-[4]",
+    ? "w-[242] h-[15] flex-row items-center bg-gradient-to-b from-[#d9ebff] via-[#a9cdf6] to-[#8fbbef]"
+    : "w-[242] h-[15] flex-row items-center",
+  headerLead: "w-[22] h-[15] items-center justify-center",
   headerRight: "flex-1 h-[15] pl-[6] flex-row items-center",
+  headerRightEnd: "flex-1 h-[15] pr-[22] flex-row items-center justify-end",
   sortIcon: "theme/icons/sort-up-ink.svg",
   headerText: "text-xs text-[#2b2b2b]",
 
@@ -70,6 +72,7 @@ export const AQUA: Theme = {
   rowLead: "w-[22] h-[21] items-center justify-center",
   rowTitleCell: "w-[214] h-[21] mr-[6] flex-col justify-center overflow-hidden",
   rowDetailCell: "flex-1 h-[21] pl-[6] flex-col justify-center overflow-hidden",
+  rowWideCell: "flex-1 h-[21] flex-col justify-center overflow-hidden",
   rowCountCell: "w-[60] h-[21] pr-[22] flex-col items-end justify-center",
   rowTitle: (kind) => (kind === "selected" ? "text-xs text-white" : "text-xs text-black"),
   rowDetail: (kind) => (kind === "selected" ? "text-xs text-white" : "text-xs text-[#2b2b2b]"),

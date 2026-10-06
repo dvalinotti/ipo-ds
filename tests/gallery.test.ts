@@ -2,7 +2,7 @@ import { afterAll, beforeAll, expect, test } from "bun:test";
 import { BTN } from "@pocketjs/framework/input";
 import type { BundleWorld } from "../runtime/hosts/sim/sim.ts";
 import { GALLERY_STATES, type GalleryStateName } from "../app/gallery/names.ts";
-import { backgroundOf, bootGallery, disposeGuest, pathTo, screenText, textColorOf } from "./support/app-world.ts";
+import { backgroundOf, bootGallery, disposeGuest, pathTo, pathsTo, screenText, textColorOf } from "./support/app-world.ts";
 
 // Colours as the core holds them: 0xAABBGGRR.
 const SELECTED_ROW = 0xffd77538; // #3875d7
@@ -100,6 +100,15 @@ test("artists: names with right-hand counts, Queen selected; idle Now Playing", 
   expectAll(screenText(world, "primary"), ["Beyoncé", "Queen", "Unknown Artist", "Open"]);
   expect(backgroundOf(pathTo(world, "primary", "Queen"))).toBe(SELECTED_ROW);
   expect(textColorOf(pathTo(world, "primary", "14"))).toBe(WHITE);
+  // Header labels line up with their columns: names start where "Artist" starts; counts end where "Songs" ends.
+  const [hx] = rect(pathTo(world, "primary", "Artist").at(-2));
+  const [nx] = rect(pathTo(world, "primary", "Beyoncé").at(-2));
+  expect(nx).toBe(hx);
+  // "Songs" is also a tab; the column header is the copy below the toolbar.
+  const header = pathsTo(world, "primary", "Songs").find((path) => rect(path.at(-2))[1] > 30)!;
+  const [sx, , sw] = rect(header.at(-2));
+  const [cx, , cw] = rect(pathTo(world, "primary", "3").at(-2));
+  expect(cx + cw).toBe(sx + sw);
   expectAll(screenText(world, "auxiliary"), ["Nothing playing", "Pick a song above and press", "--:--"]);
   // The A in "press A" is a drawn key badge, not the circled glyph that clipped.
   expect(screenText(world, "auxiliary")).not.toContain("Ⓐ");
@@ -114,6 +123,11 @@ test("album drill-down: breadcrumb and numbered rows; Now Playing with placehold
   expect(pcx - pfx).toBe(pfx + pfw - (pcx + pcw));
   expect(pcy - pfy).toBe(pcx - pfx);
   expectAll(screenText(world, "primary"), ["Albums", "›", "Discovery", "Daft Punk · 14 songs", "5:20"]);
+  // "#" is its own column, centred over the track numbers; "Song Name" starts where the titles start.
+  const centre = (r: Rect) => r[0] + r[2] / 2;
+  // Both are centred in the same 22 px column; glyphs of different widths can land half a pixel apart.
+  expect(Math.abs(centre(rect(pathTo(world, "primary", "#").at(-2))) - centre(rect(pathTo(world, "primary", "1").at(-2))))).toBeLessThanOrEqual(1);
+  expect(rect(pathTo(world, "primary", "Song Name").at(-2))[0]).toBe(rect(pathTo(world, "primary", "One More Time").at(-2))[0]);
   expect(backgroundOf(pathTo(world, "primary", "Aerodynamic"))).toBe(SELECTED_ROW);
   // A title longer than its column is clipped by its 214 px cell (6 px gutter); the time column stays put.
   const long = pathTo(world, "primary", "Harder, Better, Faster, Stronger (Extended Club Mix)");
