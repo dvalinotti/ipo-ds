@@ -32,6 +32,16 @@ launch it from the Homebrew Launcher on a console.
 bun run check
 ```
 
+## Theme gallery
+
+```sh
+bun run gallery   # dist/gallery/<n>-<state>-{top,bottom}@2x.png
+```
+
+`gallery.pocket.json` builds `app/gallery.tsx`, which shows the approved Aqua
+mockup states (`docs/design/aqua/`) built from `app/theme/parts`. L / R flip
+states on a device or in the sim.
+
 ## Updating PocketJS
 
 ```sh
