@@ -27,7 +27,9 @@ export type PlayerAction =
   | { type: "toggleShuffle" } | { type: "cycleRepeat" }
   | { type: "hostStatus"; status: LocalStatus }
   /** The host accepted the latest open command and returned this serial. */
-  | { type: "opened"; serial: number };
+  | { type: "opened"; serial: number }
+  /** A rescan listed these ids; drop the rest from the queue (the current song stays). */
+  | { type: "prune"; ids: readonly number[] };
 export type PlayerCommand = { type: "open"; id: number } | { type: "paused"; value: boolean } | { type: "seek"; ms: number };
 export interface Reduced { state: PlayerState; commands: PlayerCommand[] }
 
@@ -107,6 +109,13 @@ export function reducePlayer(state: PlayerState, action: PlayerAction, random: (
     }
     case "opened":
       return none({ ...state, serial: action.serial });
+    case "prune": {
+      const id = currentId(state);
+      const keep = new Set(action.ids);
+      const kept = (list: readonly number[]) => list.filter((queued) => queued === id || keep.has(queued));
+      const order = kept(state.order);
+      return none({ ...state, queue: kept(state.queue), order, index: id < 0 ? -1 : order.indexOf(id) });
+    }
     case "cycleRepeat":
       return none({ ...state, repeat: state.repeat === "off" ? "all" : state.repeat === "all" ? "one" : "off" });
     case "hostStatus": {
