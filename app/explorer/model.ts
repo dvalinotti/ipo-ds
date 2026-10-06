@@ -26,7 +26,9 @@ export type ExplorerAction =
   /** `count` is the number of visible rows, so focus stays on a row. */
   | { type: "focus"; index: number; count: number }
   | { type: "move"; delta: number; count: number }
-  | { type: "reveal"; id: number; library: Library };
+  | { type: "reveal"; id: number; library: Library }
+  /** A rescan finished: drop drill-downs whose artist or album is gone. */
+  | { type: "reconcile"; library: Library };
 
 export function initialExplorer(): ExplorerState {
   return { tab: "Songs", drill: { Songs: null, Artists: null, Albums: null }, focus: {}, query: "" };
@@ -72,6 +74,16 @@ export function reduceExplorer(state: ExplorerState, action: ExplorerAction): Ex
       return withFocus(state, clamp(action.index, action.count));
     case "move":
       return withFocus(state, clamp(focusOf(state) + action.delta, action.count));
+    case "reconcile": {
+      const alive = (view: View | null): View | null => {
+        if (!view) return null;
+        if (view.kind === "artist") return action.library.artists.some((a) => a.key === view.key) ? view : null;
+        if (view.kind === "album") return action.library.albums.some((a) => a.key === view.key) ? view : null;
+        return view;
+      };
+      const drill = { Songs: alive(state.drill.Songs), Artists: alive(state.drill.Artists), Albums: alive(state.drill.Albums) };
+      return TAB_ORDER.every((tab) => drill[tab] === state.drill[tab]) ? state : { ...state, drill };
+    }
     case "reveal": {
       const songs: ExplorerState = { ...state, tab: "Songs" };
       const visible = (s: ExplorerState) => rows(action.library, BASE_VIEW.Songs, s.query).findIndex((row) => row.kind === "song" && row.id === action.id);
@@ -89,6 +101,11 @@ export function reduceExplorer(state: ExplorerState, action: ExplorerAction): Ex
 // ---------------------------------------------------------------------------
 // Selectors
 // ---------------------------------------------------------------------------
+
+/** What the visible rows depend on (view and query, not focus): a memo key for screens. */
+export function rowsKey(state: ExplorerState): string {
+  return `${viewKey(currentView(state))}\u0000${state.query}`;
+}
 
 export function visibleRows(library: Library, state: ExplorerState): Row[] {
   return rows(library, currentView(state), state.query);

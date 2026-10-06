@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { buildLibrary } from "../app/library/library.ts";
 import {
-  crumbOf, currentView, focusOf, headerOf, initialExplorer, lcdLine, legendOf, reduceExplorer, rowCells, visibleRows, visibleSongIds,
+  crumbOf, currentView, focusOf, headerOf, initialExplorer, lcdLine, legendOf, reduceExplorer, rowCells, rowsKey, visibleRows, visibleSongIds,
   type ExplorerAction, type ExplorerState,
 } from "../app/explorer/model.ts";
 import { TRACKS } from "./fixtures/tracks.ts";
@@ -51,6 +51,22 @@ test("one query filters whichever tab shows, resets focus, and B clears it once 
   state = run(state, { type: "back" });
   expect(state.query).toBe("");
   expect(run(initialExplorer(), { type: "back" })).toEqual(initialExplorer());
+});
+
+test("the rows depend on the view and query only, not on focus", () => {
+  const start = initialExplorer();
+  expect(rowsKey(run(start, { type: "move", delta: 3, count: 7 }))).toBe(rowsKey(start));
+  expect(rowsKey(run(start, { type: "setQuery", query: "a" }))).not.toBe(rowsKey(start));
+  expect(rowsKey(run(start, { type: "tab", delta: 1 }))).not.toBe(rowsKey(start));
+});
+
+test("reconcile drops drill-downs whose artist or album a rescan removed", () => {
+  let state = run(initialExplorer(), { type: "tab", delta: 1 }, { type: "open", row: { kind: "artist", key: "gorillaz" } });
+  state = run(state, { type: "tab", delta: 1 }, { type: "open", row: { kind: "album", key: "discovery\u0000daft punk" } });
+  const withoutGorillaz = buildLibrary(TRACKS.filter((track) => track.artist !== "Gorillaz"));
+  state = run(state, { type: "reconcile", library: withoutGorillaz });
+  expect(state.drill.Artists).toBeNull();
+  expect(state.drill.Albums).toEqual({ kind: "album", key: "discovery\u0000daft punk" });
 });
 
 test("song rows do not drill", () => {

@@ -3,7 +3,7 @@ import { BTN } from "@pocketjs/framework/input";
 import type { BundleWorld, SimNode, StepInput } from "../runtime/hosts/sim/sim.ts";
 import { createSimLocalMedia, type SimLocalMediaHost, type SimLocalTrack } from "../runtime/hosts/sim/localmedia.ts";
 import { LIBRARY } from "./fixtures/library.ts";
-import { bootApp, disposeGuest, pathTo, screenText } from "./support/app-world.ts";
+import { bootApp, disposeGuest, pathTo, pathsTo, screenText } from "./support/app-world.ts";
 
 afterAll(disposeGuest);
 
@@ -57,6 +57,23 @@ function selectedRow(world: BundleWorld): string {
 
 const opens = (host: SimLocalMediaHost) => host.log.filter((entry) => entry.startsWith("open("));
 
+/** Taps a key of the open keyboard by its label. */
+function typeKeys(rig: Rig, keys: string): void {
+  for (const key of keys) {
+    const [x, y, w, h] = pathTo(rig.world, "auxiliary", key).at(-2)!.rect!;
+    touch(rig, x + w / 2, y + h / 2);
+  }
+}
+
+/** Holds X past the hold time: a rescan. */
+function rescan(rig: Rig): void {
+  press(rig, X, 70);
+  frames(rig, 3);
+}
+
+/** The column header labelled `text` (not a tab or row with the same text). */
+const header = (world: BundleWorld, text: string) => pathsTo(world, "primary", text).find((path) => path.at(-2)!.rect![1] === 35);
+
 test("launch: the Explorer lists the library, sorted, first row focused; Now Playing is idle", async () => {
   const rig = await boot();
   const top = screenText(rig.world, "primary");
@@ -85,7 +102,7 @@ test("tabs do not wrap; drilling into an artist and backing out restores the foc
   press(rig, BTN.RTRIGGER);
   press(rig, BTN.RTRIGGER);
   press(rig, BTN.RTRIGGER);
-  expect(screenText(rig.world, "primary")).toContain("Album");
+  expect(header(rig.world, "Album")).toBeDefined();
   press(rig, BTN.LTRIGGER);
   press(rig, BTN.DOWN);
   expect(selectedRow(rig.world)).toContain("Gorillaz");
@@ -256,4 +273,100 @@ test("a build without media.local, a garbled host reply, and an empty card each 
   expect(screenText(empty.world, "primary")).not.toContain("0 min");
   press(empty, X);
   expect(empty.host.log.filter((entry) => entry === "scan()")).toHaveLength(2);
+}, 120_000);
+
+test("a search that matches nothing shows No matches instead of crashing", async () => {
+  const rig = await boot();
+  press(rig, X);
+  typeKeys(rig, "qq");
+  press(rig, BTN.START);
+  expect(rig.world.failure).toBeNull();
+  const top = screenText(rig.world, "primary");
+  for (const part of ["No matches", "0 found"]) expect(top).toContain(part);
+}, 120_000);
+
+test("a query counts what each tab shows, and a tab with no matches is safe", async () => {
+  const rig = await boot();
+  press(rig, X);
+  typeKeys(rig, "daft");
+  press(rig, BTN.START);
+  press(rig, BTN.RTRIGGER);
+  expect(screenText(rig.world, "primary")).toContain("1 found");
+  press(rig, BTN.RTRIGGER);
+  expect(rig.world.failure).toBeNull();
+  expect(screenText(rig.world, "primary")).toContain("No matches");
+}, 120_000);
+
+test("a rescan that removes the drilled artist, or shrinks the list below the focus, stays usable", async () => {
+  const rig = await boot();
+  press(rig, BTN.RTRIGGER);
+  press(rig, BTN.DOWN);
+  press(rig, A); // Gorillaz
+  rig.host.setLibrary(LIBRARY.filter((song) => song.artist !== "Gorillaz"));
+  rescan(rig);
+  expect(rig.world.failure).toBeNull();
+  expect(screenText(rig.world, "primary")).not.toContain("›");
+  expect(header(rig.world, "Artist")).toBeDefined();
+  press(rig, BTN.LTRIGGER);
+  for (let i = 0; i < 16; i++) press(rig, BTN.DOWN);
+  rig.host.setLibrary(LIBRARY.filter((song) => song.artist !== "Gorillaz" && song.file !== "qu-02.mp3"));
+  rescan(rig);
+  expect(rig.world.failure).toBeNull();
+  expect(selectedRow(rig.world)).not.toBe("");
+}, 120_000);
+
+test("Now Playing keeps a song a rescan removed, even after the keyboard has replaced it", async () => {
+  const rig = await boot();
+  press(rig, A); // Aerodynamic
+  frames(rig, 3);
+  rig.host.setLibrary(LIBRARY.filter((song) => song.file !== "dp-02.mp3"));
+  rescan(rig);
+  press(rig, X);
+  press(rig, BTN.START);
+  frames(rig, 3);
+  expect(screenText(rig.world, "auxiliary")).toContain("Aerodynamic");
+  touch(rig, 160, 196);
+  expect(rig.host.log).toContain("paused(true)");
+}, 120_000);
+
+test("transport taps do nothing while nothing has played", async () => {
+  const rig = await boot();
+  for (const x of [49, 97, 160, 223, 271]) touch(rig, x, 196);
+  expect(rig.host.log).toEqual(["scan()"]);
+}, 120_000);
+
+test("an hour-long track shows h:mm:ss on both sides of the seek bar", async () => {
+  const rig = await boot([{ file: "mix.mp3", title: "Two Hour Mix", artist: "DJ", album: "Mixes", track: 1, durationMs: 7_200_000 }]);
+  press(rig, A);
+  frames(rig, 70);
+  const bottom = screenText(rig.world, "auxiliary");
+  expect(bottom).toContain("0:00:01");
+  expect(bottom).toContain("-1:59:5");
+}, 120_000);
+
+test("a host whose status reads start failing is reported, survives taps, and recovers", async () => {
+  const host = createSimLocalMedia(LIBRARY);
+  let garbled = false;
+  const ns = { ...host.ns, status: () => (garbled ? "{" : host.ns.status()) };
+  const rig = { host, world: await bootApp({ localmedia: ns }) };
+  frames(rig, 4);
+  press(rig, A);
+  garbled = true;
+  frames(rig, 3);
+  expect(screenText(rig.world, "primary")).toContain("Could not read the music library");
+  touch(rig, 160, 196);
+  press(rig, BTN.START);
+  expect(rig.world.failure).toBeNull();
+  garbled = false;
+  frames(rig, 3);
+  expect(screenText(rig.world, "primary")).not.toContain("Could not read the music library");
+  expect(selectedRow(rig.world)).toContain("Aerodynamic");
+}, 120_000);
+
+test("a tap on the remaining-time label does not seek", async () => {
+  const rig = await boot();
+  press(rig, A);
+  frames(rig, 10);
+  touch(rig, 290, 135);
+  expect(rig.host.log.filter((entry) => entry.startsWith("seek("))).toEqual([]);
 }, 120_000);

@@ -14,3 +14,9 @@ test("remaining time carries a minus sign and never goes below zero", () => {
   expect([formatRemaining(102_000, 340_000), formatRemaining(400_000, 340_000), formatRemaining(0, 3_754_000)]).toEqual(["-3:58", "-0:00", "-1:02:34"]);
   expect([needsHours(3_599_999), needsHours(3_600_000)]).toEqual([false, true]);
 });
+
+test("a time on an hour-long track reads h:mm:ss even before the first hour", () => {
+  expect([formatTime(1_000, true), formatTime(61_000, true), formatTime(3_725_000, true)]).toEqual(["0:00:01", "0:01:01", "1:02:05"]);
+  expect(formatRemaining(1_000, 7_200_000)).toBe("-1:59:59");
+  expect(formatRemaining(7_199_000, 7_200_000)).toBe("-0:00:01");
+});
