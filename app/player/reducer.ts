@@ -17,23 +17,27 @@ export interface PlayerState {
   status: LocalStatus;
   /** Consecutive songs that failed to play. */
   failures: number;
+  /** Serial the host returned for the latest open; 0 until it is known. */
+  serial: number;
 }
 export type PlayerAction =
   | { type: "playFrom"; ids: readonly number[]; startId: number }
   | { type: "toggle" } | { type: "next" } | { type: "prev" }
   | { type: "seek"; ms: number }
   | { type: "toggleShuffle" } | { type: "cycleRepeat" }
-  | { type: "hostStatus"; status: LocalStatus };
+  | { type: "hostStatus"; status: LocalStatus }
+  /** The host accepted the latest open command and returned this serial. */
+  | { type: "opened"; serial: number };
 export type PlayerCommand = { type: "open"; id: number } | { type: "paused"; value: boolean } | { type: "seek"; ms: number };
 export interface Reduced { state: PlayerState; commands: PlayerCommand[] }
 
 export const RESTART_THRESHOLD_MS = 3000;
 export const IDLE_STATUS: LocalStatus = Object.freeze({
-  phase: "idle", trackId: -1, positionMs: 0, durationMs: 0, scanning: false, scanGeneration: 0, underruns: 0, error: "",
+  phase: "idle", trackId: -1, openSerial: 0, positionMs: 0, durationMs: 0, scanning: false, scanGeneration: 0, underruns: 0, error: "",
 });
 
 export function initialPlayer(): PlayerState {
-  return { queue: [], order: [], index: -1, shuffle: false, repeat: "off", status: IDLE_STATUS, failures: 0 };
+  return { queue: [], order: [], index: -1, shuffle: false, repeat: "off", status: IDLE_STATUS, failures: 0, serial: 0 };
 }
 
 export function currentId(state: PlayerState): number {
@@ -52,7 +56,7 @@ export function shuffled(ids: readonly number[], random: () => number): number[]
 
 const none = (state: PlayerState): Reduced => ({ state, commands: [] });
 const openAt = (state: PlayerState, index: number): Reduced =>
-  ({ state: { ...state, index }, commands: [{ type: "open", id: state.order[index]! }] });
+  ({ state: { ...state, index, serial: 0 }, commands: [{ type: "open", id: state.order[index]! }] });
 
 /** auto: the host finished or failed the song; failed: it failed. */
 function advance(state: PlayerState, auto: boolean, failed: boolean): Reduced {
@@ -101,11 +105,15 @@ export function reducePlayer(state: PlayerState, action: PlayerAction, random: (
       const rest = shuffled(state.queue.filter((queued) => queued !== id), random);
       return none({ ...state, shuffle: true, order: id < 0 ? rest : [id, ...rest], index: id < 0 ? -1 : 0 });
     }
+    case "opened":
+      return none({ ...state, serial: action.serial });
     case "cycleRepeat":
       return none({ ...state, repeat: state.repeat === "off" ? "all" : state.repeat === "all" ? "one" : "off" });
     case "hostStatus": {
       const next = { ...state, status: action.status };
-      if (state.index < 0 || action.status.trackId !== currentId(state)) return none(next);
+      // A snapshot of another track, or of an earlier open of this one, is stored but never acted on.
+      const stale = action.status.trackId !== currentId(state) || (state.serial > 0 && action.status.openSerial !== state.serial);
+      if (state.index < 0 || stale) return none(next);
       if (action.status.phase === "playing") return none({ ...next, failures: 0 });
       if (action.status.phase === "ended") return advance({ ...next, failures: 0 }, true, false);
       if (action.status.phase === "error") {

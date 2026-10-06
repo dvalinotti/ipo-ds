@@ -127,3 +127,13 @@ test("transport actions with nothing queued do nothing", () => {
     expect(run(initialPlayer(), action).commands).toEqual([]);
   }
 });
+
+test("a snapshot from an earlier open of the same song is ignored", () => {
+  let state = run(playing([0, 1], 0, { repeat: "one" }), { type: "opened", serial: 5 }).state;
+  const stale = run(state, { type: "hostStatus", status: status({ trackId: 0, openSerial: 4, phase: "ended" }) });
+  expect(stale.commands).toEqual([]);
+  expect(stale.state.status.openSerial).toBe(4);
+  state = stale.state;
+  expect(run(state, { type: "hostStatus", status: status({ trackId: 0, openSerial: 5, phase: "ended" }) }).commands)
+    .toEqual([{ type: "open", id: 0 }]);
+});

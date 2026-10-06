@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { localMedia } from "@pocketjs/framework/localmedia";
+import { localMedia, type LocalMediaOps } from "@pocketjs/framework/localmedia";
 import { createSimLocalMedia, type SimLocalTrack } from "../runtime/hosts/sim/localmedia.ts";
 import { createPlayerController } from "../app/player/controller.ts";
 import { currentId } from "../app/player/reducer.ts";
@@ -79,4 +79,42 @@ test("an id the host refuses to open is skipped like a failed song", () => {
   frames(15);
   expect(host.log.filter((entry) => entry.startsWith("open"))).toEqual(["open(0)", "open(5)", "open(1)"]);
   expect(player.state().status).toMatchObject({ trackId: 1, phase: "playing" });
+});
+
+/** A host that breaks the snapshot rule: the first status read after an open still shows the snapshot from before it. */
+function lagging(ns: LocalMediaOps): LocalMediaOps {
+  let stale: string | null = null;
+  return {
+    ...ns,
+    open(id) {
+      stale = ns.status();
+      return ns.open(id);
+    },
+    status() {
+      if (stale === null) return ns.status();
+      const before = stale;
+      stale = null;
+      return before;
+    },
+  };
+}
+
+test("repeat one replays once even when the host reports the previous end after the reopen", () => {
+  const host = createSimLocalMedia([song("a.mp3")]);
+  const media = localMedia(lagging(host.ns));
+  media.scan();
+  const player = createPlayerController(media, { random: () => 0 });
+  player.dispatch({ type: "cycleRepeat" });
+  player.dispatch({ type: "cycleRepeat" });
+  player.dispatch({ type: "playFrom", ids: [0], startId: 0 });
+  const opens = () => host.log.filter((entry) => entry.startsWith("open")).length;
+  for (let i = 0; i < 50 && opens() < 2; i++) {
+    host.advance(100);
+    player.poll();
+  }
+  expect(opens()).toBe(2);
+  host.advance(100);
+  player.poll();
+  expect(opens()).toBe(2);
+  expect(player.state().status).toMatchObject({ trackId: 0, phase: "playing", openSerial: 2 });
 });

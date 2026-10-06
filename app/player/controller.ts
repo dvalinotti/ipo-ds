@@ -11,15 +11,24 @@ export interface PlayerController {
   poll(): void;
 }
 
-/** Runs commands in order; returns the id of an open the host refused (and stops there), or -1. */
-export function runCommands(media: LocalMedia, commands: readonly PlayerCommand[]): number {
+export interface CommandResult {
+  /** Serial of the last open the host accepted; 0 when none ran. */
+  serial: number;
+  /** Id of an open the host refused (running stops there); -1 when none. */
+  refused: number;
+}
+
+export function runCommands(media: LocalMedia, commands: readonly PlayerCommand[]): CommandResult {
+  let serial = 0;
   for (const command of commands) {
     if (command.type === "open") {
-      if (!media.open(command.id)) return command.id;
+      const opened = media.open(command.id);
+      if (opened === 0) return { serial, refused: command.id };
+      serial = opened;
     } else if (command.type === "paused") media.pause(command.value);
     else media.seek(command.ms);
   }
-  return -1;
+  return { serial, refused: -1 };
 }
 
 export function createPlayerController(
@@ -31,12 +40,13 @@ export function createPlayerController(
   const apply = (action: PlayerAction): number => {
     const reduced = reducePlayer(state, action, random);
     state = reduced.state;
-    const refused = runCommands(media, reduced.commands);
+    const { serial, refused } = runCommands(media, reduced.commands);
+    if (serial > 0) state = reducePlayer(state, { type: "opened", serial }, random).state;
     // A refused id (one a rescan dropped) is reported as a failed song, so
     // the reducer's skip-and-stop rules apply. Each refusal raises the
     // failure count, which bounds this recursion by the queue length.
     if (refused >= 0) {
-      const failed = { ...media.status(), phase: "error" as const, trackId: refused, positionMs: 0, durationMs: 0, error: "Track is not in the library" };
+      const failed = { ...media.status(), phase: "error" as const, trackId: refused, openSerial: state.serial, positionMs: 0, durationMs: 0, error: "Track is not in the library" };
       apply({ type: "hostStatus", status: failed });
     }
     return reduced.commands.length;

@@ -121,6 +121,7 @@ export interface LocalTrack {
 export interface LocalStatus {
   phase: LocalPhase;
   trackId: number;      // -1 when none
+  openSerial: number;   // serial of the open this snapshot describes; 0 before the first
   positionMs: number;
   durationMs: number;
   scanning: boolean;    // a scan is running (independent of playback phase)
@@ -131,7 +132,7 @@ export interface LocalStatus {
 export interface LocalMediaOps {
   scan(): boolean;                 // starts async scan; status.scanning → true
   tracks(): string;                // JSON LocalTrack[] of the last completed scan
-  open(id: number): boolean;       // stop current, load + play id
+  open(id: number): number;        // stop current, load + play id; returns its serial (0 = refused)
   paused(value: boolean): void;
   seek(ms: number): void;
   volume(value: number): void;     // 0..1
@@ -147,6 +148,12 @@ returns — `open(id)` reads back `{trackId: id, phase: "loading", positionMs: 0
 `paused(v)` reads back `paused`/`playing`. The worker never publishes state for
 a command that a newer command superseded. This keeps a stale `ended` from a
 previous track from reaching the guest after it opened the next one.
+
+**Open serial:** each accepted `open` returns a serial one greater than the
+last, and every snapshot carries the serial of the open it describes. The
+guest acts only on snapshots carrying its latest serial, so a stale snapshot
+is ignored even when it names the same track (repeat one) or the host breaks
+the snapshot rule.
 
 SDK (`framework/src/localmedia.ts`): `localMedia(ops = globalThis.localmedia)`
 returning typed wrappers (parse JSON, clamp volume, validate ids), throwing
