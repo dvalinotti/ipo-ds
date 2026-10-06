@@ -21,7 +21,8 @@ try {
       console.log(file);
     }
     world.step({ buttons: BTN.RTRIGGER });
-    for (let f = 0; f < 3; f++) world.step();
+    // Settle slide-ins (the search keyboard) before the next capture.
+    for (let f = 0; f < 30; f++) world.step();
   }
   if (world.failure) throw new Error(`gallery failed: ${world.failure.message}`);
 } finally {

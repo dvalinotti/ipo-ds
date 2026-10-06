@@ -190,6 +190,8 @@ test("search: query strip with results; the classic keyboard on the bottom scree
   const [, hy] = rect(pathTo(world, "auxiliary", "B close · START confirm").at(-2));
   expect(fy).toBeGreaterThanOrEqual(0);
   expect(fy + fh).toBeLessThanOrEqual(hy);
+  // Let the keyboard's slide-in finish: its resting place is what the user sees.
+  for (let frame = 0; frame < 60; frame++) world.step();
   // …and the keyboard keeps its docked place, filling the screen below the field:
   // at (4, 60) the pixel is the keyboard panel's bluish grey, not the neutral metal behind it.
   const aux = world.pixels("auxiliary");
