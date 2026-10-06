@@ -2,21 +2,24 @@
 // ~300 tagged tracks across 30 artists and 40 albums, with accented and
 // NFD-decomposed names, CBR 128/320, VBR with and without a Xing header, a
 // mono 22.05 kHz file, ID3 v2.3 / v2.4 / v1-only tags, JPEG and PNG covers
-// (one too large to decode), a 65-minute track and a file of random bytes.
+// (one too large to decode, two at the 1500 px limit: a progressive 4:4:4 JPEG
+// and an RGBA PNG, the decoder's largest allocations), a 65-minute track and a
+// file of random bytes.
 //
 //   bun scripts/make-test-library.ts [outdir]     (default dist/test-music)
 //
-// Needs ffmpeg and lame on PATH. Copy the folder's contents to sdmc:/music/.
+// Needs ffmpeg, lame and ImageMagick (magick) on PATH. Copy the folder's contents to sdmc:/music/.
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { prepareLibraryDir } from "./test-library-dir.ts";
 import { availableParallelism } from "node:os";
 import { join, resolve } from "node:path";
 
 const out = resolve(process.argv[2] ?? "dist/test-music");
 const work = join(out, ".work");
-rmSync(out, { recursive: true, force: true });
+prepareLibraryDir(out);
 mkdirSync(work, { recursive: true });
 
-for (const tool of ["ffmpeg", "lame"]) if (!Bun.which(tool)) throw new Error(`make-test-library: ${tool} is not on PATH`);
+for (const tool of ["ffmpeg", "lame", "magick"]) if (!Bun.which(tool)) throw new Error(`make-test-library: ${tool} is not on PATH`);
 
 async function run(cmd: string[]): Promise<void> {
   const proc = Bun.spawn(cmd, { stdout: "ignore", stderr: "pipe" });
@@ -38,12 +41,20 @@ const covers = {
   png: join(work, "cover-300.png"),
   wide: join(work, "cover-640x400.jpg"),
   huge: join(work, "cover-1600.jpg"),
+  bigProgressive: join(work, "cover-1500-progressive.jpg"),
+  bigPng: join(work, "cover-1500-rgba.png"),
 };
 await pool([
   () => run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "mandelbrot=size=500x500:rate=1", "-frames:v", "1", covers.jpeg]),
   () => run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "testsrc2=size=300x300:rate=1", "-frames:v", "1", covers.png]),
   () => run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "smptehdbars=size=640x400:rate=1", "-frames:v", "1", covers.wide]),
   () => run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "mandelbrot=size=1600x1600:rate=1", "-frames:v", "1", covers.huge]),
+  async () => {
+    const baseline = join(work, "cover-1500-baseline.jpg");
+    await run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "mandelbrot=size=1500x1500:rate=1", "-frames:v", "1", "-pix_fmt", "yuvj444p", baseline]);
+    await run(["magick", baseline, "-interlace", "JPEG", "-sampling-factor", "1x1", covers.bigProgressive]);
+  },
+  () => run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "testsrc2=size=1500x1500:rate=1", "-frames:v", "1", "-pix_fmt", "rgba", covers.bigPng]),
 ]);
 
 const ARTISTS = [
@@ -70,7 +81,7 @@ for (let a = 0; a < ARTISTS.length; a++) {
       n++;
       const kinds: Job["kind"][] = ["cbr128", "cbr128", "cbr320", "vbr", "vbr-plain"];
       const tags: Job["tag"][] = ["v23", "v23", "v24", "v1"];
-      const coverKinds: (keyof typeof covers | undefined)[] = ["jpeg", "png", "wide", undefined, "jpeg", "huge"];
+      const coverKinds: (keyof typeof covers | undefined)[] = ["jpeg", "png", "wide", undefined, "jpeg", "huge", "bigProgressive", "bigPng"];
       jobs.push({
         file: `${String(n).padStart(3, "0")} ${ARTISTS[a]!.replace(/[&/]/g, "and")} - ${WORDS[(n * 7) % WORDS.length]}.mp3`,
         title: `${WORDS[(n * 7) % WORDS.length]} ${WORDS[(n * 13 + 5) % WORDS.length]}`,
