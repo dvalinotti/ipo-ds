@@ -15,7 +15,7 @@ contract shape, the chosen visual direction, the parts kit's class strings.
 | 3 | 4, 5 | `walkman-03-screens.md` (to write) | Plans 1, 2 | Explorer (tabs, VirtualList, drill-down, OSK search, held-D-pad repeat, ♪ marker) and Now Playing (transport, scrubber gesture, marquee, placeholder art), all driven by headless tests |
 | 4 | 6, 7 | `walkman-04-native-localmedia.md` (to write) | Plan 1 (contract only) — can run in parallel with Plans 2–3 | `hosts/3ds/src/localmedia.c`: scan, ID3v2/v1, duration, minimp3 → NDSP, seek, snapshot rule; APIC → stb_image → RGB565 texture; `media.local` in the 3DS profile (hostAbi 12); `POCKETJS_LOCALMEDIA` build flag; host-compiled C tests for the tag/frame parsers |
 | 5 | 8 | `walkman-05-hardening.md` (to write) | Plans 3, 4 | Device checklist on New 3DS + Azahar, scan-time/CPU/memory/underrun budgets, corrupt-file corpus, Azahar e2e capture |
-| — | v2 | — | Plan 5 | Lid-closed playback, resume-on-launch |
+| — | v2 | — | Plan 5 | Lid-closed playback, resume-on-launch, theme switching |
 
 ## Ordering
 
