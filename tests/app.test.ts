@@ -444,3 +444,28 @@ test("fifty track changes leave at most one live cover and release each exactly 
   expect(new Set(released).size).toBe(released.length);
   expect(rig.host.ns.status()).toContain('"artHandles":1');
 }, 120_000);
+
+test("a playback error shows in the LCD status row", async () => {
+  const rig = await bootWith([{ file: "broken.mp3", title: "Broken", durationMs: 1000, corrupt: true }]);
+  press(rig, A);
+  frames(rig, 3);
+  expect(screenText(rig.world, "auxiliary")).toContain("MP3 frame sync not found");
+}, 120_000);
+
+test("holding L+R shows underruns, decode load and live covers without stepping tabs", async () => {
+  const rig = await bootWith(COVERS);
+  press(rig, A);
+  frames(rig, 3);
+  rig.host.setDecodeLoad(23);
+  frames(rig, 3, { buttons: BTN.LTRIGGER });
+  frames(rig, 3, { buttons: BTN.LTRIGGER | BTN.RTRIGGER });
+  expect(screenText(rig.world, "auxiliary")).toContain("U:0 D:23% A:1");
+  frames(rig, 3);
+  expect(screenText(rig.world, "auxiliary")).toContain("1 of 4");
+  expect(header(rig.world, "Song Name")).toBeDefined(); // still the Songs tab (L alone could not step left of it)
+  press(rig, BTN.RTRIGGER); // Artists
+  frames(rig, 3, { buttons: BTN.RTRIGGER });
+  frames(rig, 3, { buttons: BTN.RTRIGGER | BTN.LTRIGGER });
+  frames(rig, 3);
+  expect(header(rig.world, "Song Name")).toBeUndefined(); // still Artists: the second shoulder did not step back
+}, 120_000);

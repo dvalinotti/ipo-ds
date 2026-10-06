@@ -124,6 +124,8 @@ export const AQUA: Theme = {
   infoAlbum: "w-full text-center text-xs text-[#6a6c5a] mt-[1]",
   infoStatus: "flex-row items-center gap-[6] mt-[8]",
   infoStatusText: "text-xs text-[#3c3e31]",
+  infoNote: "w-full text-center text-xs text-[#3c3e31]",
+  infoAlert: "w-full text-center text-xs font-bold text-[#b0281c]",
   infoFlagText: "text-xs font-bold text-[#1c6fd1]",
 
   seekCapsule: "absolute left-[10] top-[120] w-[300] h-[30] flex-row items-center px-[8] gap-[8] rounded-[15] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",

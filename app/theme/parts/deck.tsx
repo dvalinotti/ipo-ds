@@ -10,7 +10,7 @@ import { AQUA } from "../aqua.ts";
 import { trackOffset } from "../geometry.ts";
 import { placeholderArt } from "../placeholder.ts";
 import type { RepeatMode, Theme, TransportKind } from "../theme.ts";
-import { FONT_12, FONT_16_BOLD } from "../fonts.ts";
+import { FONT_12, FONT_12_BOLD, FONT_16_BOLD } from "../fonts.ts";
 import { Marquee } from "./marquee.tsx";
 
 export function PlaceholderArt(props: { album: string; theme?: Theme }) {
@@ -55,6 +55,9 @@ export function InfoLcd(props: {
   position: string;
   shuffle: boolean;
   repeat: RepeatMode;
+  /** Replaces the status row: diagnostics, or a playback error when `alert`. */
+  note?: string;
+  alert?: boolean;
   theme?: Theme;
 }) {
   const t = () => props.theme ?? AQUA;
@@ -63,18 +66,27 @@ export function InfoLcd(props: {
       <Marquee text={props.title} class={t().infoTitle} slot={FONT_16_BOLD} width={INFO_TEXT_PX} />
       <Marquee text={props.artist} class={t().infoArtist} slot={FONT_12} width={INFO_TEXT_PX} />
       <Marquee text={props.album} class={t().infoAlbum} slot={FONT_12} width={INFO_TEXT_PX} />
-      <View class={t().infoStatus}>
-        <Text class={t().infoStatusText}>{props.position}</Text>
-        <Show when={props.shuffle}>
-          <Image class="w-[16] h-[16]" src={t().icon("shuffle", "blue")} />
-        </Show>
-        <Show when={props.repeat !== "off"}>
-          <Image class="w-[16] h-[16]" src={t().icon("repeat", "blue")} />
-        </Show>
-        <Show when={props.repeat === "one"}>
-          <Text class={t().infoFlagText}>1</Text>
-        </Show>
-      </View>
+      <Show
+        when={!props.note}
+        fallback={
+          <View class={t().infoStatus}>
+            <Marquee text={props.note!} class={props.alert ? t().infoAlert : t().infoNote} slot={props.alert ? FONT_12_BOLD : FONT_12} width={INFO_TEXT_PX} />
+          </View>
+        }
+      >
+        <View class={t().infoStatus}>
+          <Text class={t().infoStatusText}>{props.position}</Text>
+          <Show when={props.shuffle}>
+            <Image class="w-[16] h-[16]" src={t().icon("shuffle", "blue")} />
+          </Show>
+          <Show when={props.repeat !== "off"}>
+            <Image class="w-[16] h-[16]" src={t().icon("repeat", "blue")} />
+          </Show>
+          <Show when={props.repeat === "one"}>
+            <Text class={t().infoFlagText}>1</Text>
+          </Show>
+        </View>
+      </Show>
     </View>
   );
 }

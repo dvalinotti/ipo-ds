@@ -74,8 +74,9 @@ export function stepShoulders(
     if (pressed & bits.r) { events.push("next"); chorded = true; }
   } else {
     if (yWas && !chorded) events.push("reveal");
-    if (pressed & bits.l) events.push("tabPrev");
-    if (pressed & bits.r) events.push("tabNext");
+    // Both shoulders down is the diagnostics chord (Now Playing): no tab step.
+    if (pressed & bits.l && !(buttons & bits.r)) events.push("tabPrev");
+    if (pressed & bits.r && !(buttons & bits.l)) events.push("tabNext");
     chorded = false;
   }
   return { state: { mask: buttons, chorded }, events };
