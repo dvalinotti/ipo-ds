@@ -62,7 +62,8 @@ test("design: art is centred in its frame; LCD lines clear the pill; tabs form o
 
   const line = pathTo(world, "primary", "142 songs · 9.6 hrs");
   const [, ly, , lh] = rect(line.at(-2));
-  const [, by, , bh] = rect(line.at(-3));
+  // The line is a marquee: run → Text → clip box → LCD pill.
+  const [, by, , bh] = rect(line.at(-4));
   const [, ty] = rect(pathTo(world, "primary", "Ds Man").at(-2));
   expect(ty).toBeGreaterThanOrEqual(by + 2);
   expect(ly + lh).toBeLessThanOrEqual(by + bh - 2);
@@ -157,10 +158,10 @@ test("empty library: guidance and a single Scan again hint", () => {
   expect(screenText(world, "auxiliary")).toContain("Nothing playing");
 });
 
-/** A text run's <Text> element (path[-2]) lies inside the box that holds it (path[-3]). */
+/** A marquee's clip box (run → Text → clip box → panel) lies inside its panel, so a long line never paints outside it. */
 function expectInside(path: ReturnType<typeof pathTo>): void {
-  const [x, , w] = path[path.length - 2]!.rect!;
-  const [bx, , bw] = path[path.length - 3]!.rect!;
+  const [x, , w] = path[path.length - 3]!.rect!;
+  const [bx, , bw] = path[path.length - 4]!.rect!;
   expect(x).toBeGreaterThanOrEqual(bx);
   expect(x + w).toBeLessThanOrEqual(bx + bw);
 }

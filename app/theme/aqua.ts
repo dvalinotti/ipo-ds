@@ -29,7 +29,7 @@ const LARGE_ICONS: Record<"play" | "pause", Record<"white" | "ink", string>> = {
 export const AQUA: Theme = {
   name: "aqua",
   osk: "classic",
-  oskKeyHeight: 43,
+  oskKeyHeight: 45,
 
   topScreen: "w-full h-full flex-col bg-[#c2c2c2] overflow-hidden",
   bottomScreen: "relative w-full h-full bg-gradient-to-b from-[#d6d6d6] via-[#c2c2c2] to-[#a8a8a8] overflow-hidden",
@@ -40,7 +40,7 @@ export const AQUA: Theme = {
     color === "red" ? "w-[10] h-[10] rounded-[5] border border-[#00000059] bg-gradient-to-b from-[#ffb3a8] to-[#e0443a]"
     : color === "amber" ? "w-[10] h-[10] rounded-[5] border border-[#00000059] bg-gradient-to-b from-[#ffe2a1] to-[#e3a21a]"
     : "w-[10] h-[10] rounded-[5] border border-[#00000059] bg-gradient-to-b from-[#c9f0a8] to-[#4fa83a]",
-  lcdStatus: "w-[160] h-[30] ml-[4] px-[6] flex-col items-center justify-center overflow-hidden rounded-[6] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
+  lcdStatus: "w-[144] h-[30] shrink-0 ml-[4] px-[6] flex-col items-center justify-center overflow-hidden rounded-[6] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
   lcdTitle: "w-full leading-[13] text-center text-xs font-bold text-[#2b2b2b]",
   lcdLine: "w-full leading-[13] text-center text-xs text-[#4a4c3f]",
   tabs: "flex-row items-center ml-[6] gap-[3]",
@@ -129,7 +129,10 @@ export const AQUA: Theme = {
   seekCapsule: "absolute left-[10] top-[120] w-[300] h-[30] flex-row items-center px-[8] gap-[8] rounded-[15] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
   seekTime: "w-[34] text-xs font-bold text-[#1f2018]",
   seekTimeRight: "w-[34] text-xs font-bold text-[#1f2018] text-right",
+  seekTimeWide: "w-[46] text-xs font-bold text-[#1f2018]",
+  seekTimeRightWide: "w-[46] text-xs font-bold text-[#1f2018] text-right",
   seekTrack: "w-[200] h-[8] relative rounded-[4] border border-[#8a8c78] bg-[#c9cbb3]",
+  seekTrackWide: "w-[176] h-[8] relative rounded-[4] border border-[#8a8c78] bg-[#c9cbb3]",
   seekFill: "absolute left-[1] top-[1] h-[6] rounded-[3] bg-[#4a4c3f]",
   seekKnob: "absolute top-[-6] w-[18] h-[18] rounded-[9] bg-gradient-to-b from-[#b9dcff] via-[#5aa7f0] to-[#1c6fd1] border border-[#1a4f99]",
 

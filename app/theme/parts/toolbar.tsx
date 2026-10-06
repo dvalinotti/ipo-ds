@@ -4,6 +4,11 @@ import { For, Show } from "solid-js";
 import { Text, View } from "@pocketjs/framework/components";
 import { AQUA } from "../aqua.ts";
 import type { Tab, Theme } from "../theme.ts";
+import { FONT_12 } from "../fonts.ts";
+import { Marquee } from "./marquee.tsx";
+
+/** Text width inside the 144 px LCD (6 px padding each side). */
+const LCD_TEXT_PX = 132;
 
 export const TABS: readonly Tab[] = ["Songs", "Artists", "Albums"];
 
@@ -23,7 +28,7 @@ export function LcdStatus(props: { title: string; line: string; theme?: Theme })
   return (
     <View class={t().lcdStatus}>
       <Text class={t().lcdTitle}>{props.title}</Text>
-      <Text class={t().lcdLine}>{props.line}</Text>
+      <Marquee text={props.line} class={t().lcdLine} slot={FONT_12} width={LCD_TEXT_PX} />
     </View>
   );
 }
