@@ -40,12 +40,14 @@ export const AQUA: Theme = {
     : color === "amber" ? "w-[10] h-[10] rounded-[5] border border-[#00000059] bg-gradient-to-b from-[#ffe2a1] to-[#e3a21a]"
     : "w-[10] h-[10] rounded-[5] border border-[#00000059] bg-gradient-to-b from-[#c9f0a8] to-[#4fa83a]",
   lcdStatus: "w-[160] h-[30] ml-[4] px-[6] flex-col items-center justify-center overflow-hidden rounded-[6] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
-  lcdTitle: "w-full text-center text-xs font-bold text-[#2b2b2b]",
-  lcdLine: "w-full text-center text-xs text-[#4a4c3f]",
-  tabs: "flex-row items-center ml-[6] gap-[2]",
+  lcdTitle: "w-full leading-[13] text-center text-xs font-bold text-[#2b2b2b]",
+  lcdLine: "w-full leading-[13] text-center text-xs text-[#4a4c3f]",
+  tabs: "flex-row items-center ml-[6] gap-[3]",
+  tabGroup: "h-[20] p-[1] flex-row items-center rounded-[4] border border-[#7d7d7d] bg-[#7d7d7d] overflow-hidden",
   tab: (active) => active
-    ? "h-[20] px-[8] items-center justify-center rounded-[4] bg-gradient-to-b from-[#b9dcff] via-[#5aa7f0] to-[#1c6fd1] border border-[#1a4f99]"
-    : "h-[20] px-[8] items-center justify-center rounded-[4] bg-gradient-to-b from-[#ffffff] via-[#e2e2e2] to-[#c4c4c4] border border-[#7d7d7d]",
+    ? "h-[18] px-[8] items-center justify-center bg-gradient-to-b from-[#b9dcff] via-[#5aa7f0] to-[#1c6fd1]"
+    : "h-[18] px-[8] items-center justify-center bg-gradient-to-b from-[#ffffff] via-[#e2e2e2] to-[#c4c4c4]",
+  tabDivider: "w-[1] h-[18] bg-[#7d7d7d]",
   tabText: (active) => (active ? "text-xs text-white" : "text-xs text-[#2b2b2b]"),
   hint: "text-xs text-[#4a4a4a]",
 
@@ -54,7 +56,7 @@ export const AQUA: Theme = {
   headerLeft: (sorted) => sorted
     ? "w-[242] h-[15] pl-[22] flex-row items-center gap-[4] bg-gradient-to-b from-[#d9ebff] via-[#a9cdf6] to-[#8fbbef]"
     : "w-[242] h-[15] pl-[22] flex-row items-center gap-[4]",
-  headerRight: "flex-1 h-[15] flex-row items-center",
+  headerRight: "flex-1 h-[15] pl-[6] flex-row items-center",
   sortIcon: "theme/icons/sort-up-ink.svg",
   headerText: "text-xs text-[#2b2b2b]",
 
@@ -65,7 +67,7 @@ export const AQUA: Theme = {
     : "w-full h-[21] flex-row items-center bg-white",
   rowLead: "w-[22] h-[21] items-center justify-center",
   rowTitleCell: "w-[214] h-[21] mr-[6] flex-col justify-center overflow-hidden",
-  rowDetailCell: "flex-1 h-[21] flex-col justify-center overflow-hidden",
+  rowDetailCell: "flex-1 h-[21] pl-[6] flex-col justify-center overflow-hidden",
   rowCountCell: "w-[60] h-[21] pr-[22] flex-col items-end justify-center",
   rowTitle: (kind) => (kind === "selected" ? "text-xs text-white" : "text-xs text-black"),
   rowDetail: (kind) => (kind === "selected" ? "text-xs text-white" : "text-xs text-[#2b2b2b]"),
@@ -100,10 +102,10 @@ export const AQUA: Theme = {
   panel: "w-full flex-1 flex-col items-center justify-center gap-[4] bg-white",
   panelTitle: "text-sm font-bold text-[#2b2b2b]",
   panelText: "text-xs text-[#4a4a4a]",
-  progressTrack: "w-[220] h-[12] mt-[6] rounded-[6] border border-[#1a4f99] bg-white overflow-hidden",
-  progressFill: "h-[10] bg-gradient-to-b from-[#b9dcff] via-[#5aa7f0] to-[#1c6fd1]",
+  progressTrack: "w-[220] h-[12] mt-[6] p-[1] rounded-[6] border border-[#1a4f99] bg-white overflow-hidden",
+  progressFill: "h-[10] rounded-[5] bg-gradient-to-b from-[#b9dcff] via-[#5aa7f0] to-[#1c6fd1]",
 
-  artFrame: "absolute left-[10] top-[10] w-[100] h-[100] p-[3] border border-[#7d7d7d] bg-white",
+  artFrame: "absolute left-[10] top-[10] w-[100] h-[100] items-center justify-center border border-[#7d7d7d] bg-white",
   ring: (size) => (size === "outer"
     ? "absolute left-[8] top-[8] w-[76] h-[76] rounded-[38] border-[2] border-[#f4f6e6] opacity-85"
     : "absolute left-[22] top-[22] w-[48] h-[48] rounded-[24] border-[2] border-[#f4f6e6] opacity-85"),
@@ -120,7 +122,7 @@ export const AQUA: Theme = {
   seekTime: "w-[34] text-xs font-bold text-[#1f2018]",
   seekTimeRight: "w-[34] text-xs font-bold text-[#1f2018] text-right",
   seekTrack: "w-[200] h-[8] relative rounded-[4] border border-[#8a8c78] bg-[#c9cbb3]",
-  seekFill: "absolute left-[0] top-[0] h-[6] rounded-[3] bg-[#4a4c3f]",
+  seekFill: "absolute left-[1] top-[1] h-[6] rounded-[3] bg-[#4a4c3f]",
   seekKnob: "absolute top-[-6] w-[18] h-[18] rounded-[9] bg-gradient-to-b from-[#b9dcff] via-[#5aa7f0] to-[#1c6fd1] border border-[#1a4f99]",
 
   transportRow: "absolute left-[10] top-[160] w-[300] h-[72] flex-row items-center justify-center gap-[10]",

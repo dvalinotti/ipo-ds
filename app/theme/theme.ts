@@ -32,7 +32,11 @@ export interface Theme {
   lcdTitle: string;
   lcdLine: string;
   tabs: string;
+  /** The bordered box that joins the tabs into one segmented control. */
+  tabGroup: string;
   tab(active: boolean): string;
+  /** 1 px rule between adjacent segments. */
+  tabDivider: string;
   tabText(active: boolean): string;
   hint: string;
 

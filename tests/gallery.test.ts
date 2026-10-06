@@ -49,6 +49,45 @@ test("main: songs with a selected and a playing row; Now Playing with embedded a
   expectAll(screenText(world, "auxiliary"), ["One More Time", "Daft Punk", "3 of 12", "1:42", "-3:58", "DISCOVERY"]);
 });
 
+type Rect = [number, number, number, number];
+const rect = (node: { rect: Rect | null } | undefined): Rect => node!.rect!;
+
+test("design: art is centred in its frame; LCD lines clear the pill; tabs form one segmented control; header text aligns with its column", () => {
+  // Main state (still showing).
+  const art = pathTo(world, "auxiliary", "DISCOVERY");
+  const [fx, fy, fw, fh] = rect(art.at(-4));
+  const [cx, cy, cw, ch] = rect(art.at(-3));
+  expect(cx - fx).toBe(fx + fw - (cx + cw));
+  expect(cy - fy).toBe(fy + fh - (cy + ch));
+
+  const line = pathTo(world, "primary", "142 songs · 9.6 hrs");
+  const [, ly, , lh] = rect(line.at(-2));
+  const [, by, , bh] = rect(line.at(-3));
+  const [, ty] = rect(pathTo(world, "primary", "Ds Man").at(-2));
+  expect(ty).toBeGreaterThanOrEqual(by + 2);
+  expect(ly + lh).toBeLessThanOrEqual(by + bh - 2);
+
+  // Segments touch, separated by a 1 px divider, inside one group.
+  const [sx, , sw] = rect(pathTo(world, "primary", "Songs").at(-3));
+  const [ax, , aw] = rect(pathTo(world, "primary", "Artists").at(-3));
+  const [bx] = rect(pathTo(world, "primary", "Albums").at(-3));
+  expect(ax).toBe(sx + sw + 1);
+  expect(bx).toBe(ax + aw + 1);
+
+  // The second column's header and values share one inset past the column edge.
+  const [hx] = rect(pathTo(world, "primary", "Artist").at(-2));
+  const [dx] = rect(pathTo(world, "primary", "Daft Punk").at(-2));
+  expect(hx).toBe(dx);
+  expect(hx).toBeGreaterThan(242);
+
+  // Seek fill starts inside the track's 1 px border.
+  const capsule = pathTo(world, "auxiliary", "1:42").at(-3)!;
+  const track = capsule.children[1]!;
+  const [tx, tyy] = rect(track);
+  const [qx, qy] = rect(track.children[0]);
+  expect([qx, qy]).toEqual([tx + 1, tyy + 1]);
+});
+
 test("artists: names with right-hand counts, Queen selected; idle Now Playing", () => {
   show("artists");
   expectAll(screenText(world, "primary"), ["Beyoncé", "Queen", "Unknown Artist", "Open"]);
@@ -59,6 +98,11 @@ test("artists: names with right-hand counts, Queen selected; idle Now Playing", 
 
 test("album drill-down: breadcrumb and numbered rows; Now Playing with placeholder art", () => {
   show("album");
+  const ph = pathTo(world, "auxiliary", "Di");
+  const [pfx, pfy, pfw] = rect(ph.at(-5));
+  const [pcx, pcy, pcw] = rect(ph.at(-4));
+  expect(pcx - pfx).toBe(pfx + pfw - (pcx + pcw));
+  expect(pcy - pfy).toBe(pcx - pfx);
   expectAll(screenText(world, "primary"), ["Albums", "›", "Discovery", "Daft Punk · 14 songs", "5:20"]);
   expect(backgroundOf(pathTo(world, "primary", "Aerodynamic"))).toBe(SELECTED_ROW);
   // A title longer than its column is clipped by its 214 px cell (6 px gutter); the time column stays put.
@@ -72,6 +116,12 @@ test("album drill-down: breadcrumb and numbered rows; Now Playing with placehold
 
 test("scanning: LCD and panel report progress; idle Now Playing", () => {
   show("scanning");
+  // The progress fill sits inside the track's 1 px border, the full inner height.
+  const body = pathTo(world, "primary", "sdmc:/music/ · 87 of 142 files").at(-3)!;
+  const progress = body.children.at(-1)!;
+  const [px, py, , ph2] = rect(progress);
+  const [fx2, fy2, , fh2] = rect(progress.children[0]);
+  expect([fx2, fy2, fh2]).toEqual([px + 1, py + 1, ph2 - 2]);
   expectAll(screenText(world, "primary"), ["Scanning…", "Scanning your music…", "sdmc:/music/ · 87 of 142 files", "Now Playing"]);
   expect(screenText(world, "auxiliary")).toContain("Nothing playing");
 });

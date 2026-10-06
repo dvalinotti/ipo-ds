@@ -70,7 +70,7 @@ export function InfoLcd(props: {
   );
 }
 
-/** Inner width of the seek track (200 wide with a 1 px border). */
+/** Inner width of the seek track (200 wide with a 1 px border); the fill starts at x 1 and the 18 px knob centres on its end. */
 export const SEEK_TRACK_PX = 198;
 
 export function SeekCapsule(props: { elapsed: string; remaining: string; fraction: number; enabled: boolean; theme?: Theme }) {
@@ -82,7 +82,7 @@ export function SeekCapsule(props: { elapsed: string; remaining: string; fractio
       <View class={t().seekTrack}>
         <Show when={props.enabled}>
           <View class={t().seekFill} style={{ width: x() }} />
-          <View class={t().seekKnob} style={{ insetL: x() - 9 }} />
+          <View class={t().seekKnob} style={{ insetL: x() - 8 }} />
         </Show>
       </View>
       <Text class={t().seekTimeRight}>{props.remaining}</Text>

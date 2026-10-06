@@ -1,6 +1,6 @@
 // The top screen's toolbar: window lights, the iTunes status LCD and the
 // Songs / Artists / Albums segmented tabs with their L / R hints.
-import { For } from "solid-js";
+import { For, Show } from "solid-js";
 import { Text, View } from "@pocketjs/framework/components";
 import { AQUA } from "../aqua.ts";
 import type { Tab, Theme } from "../theme.ts";
@@ -33,13 +33,20 @@ export function SegmentedTabs(props: { active: Tab; theme?: Theme }) {
   return (
     <View class={t().tabs}>
       <Text class={t().hint}>L</Text>
-      <For each={TABS}>
-        {(tab) => (
-          <View class={t().tab(tab === props.active)}>
-            <Text class={t().tabText(tab === props.active)}>{tab}</Text>
-          </View>
-        )}
-      </For>
+      <View class={t().tabGroup}>
+        <For each={TABS}>
+          {(tab, i) => (
+            <>
+              <Show when={i() > 0}>
+                <View class={t().tabDivider} />
+              </Show>
+              <View class={t().tab(tab === props.active)}>
+                <Text class={t().tabText(tab === props.active)}>{tab}</Text>
+              </View>
+            </>
+          )}
+        </For>
+      </View>
       <Text class={t().hint}>R</Text>
     </View>
   );
