@@ -43,7 +43,7 @@ export function initialPlayer(): PlayerState {
   return { queue: [], order: [], index: -1, shuffle: false, repeat: "off", status: IDLE_STATUS, failures: 0, serial: 0 };
 }
 
-export function currentId(state: PlayerState): number {
+export function currentId(state: Pick<PlayerState, "index" | "order">): number {
   return state.index >= 0 ? state.order[state.index]! : -1;
 }
 

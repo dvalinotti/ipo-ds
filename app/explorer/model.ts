@@ -4,9 +4,7 @@
 import { formatTime } from "../format.ts";
 import { rows, type Library, type Row, type View } from "../library/library.ts";
 import type { LegendItem } from "../theme/parts/strips.tsx";
-import type { Tab } from "../theme/theme.ts";
-
-export const TAB_ORDER: readonly Tab[] = ["Songs", "Artists", "Albums"];
+import { TAB_ORDER, type Tab } from "../theme/theme.ts";
 
 export interface ExplorerState {
   tab: Tab;

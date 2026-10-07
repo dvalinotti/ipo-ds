@@ -3,15 +3,13 @@
 import { For, Show } from "solid-js";
 import { Text, View } from "@pocketjs/framework/components";
 import { AQUA } from "../aqua.ts";
-import type { Tab, Theme } from "../theme.ts";
+import { TAB_ORDER, type Tab, type Theme } from "../theme.ts";
 import { FONT_12 } from "../fonts.ts";
 import { Gel, GelLabel } from "./gel.tsx";
 import { Marquee } from "./marquee.tsx";
 
 /** Text width inside the 144 px LCD (6 px padding each side). */
 const LCD_TEXT_PX = 132;
-
-export const TABS: readonly Tab[] = ["Songs", "Artists", "Albums"];
 
 export function Lights(props: { theme?: Theme }) {
   const t = () => props.theme ?? AQUA;
@@ -40,7 +38,7 @@ export function SegmentedTabs(props: { active: Tab; theme?: Theme }) {
     <View class={t().tabs}>
       <Text class={t().hint}>L</Text>
       <View class={t().tabGroup}>
-        <For each={TABS}>
+        <For each={TAB_ORDER}>
           {(tab, i) => (
             <>
               <Show when={i() > 0}>

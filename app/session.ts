@@ -11,12 +11,16 @@ import { buildLibrary, type Library } from "./library/library.ts";
 import { createPlayerController, type PlayerController } from "./player/controller.ts";
 import { IDLE_STATUS, initialPlayer, type PlayerAction, type PlayerState } from "./player/reducer.ts";
 
+/** The player as the screens see it: the queue, its order and position, the modes. The status moves
+ * every frame of playback and is read from `status`; it is not part of this view. */
+export type PlayerView = Omit<PlayerState, "status">;
+
 export interface Session {
   /** False on a build without media.local. */
   available: boolean;
   /** Null until the first scan completes. */
   library: Accessor<Library | null>;
-  player: Accessor<PlayerState>;
+  player: Accessor<PlayerView>;
   status: Accessor<LocalStatus>;
   scanning: Accessor<boolean>;
   /** A host reply failed validation; the screens report it instead of crashing the frame. */
