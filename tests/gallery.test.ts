@@ -25,6 +25,7 @@ afterAll(disposeGuest);
 /** R advances one state; the tests visit states in GALLERY_STATES order (search, with its modal keyboard, last). */
 function show(name: GalleryStateName): void {
   const target = GALLERY_STATES.indexOf(name);
+  if (target < 0) throw new Error(`no gallery state ${JSON.stringify(name)}`);
   while (current !== target) {
     world.step({ buttons: BTN.RTRIGGER });
     for (let frame = 0; frame < 3; frame++) world.step();
@@ -247,6 +248,31 @@ test("loading: while a cover decodes, the art frame shows the spinner centred on
   expect(spinner?.rect).toEqual([44, 44, 32, 32]);
   expect(pathsTo(world, "auxiliary", "Di")).toHaveLength(0); // no placeholder initials
   expect(screenText(world, "auxiliary")).toContain("Digital Love");
+});
+
+test("gels: the reference pill, every transport state, and a fill too narrow for its gloss draws nothing outside it", () => {
+  show("gels");
+  // The reference pill: 115×44 with its label and shadow copy; gloss per spec §3.1.
+  const pill = pathsTo(world, "primary", "default");
+  expect(pill).toHaveLength(2);
+  const body = pill[0]!.at(-4)!;
+  expect(rect(body).slice(2)).toEqual([115, 44]);
+  expect(glossOffset(body)).toEqual([9, 2, 97, 18]);
+  // Three progress tracks (2 %, 10 %, 60 %): the 4 px fill's gloss has no room and paints nothing outside the fill.
+  const tracks = findAll(world.tree("primary"), (node) => node.rect !== null && node.rect[2] === 220 && node.rect[3] === 12);
+  expect(tracks).toHaveLength(3);
+  const fill = tracks[0]!.children[0]!;
+  expect(rect(fill)[2]).toBe(4);
+  const gloss = fill.children[0]!.rect;
+  if (gloss && gloss[2] > 0 && gloss[3] > 0) {
+    expect(gloss[0]).toBeGreaterThanOrEqual(rect(fill)[0]);
+    expect(gloss[0] + gloss[2]).toBeLessThanOrEqual(rect(fill)[0] + rect(fill)[2]);
+  }
+  // Transport: an enabled blue/grey row, an enabled grey row, a disabled row (no gloss: it would show through at 45 %).
+  const rows = findAll(world.tree("auxiliary"), (node) => node.children.length === 5 && node.children.every((child) => child.rect !== null && child.rect[2] === child.rect[3] && child.rect[2] >= 34));
+  expect(rows).toHaveLength(3);
+  expect(rows[0]!.children.map(glossOffset)).toEqual([[5, 3, 24, 16], [6, 3, 30, 20], [10, 3, 44, 30], [6, 3, 30, 20], [5, 3, 24, 16]]);
+  expect(rows[2]!.children.every((button) => button.children[0]!.hidden)).toBe(true);
 });
 
 test("search: query strip with results; the classic keyboard on the bottom screen", () => {

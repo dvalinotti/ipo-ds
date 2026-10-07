@@ -5,6 +5,7 @@
 import { expect, test } from "bun:test";
 import { AQUA } from "../app/theme/aqua.ts";
 import type { GelClasses, TransportKind } from "../app/theme/theme.ts";
+import { REFERENCE_PILL } from "../app/gallery/reference-pill.ts";
 
 interface Case {
   name: string;
@@ -39,6 +40,7 @@ function gelCases(): Case[] {
   out.push({ name: "progress fill", gel: AQUA.progressFill, tone: "blue", outline: false, shadow: false, sizes: [[0, 10], [10, 10], [22, 10], [PROGRESS_TRACK_PX, 10]] });
   out.push({ name: "tab active", gel: AQUA.tab(true), tone: "blue", outline: false, shadow: false, sizes: [[40, 18], [60, 18]] });
   out.push({ name: "tab", gel: AQUA.tab(false), tone: "grey", outline: false, shadow: false, sizes: [[40, 18], [60, 18]] });
+  out.push({ name: "reference pill", gel: REFERENCE_PILL, tone: "blue", outline: true, shadow: true });
   return out;
 }
 
