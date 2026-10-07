@@ -2,7 +2,7 @@ import type { LocalTrack } from "@pocketjs/framework/localmedia";
 import { normalize } from "./normalize.ts";
 
 export interface Artist { key: string; name: string; trackIds: number[] }
-export interface Album { key: string; name: string; artist: string; trackIds: number[] }
+export interface Album { key: string; name: string; /** Folded name, for search. */ nameKey: string; artist: string; trackIds: number[] }
 export interface Library {
   tracks: Map<number, LocalTrack>;
   songs: number[];
@@ -11,6 +11,8 @@ export interface Library {
   /** Lookups by key, so a row renders without a search. */
   artistByKey: Map<string, Artist>;
   albumByKey: Map<string, Album>;
+  /** Folded title, artist and album per track (NUL-separated): one includes() per search match. */
+  searchKeys: Map<number, string>;
 }
 
 export type View =
@@ -20,7 +22,6 @@ export type Row = { kind: "song"; id: number } | { kind: "artist"; key: string }
 
 const stem = (file: string) => file.replace(/\.[^.]*$/, "");
 const compare = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
-const albumKey = (album: string, artist: string) => `${normalize(album)}\u0000${normalize(artist)}`;
 /** Track number order with unknown (0) after every numbered track. */
 const trackOrder = (n: number) => (n > 0 ? n : Number.MAX_SAFE_INTEGER);
 
@@ -37,10 +38,13 @@ function withFallbacks(track: LocalTrack): LocalTrack {
 export function buildLibrary(input: readonly LocalTrack[]): Library {
   const tracks = new Map<number, LocalTrack>();
   const titleKey = new Map<number, string>();
+  const searchKeys = new Map<number, string>();
   for (const raw of input) {
     const track = withFallbacks(raw);
     tracks.set(track.id, track);
-    titleKey.set(track.id, normalize(track.title));
+    const title = normalize(track.title);
+    titleKey.set(track.id, title);
+    searchKeys.set(track.id, `${title}\u0000${normalize(track.artist)}\u0000${normalize(track.album)}`);
   }
   const byTitle = (a: number, b: number) => compare(titleKey.get(a)!, titleKey.get(b)!) || a - b;
   const byAlbumTrack = (a: number, b: number) => {
@@ -55,8 +59,9 @@ export function buildLibrary(input: readonly LocalTrack[]): Library {
     const artist = artistMap.get(aKey) ?? { key: aKey, name: track.artist, trackIds: [] };
     artist.trackIds.push(track.id);
     artistMap.set(aKey, artist);
-    const bKey = albumKey(track.album, track.artist);
-    const album = albumMap.get(bKey) ?? { key: bKey, name: track.album, artist: track.artist, trackIds: [] };
+    const nameKey = normalize(track.album);
+    const bKey = `${nameKey}\u0000${aKey}`;
+    const album = albumMap.get(bKey) ?? { key: bKey, name: track.album, nameKey, artist: track.artist, trackIds: [] };
     album.trackIds.push(track.id);
     albumMap.set(bKey, album);
   }
@@ -69,24 +74,20 @@ export function buildLibrary(input: readonly LocalTrack[]): Library {
   const artists = [...artistMap.values()].sort((a, b) => compare(a.key, b.key));
   for (const artist of artists) artist.trackIds.sort((a, b) => albumRank.get(a)! - albumRank.get(b)! || byAlbumTrack(a, b));
 
-  return { tracks, songs: [...tracks.keys()].sort(byTitle), artists, albums, artistByKey: artistMap, albumByKey: albumMap };
-}
-
-function songMatches(track: LocalTrack, query: string): boolean {
-  return normalize(track.title).includes(query) || normalize(track.artist).includes(query) || normalize(track.album).includes(query);
+  return { tracks, songs: [...tracks.keys()].sort(byTitle), artists, albums, artistByKey: artistMap, albumByKey: albumMap, searchKeys };
 }
 
 export function rows(library: Library, view: View, query: string): Row[] {
   const q = normalize(query);
   const songs = (list: readonly number[]): Row[] =>
-    list.filter((id) => q === "" || songMatches(library.tracks.get(id)!, q)).map((id) => ({ kind: "song", id }));
+    (q === "" ? list : list.filter((id) => library.searchKeys.get(id)!.includes(q))).map((id) => ({ kind: "song", id }));
   switch (view.kind) {
     case "songs":
       return songs(library.songs);
     case "artists":
       return library.artists.filter((a) => q === "" || a.key.includes(q)).map((a) => ({ kind: "artist", key: a.key }));
     case "albums":
-      return library.albums.filter((a) => q === "" || normalize(a.name).includes(q)).map((a) => ({ kind: "album", key: a.key }));
+      return library.albums.filter((a) => q === "" || a.nameKey.includes(q)).map((a) => ({ kind: "album", key: a.key }));
     case "artist":
       return songs(library.artistByKey.get(view.key)?.trackIds ?? []);
     case "album":
