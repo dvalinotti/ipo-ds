@@ -11,6 +11,7 @@ import { trackOffset } from "../geometry.ts";
 import { placeholderArt } from "../placeholder.ts";
 import type { RepeatMode, Theme, TransportKind } from "../theme.ts";
 import { FONT_12, FONT_12_BOLD, FONT_16_BOLD } from "../fonts.ts";
+import { Gel } from "./gel.tsx";
 import { Marquee } from "./marquee.tsx";
 
 export function PlaceholderArt(props: { album: string; theme?: Theme }) {
@@ -130,7 +131,7 @@ export function SeekCapsule(props: {
       <View class={props.hours ? t().seekTrackWide : t().seekTrack}>
         <Show when={props.enabled}>
           <View class={t().seekFill} style={{ width: x() }} />
-          <View class={t().seekKnob} style={{ insetL: x() - 8 }} />
+          <Gel classes={t().seekKnob} style={{ insetL: x() - 8 }} />
         </Show>
       </View>
       <Text class={props.hours ? t().seekTimeRightWide : t().seekTimeRight}>{props.remaining}</Text>
@@ -155,14 +156,14 @@ export function TransportButton(props: { kind: TransportKind; on?: boolean; enab
     },
   });
   return (
-    <View class={t().transport(props.kind, props.on ?? false, enabled())} ref={(n: unknown) => (node = n)}>
+    <Gel classes={t().transport(props.kind, props.on ?? false, enabled())} ref={(n: unknown) => (node = n)}>
       <Show
         when={big()}
         fallback={<Image class="w-[16] h-[16]" src={t().icon(props.kind as "shuffle" | "repeat" | "prev" | "next", ink())} />}
       >
         <Image class="w-[32] h-[32]" src={t().iconLarge(props.kind as "play" | "pause", ink() === "white" ? "white" : "ink")} />
       </Show>
-    </View>
+    </Gel>
   );
 }
 

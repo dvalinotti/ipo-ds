@@ -1,6 +1,6 @@
 // Ds Man's Aqua / iTunes 4 theme: every slot is a complete class literal so the
 // build can compile it; state variants pick between literals.
-import type { IconInk, IconName, PlaceholderHue, Theme, TransportKind } from "./theme.ts";
+import type { GelClasses, IconInk, IconName, PlaceholderHue, Theme, TransportKind } from "./theme.ts";
 
 
 const HUES: readonly PlaceholderHue[] = [
@@ -26,6 +26,68 @@ const LARGE_ICONS: Record<"play" | "pause", Record<"white" | "ink", string>> = {
   pause: { white: "theme/icons/pause-lg-white.svg", ink: "theme/icons/pause-lg-ink.svg" },
 };
 
+// Gels (docs/superpowers/specs/2026-10-07-aqua-gels-design.md §3): a body darkest
+// under its gloss and glowing toward the bottom, with a gloss box over the top.
+// Blue is sampled from the reference button; grey is the same build in graphite.
+// A disabled button keeps its grey body at 45 % opacity but draws no gloss and no
+// shadow: opacity applies per primitive, so they would show through.
+const TAB_BLUE: GelClasses = {
+  body: "relative h-[18] px-[8] items-center justify-center bg-gradient-to-b from-[#4a80da] via-[#4a80da] to-[#c8daf6]",
+  gloss: "absolute left-[0] right-[0] top-[0] h-[9] bg-gradient-to-b from-[#f5f8fe] via-[#d3e1f8] to-[#93b4eb]",
+};
+const TAB_GREY: GelClasses = {
+  body: "relative h-[18] px-[8] items-center justify-center bg-gradient-to-b from-[#c4c4c4] via-[#c4c4c4] to-[#f4f4f4]",
+  gloss: "absolute left-[0] right-[0] top-[0] h-[9] bg-gradient-to-b from-[#fdfdfd] via-[#ececec] to-[#d6d6d6]",
+};
+const BADGE_BLUE: GelClasses = {
+  body: "relative w-[14] h-[14] rounded-[7] items-center justify-center bg-gradient-to-b from-[#4a80da] via-[#4a80da] to-[#c8daf6] border border-[#2b4f8c]",
+  gloss: "absolute left-[2] top-[3] w-[10] h-[6] rounded-[3] bg-gradient-to-b from-[#f5f8fe] via-[#d3e1f8] to-[#93b4eb]",
+};
+const BADGE_GREY: GelClasses = {
+  body: "relative w-[14] h-[14] rounded-[7] items-center justify-center bg-gradient-to-b from-[#c4c4c4] via-[#c4c4c4] to-[#f4f4f4] border border-[#6e6e6e]",
+  gloss: "absolute left-[2] top-[3] w-[10] h-[6] rounded-[3] bg-gradient-to-b from-[#fdfdfd] via-[#ececec] to-[#d6d6d6]",
+};
+const SCROLL_THUMB: GelClasses = {
+  body: "absolute left-[1] w-[11] rounded-[6] bg-gradient-to-r from-[#4a80da] via-[#4a80da] to-[#c8daf6] border border-[#2b4f8c]",
+  gloss: "absolute left-[2] top-[3] bottom-[3] w-[4] rounded-[2] bg-gradient-to-r from-[#f5f8fe] via-[#d3e1f8] to-[#93b4eb]",
+};
+const PROGRESS_FILL: GelClasses = {
+  body: "relative h-[10] rounded-[5] bg-gradient-to-b from-[#4a80da] via-[#4a80da] to-[#c8daf6]",
+  gloss: "absolute left-[3] right-[3] top-[1] h-[4] rounded-[2] bg-gradient-to-b from-[#f5f8fe] via-[#d3e1f8] to-[#93b4eb]",
+};
+const SEEK_KNOB: GelClasses = {
+  body: "absolute top-[-6] w-[18] h-[18] rounded-[9] shadow bg-gradient-to-b from-[#4a80da] via-[#4a80da] to-[#c8daf6] border border-[#2b4f8c]",
+  gloss: "absolute left-[2] top-[3] w-[14] h-[8] rounded-[4] bg-gradient-to-b from-[#f5f8fe] via-[#d3e1f8] to-[#93b4eb]",
+};
+const PLAY_BLUE: GelClasses = {
+  body: "relative w-[64] h-[64] rounded-[32] items-center justify-center shadow bg-gradient-to-b from-[#4a80da] via-[#4a80da] to-[#c8daf6] border border-[#2b4f8c]",
+  gloss: "absolute left-[10] top-[3] w-[44] h-[30] rounded-[15] bg-gradient-to-b from-[#f5f8fe] via-[#d3e1f8] to-[#93b4eb]",
+};
+const PLAY_OFF: GelClasses = {
+  body: "relative w-[64] h-[64] rounded-[32] items-center justify-center opacity-45 bg-gradient-to-b from-[#c4c4c4] via-[#c4c4c4] to-[#f4f4f4] border border-[#6e6e6e]",
+  gloss: "hidden",
+};
+const SKIP_GREY: GelClasses = {
+  body: "relative w-[42] h-[42] rounded-[21] items-center justify-center shadow bg-gradient-to-b from-[#c4c4c4] via-[#c4c4c4] to-[#f4f4f4] border border-[#6e6e6e]",
+  gloss: "absolute left-[6] top-[3] w-[30] h-[20] rounded-[10] bg-gradient-to-b from-[#fdfdfd] via-[#ececec] to-[#d6d6d6]",
+};
+const SKIP_OFF: GelClasses = {
+  body: "relative w-[42] h-[42] rounded-[21] items-center justify-center opacity-45 bg-gradient-to-b from-[#c4c4c4] via-[#c4c4c4] to-[#f4f4f4] border border-[#6e6e6e]",
+  gloss: "hidden",
+};
+const MODE_BLUE: GelClasses = {
+  body: "relative w-[34] h-[34] rounded-[17] items-center justify-center shadow bg-gradient-to-b from-[#4a80da] via-[#4a80da] to-[#c8daf6] border border-[#2b4f8c]",
+  gloss: "absolute left-[5] top-[3] w-[24] h-[16] rounded-[8] bg-gradient-to-b from-[#f5f8fe] via-[#d3e1f8] to-[#93b4eb]",
+};
+const MODE_GREY: GelClasses = {
+  body: "relative w-[34] h-[34] rounded-[17] items-center justify-center shadow bg-gradient-to-b from-[#c4c4c4] via-[#c4c4c4] to-[#f4f4f4] border border-[#6e6e6e]",
+  gloss: "absolute left-[5] top-[3] w-[24] h-[16] rounded-[8] bg-gradient-to-b from-[#fdfdfd] via-[#ececec] to-[#d6d6d6]",
+};
+const MODE_OFF: GelClasses = {
+  body: "relative w-[34] h-[34] rounded-[17] items-center justify-center opacity-45 bg-gradient-to-b from-[#c4c4c4] via-[#c4c4c4] to-[#f4f4f4] border border-[#6e6e6e]",
+  gloss: "hidden",
+};
+
 export const AQUA: Theme = {
   name: "aqua",
   osk: "classic",
@@ -46,11 +108,10 @@ export const AQUA: Theme = {
   tabs: "flex-row items-center ml-[6] gap-[3]",
   tabGroup: "relative h-[20] p-[1] flex-row items-center rounded-[4] bg-[#7d7d7d] overflow-hidden",
   tabFrame: "absolute left-[0] top-[0] w-full h-full rounded-[4] border border-[#7d7d7d]",
-  tab: (active) => active
-    ? "h-[18] px-[8] items-center justify-center bg-gradient-to-b from-[#b9dcff] via-[#5aa7f0] to-[#1c6fd1]"
-    : "h-[18] px-[8] items-center justify-center bg-gradient-to-b from-[#ffffff] via-[#e2e2e2] to-[#c4c4c4]",
+  tab: (active) => (active ? TAB_BLUE : TAB_GREY),
   tabDivider: "w-[1] h-[18] bg-[#7d7d7d]",
   tabText: (active) => (active ? "text-xs text-white" : "text-xs text-[#2b2b2b]"),
+  tabTextShadow: "absolute left-[0] top-[1] text-xs text-[#1d3f8099]",
   hint: "text-xs text-[#4a4a4a]",
 
   header: "w-full h-[15] shrink-0 flex-row items-center bg-gradient-to-b from-[#ffffff] via-[#e7e7e7] to-[#d4d4d4]",
@@ -80,16 +141,15 @@ export const AQUA: Theme = {
   rowMarker: (kind) => (kind === "selected" ? "text-xs text-white" : "text-xs text-[#1c6fd1]"),
 
   scrollTrack: "absolute right-[0] top-[0] w-[14] h-full bg-gradient-to-r from-[#d4d4d4] via-[#f1f1f1] to-[#d4d4d4]",
-  scrollThumb: "absolute left-[1] w-[11] rounded-[6] bg-gradient-to-b from-[#b9dcff] via-[#5aa7f0] to-[#1c6fd1] border border-[#1a4f99]",
+  scrollThumb: SCROLL_THUMB,
 
   footer: "w-full h-[20] shrink-0 flex-row items-center px-[8] gap-[12] bg-gradient-to-b from-[#d6d6d6] via-[#c2c2c2] to-[#a8a8a8]",
   footerRule: "w-full h-[1] shrink-0 bg-[#6e6e6e]",
   footerItem: "flex-row items-center gap-[4]",
   footerText: "text-xs text-[#2b2b2b]",
-  badge: (primary) => primary
-    ? "w-[14] h-[14] rounded-[7] items-center justify-center bg-gradient-to-b from-[#b9dcff] via-[#5aa7f0] to-[#1c6fd1] border border-[#1a4f99]"
-    : "w-[14] h-[14] rounded-[7] items-center justify-center bg-gradient-to-b from-[#ffffff] via-[#e2e2e2] to-[#c4c4c4] border border-[#7d7d7d]",
+  badge: (primary) => (primary ? BADGE_BLUE : BADGE_GREY),
   badgeText: (primary) => (primary ? "text-xs font-bold text-white" : "text-xs font-bold text-[#2b2b2b]"),
+  badgeTextShadow: "absolute left-[0] top-[1] text-xs font-bold text-[#1d3f8099]",
 
   strip: "w-full h-[20] shrink-0 flex-row items-center px-[6] gap-[6] bg-gradient-to-b from-[#d6d6d6] to-[#c2c2c2]",
   stripRule: "w-full h-[1] shrink-0 bg-[#8a8a8a]",
@@ -110,8 +170,8 @@ export const AQUA: Theme = {
   panelTitle: "text-sm font-bold text-[#2b2b2b]",
   panelText: "text-xs text-[#4a4a4a]",
   panelKeyLine: "flex-row items-center gap-[4]",
-  progressTrack: "w-[220] h-[12] mt-[6] p-[1] rounded-[6] border border-[#1a4f99] bg-white overflow-hidden",
-  progressFill: "h-[10] rounded-[5] bg-gradient-to-b from-[#b9dcff] via-[#5aa7f0] to-[#1c6fd1]",
+  progressTrack: "w-[220] h-[12] mt-[6] p-[1] rounded-[6] border border-[#2b4f8c] bg-white overflow-hidden",
+  progressFill: PROGRESS_FILL,
 
   artFrame: "absolute left-[10] top-[10] w-[100] h-[100] items-center justify-center border border-[#7d7d7d] bg-white",
   artLoading: "w-[98] h-[98] items-center justify-center bg-gradient-to-b from-[#f7f7f7] to-[#d8d8d8]",
@@ -137,7 +197,7 @@ export const AQUA: Theme = {
   seekTrack: "w-[200] h-[8] relative rounded-[4] border border-[#8a8c78] bg-[#c9cbb3]",
   seekTrackWide: "w-[176] h-[8] relative rounded-[4] border border-[#8a8c78] bg-[#c9cbb3]",
   seekFill: "absolute left-[1] top-[1] h-[6] rounded-[3] bg-[#4a4c3f]",
-  seekKnob: "absolute top-[-6] w-[18] h-[18] rounded-[9] bg-gradient-to-b from-[#b9dcff] via-[#5aa7f0] to-[#1c6fd1] border border-[#1a4f99]",
+  seekKnob: SEEK_KNOB,
 
   transportRow: "absolute left-[10] top-[160] w-[300] h-[72] flex-row items-center justify-center gap-[10]",
   transport: (kind, on, enabled) => transportClass(kind, on, enabled),
@@ -149,18 +209,11 @@ export const AQUA: Theme = {
   iconLarge: (name, ink) => LARGE_ICONS[name][ink],
 };
 
-function transportClass(kind: TransportKind, on: boolean, enabled: boolean): string {
+function transportClass(kind: TransportKind, on: boolean, enabled: boolean): GelClasses {
   const big = kind === "play" || kind === "pause";
-  const small = kind === "shuffle" || kind === "repeat";
-  const aqua = big || (small && on);
-  if (!enabled) {
-    return big ? "w-[64] h-[64] rounded-[32] items-center justify-center opacity-45 bg-gradient-to-b from-[#ffffff] via-[#e2e2e2] to-[#c4c4c4] border border-[#7d7d7d]"
-      : small ? "w-[34] h-[34] rounded-[17] items-center justify-center opacity-45 bg-gradient-to-b from-[#ffffff] via-[#e2e2e2] to-[#c4c4c4] border border-[#7d7d7d]"
-      : "w-[42] h-[42] rounded-[21] items-center justify-center opacity-45 bg-gradient-to-b from-[#ffffff] via-[#e2e2e2] to-[#c4c4c4] border border-[#7d7d7d]";
-  }
-  if (big) return "w-[64] h-[64] rounded-[32] items-center justify-center bg-gradient-to-b from-[#b9dcff] via-[#5aa7f0] to-[#1c6fd1] border border-[#1a4f99]";
-  if (small) return aqua
-    ? "w-[34] h-[34] rounded-[17] items-center justify-center bg-gradient-to-b from-[#b9dcff] via-[#5aa7f0] to-[#1c6fd1] border border-[#1a4f99]"
-    : "w-[34] h-[34] rounded-[17] items-center justify-center bg-gradient-to-b from-[#ffffff] via-[#e2e2e2] to-[#c4c4c4] border border-[#7d7d7d]";
-  return "w-[42] h-[42] rounded-[21] items-center justify-center bg-gradient-to-b from-[#ffffff] via-[#e2e2e2] to-[#c4c4c4] border border-[#7d7d7d]";
+  const mode = kind === "shuffle" || kind === "repeat";
+  if (!enabled) return big ? PLAY_OFF : mode ? MODE_OFF : SKIP_OFF;
+  if (big) return PLAY_BLUE;
+  if (mode) return on ? MODE_BLUE : MODE_GREY;
+  return SKIP_GREY;
 }

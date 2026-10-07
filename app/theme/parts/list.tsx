@@ -4,6 +4,7 @@ import { Image, Text, View } from "@pocketjs/framework/components";
 import { AQUA } from "../aqua.ts";
 import type { RowKind, Theme } from "../theme.ts";
 import { FONT_12 } from "../fonts.ts";
+import { Gel } from "./gel.tsx";
 import { Marquee } from "./marquee.tsx";
 
 /** Title cell widths (px): beside a detail column, and spanning the row beside a count. */
@@ -90,7 +91,7 @@ export function Scrollbar(props: { thumbTop: number; thumbHeight: number; theme?
   const t = () => props.theme ?? AQUA;
   return (
     <View class={t().scrollTrack}>
-      <View class={t().scrollThumb} style={{ insetT: props.thumbTop, height: props.thumbHeight }} />
+      <Gel classes={t().scrollThumb} style={{ insetT: props.thumbTop, height: props.thumbHeight }} />
     </View>
   );
 }

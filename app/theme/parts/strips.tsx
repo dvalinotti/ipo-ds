@@ -4,6 +4,7 @@ import { For } from "solid-js";
 import { Text, View } from "@pocketjs/framework/components";
 import { AQUA } from "../aqua.ts";
 import type { Theme } from "../theme.ts";
+import { Gel, GelLabel } from "./gel.tsx";
 
 export function SearchStrip(props: { query: string; count: number; theme?: Theme }) {
   const t = () => props.theme ?? AQUA;
@@ -51,9 +52,9 @@ export function Breadcrumb(props: { root: string; leaf: string; detail: string; 
 export function KeyBadge(props: { letter: string; primary?: boolean; theme?: Theme }) {
   const t = () => props.theme ?? AQUA;
   return (
-    <View class={t().badge(props.primary ?? false)}>
-      <Text class={t().badgeText(props.primary ?? false)}>{props.letter}</Text>
-    </View>
+    <Gel classes={t().badge(props.primary ?? false)}>
+      <GelLabel text={props.letter} class={t().badgeText(props.primary ?? false)} shadow={props.primary ? t().badgeTextShadow : undefined} />
+    </Gel>
   );
 }
 
