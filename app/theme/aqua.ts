@@ -56,7 +56,7 @@ const PROGRESS_FILL: GelClasses = {
   gloss: "absolute left-[3] right-[3] top-[1] h-[4] rounded-[2] bg-gradient-to-b from-[#f5f8fe] via-[#d3e1f8] to-[#93b4eb]",
 };
 const SEEK_KNOB: GelClasses = {
-  body: "absolute top-[-6] w-[18] h-[18] rounded-[9] shadow bg-gradient-to-b from-[#4a80da] via-[#4a80da] to-[#c8daf6] border border-[#2b4f8c]",
+  body: "absolute top-[-6] w-[18] h-[18] rounded-[9] bg-gradient-to-b from-[#4a80da] via-[#4a80da] to-[#c8daf6] border border-[#2b4f8c]",
   gloss: "absolute left-[2] top-[3] w-[14] h-[8] rounded-[4] bg-gradient-to-b from-[#f5f8fe] via-[#d3e1f8] to-[#93b4eb]",
 };
 const PLAY_BLUE: GelClasses = {
@@ -68,7 +68,7 @@ const PLAY_OFF: GelClasses = {
   gloss: "hidden",
 };
 const SKIP_GREY: GelClasses = {
-  body: "relative w-[42] h-[42] rounded-[21] items-center justify-center shadow bg-gradient-to-b from-[#c4c4c4] via-[#c4c4c4] to-[#f4f4f4] border border-[#6e6e6e]",
+  body: "relative w-[42] h-[42] rounded-[21] items-center justify-center bg-gradient-to-b from-[#c4c4c4] via-[#c4c4c4] to-[#f4f4f4] border border-[#6e6e6e]",
   gloss: "absolute left-[6] top-[3] w-[30] h-[20] rounded-[10] bg-gradient-to-b from-[#fdfdfd] via-[#ececec] to-[#d6d6d6]",
 };
 const SKIP_OFF: GelClasses = {
@@ -76,11 +76,11 @@ const SKIP_OFF: GelClasses = {
   gloss: "hidden",
 };
 const MODE_BLUE: GelClasses = {
-  body: "relative w-[34] h-[34] rounded-[17] items-center justify-center shadow bg-gradient-to-b from-[#4a80da] via-[#4a80da] to-[#c8daf6] border border-[#2b4f8c]",
+  body: "relative w-[34] h-[34] rounded-[17] items-center justify-center bg-gradient-to-b from-[#4a80da] via-[#4a80da] to-[#c8daf6] border border-[#2b4f8c]",
   gloss: "absolute left-[5] top-[3] w-[24] h-[16] rounded-[8] bg-gradient-to-b from-[#f5f8fe] via-[#d3e1f8] to-[#93b4eb]",
 };
 const MODE_GREY: GelClasses = {
-  body: "relative w-[34] h-[34] rounded-[17] items-center justify-center shadow bg-gradient-to-b from-[#c4c4c4] via-[#c4c4c4] to-[#f4f4f4] border border-[#6e6e6e]",
+  body: "relative w-[34] h-[34] rounded-[17] items-center justify-center bg-gradient-to-b from-[#c4c4c4] via-[#c4c4c4] to-[#f4f4f4] border border-[#6e6e6e]",
   gloss: "absolute left-[5] top-[3] w-[24] h-[16] rounded-[8] bg-gradient-to-b from-[#fdfdfd] via-[#ececec] to-[#d6d6d6]",
 };
 const MODE_OFF: GelClasses = {

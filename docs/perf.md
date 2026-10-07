@@ -97,3 +97,39 @@ Measured in Azahar (Old) with probes around each SD call:
 | now-playing | old | 3.1/12.8 | 0.0/0.3 | 4.2/9.9 | 7.3/16.7 | cached -1, walk 5976 (324/324 read) | yes |
 | scan-first | old | 1.2/1.4 | 0.0/0.0 | 3.9/3.9 | 5.0/5.3 | cached -1, walk 5980 (324/324 read) | yes |
 | scan-cached | old | 1.0/1.0 | 0.0/0.0 | 3.9/3.9 | 4.8/4.9 | cached 363, walk 929 (0/324 read) | yes |
+
+## Aqua gels
+
+`bun run perf --check` after the gels (`docs/superpowers/specs/2026-10-07-aqua-gels-design.md`): a gloss box on every gel, and a shadow on the transport buttons and the seek knob.
+
+| Scenario | Model | JS mean/max | Tick mean/max | Draw mean/max | CPU mean/max (ms) | Scan (ms) | Within budget |
+|---|---|---|---|---|---|---|---|
+| idle | new | 0.4/0.5 | 0.0/0.0 | 1.4/1.4 | 1.8/1.9 | cached -1, walk 5760 (324/324 read) | yes |
+| scroll | new | 1.5/6.3 | 0.2/3.0 | 1.8/2.1 | 3.5/9.1 | cached -1, walk 5710 (324/324 read) | yes |
+| now-playing | new | 1.0/2.6 | 0.0/0.1 | 1.8/3.7 | 2.8/5.3 | cached -1, walk 5760 (324/324 read) | yes |
+| scan-first | new | 0.4/0.5 | 0.0/0.0 | 1.4/1.4 | 1.8/1.9 | cached -1, walk 5740 (324/324 read) | yes |
+| scan-cached | new | 0.3/0.3 | 0.0/0.0 | 1.4/1.4 | 1.7/1.7 | cached 39, walk 517 (0/324 read) | yes |
+| idle | old | 1.2/1.4 | 0.0/0.0 | 4.2/4.2 | 5.4/5.6 | cached -1, walk 5973 (324/324 read) | yes |
+| scroll | old | 4.8/22.1 | 0.8/9.1 | 5.9/12.1 | 11.4/30.7 | cached -1, walk 5992 (324/324 read) | no: CPU max 30.7 ms > 30 ms |
+| now-playing | old | 2.9/7.4 | 0.0/0.3 | 5.7/11.2 | 8.7/14.1 | cached -1, walk 5975 (324/324 read) | yes |
+| scan-first | old | 1.2/1.4 | 0.0/0.0 | 4.2/4.2 | 5.4/5.6 | cached -1, walk 5992 (324/324 read) | yes |
+| scan-cached | old | 1.0/1.0 | 0.0/0.0 | 4.2/4.2 | 5.2/5.2 | cached 362, walk 998 (0/324 read) | yes |
+
+`scroll` on Old went over by 0.7 ms, so both fallbacks were applied, re-measuring `scroll` on Old after each (`bun run perf scroll --model old --check`):
+
+| Fallback | Run |
+|---|---|
+| 1: the knob casts no shadow | `| scroll | old | 4.7/16.3 | 0.7/3.4 | 5.5/11.2 | 10.8/24.9 | cached -1, walk 5975 (324/324 read) | yes |` |
+| 1, repeated | `| scroll | old | 4.8/16.3 | 0.7/3.4 | 5.6/11.3 | 11.0/30.5 | cached -1, walk 5992 (324/324 read) | no: CPU max 30.5 ms > 30 ms |` |
+| 2: prev/next and shuffle/repeat cast no shadow either | `| scroll | old | 4.7/16.3 | 0.7/3.4 | 5.4/11.1 | 10.7/24.8 | cached -1, walk 5983 (324/324 read) | yes |` |
+| 2, repeated | `| scroll | old | 4.9/16.3 | 0.6/3.4 | 5.5/11.1 | 11.1/25.8 | cached -1, walk 6006 (324/324 read) | yes |` |
+
+Fallbacks applied: **the knob's, prev/next's and shuffle/repeat's shadows**. Play/pause keeps its own.
+
+What the 240-frame traces (`stats.json`) show for `scroll` on Old:
+
+- **The gels' cost:** they add about 1.4 ms to a typical frame's draw (median 3.9 → 5.3 ms).
+- **The worst frame:** a D-pad step costs about 16 ms of JS and 3 ms of tick. Every 10–40 frames a draw spikes to about 11 ms (10.6 ms before the gels), independent of the gels. When the two coincide, the frame reaches 30.5–30.7 ms.
+- **Before the gels:** Plan 5's final trace peaked at 29.8 ms.
+- **What the budget sees:** it reads the host's 60-frame window, and that window passes in both runs after fallback 2 (24.8 and 25.8 ms). One of those runs still has a 30.6 ms frame elsewhere in its 240-frame trace.
+- **Remaining work:** the 11 ms draw spike, not the gels, is what to chase for headroom.
