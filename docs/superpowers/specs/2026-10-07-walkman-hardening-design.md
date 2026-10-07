@@ -1,7 +1,7 @@
 # Ds Man — Hardening (Plan 5)
 
 Date: 2026-10-07
-Status: approved in conversation, pending written-spec review
+Status: approved; amended after the prototype (§11)
 Parent specs: `docs/superpowers/specs/2026-10-06-walkman-player-design.md` (§7, §8 stage 8), `docs/superpowers/specs/2026-10-06-walkman-native-localmedia-design.md`
 Roadmap: `docs/superpowers/plans/2026-10-06-walkman-roadmap.md` (Plan 5)
 
@@ -223,3 +223,47 @@ Left as they are:
 - **The capture build's SYNCDRAW pacing** can hide GPU-bound costs. The budgets use CPU phases only, and GPU-bound costs need a non-capture check (the in-app `F:`, read by the user).
 - **mtime reliability** on 3DS sdmc (§5.2) could force the name-and-size key.
 - **The QuickJS ceiling:** if the app-side fixes leave Old 3DS scrolling above 30 ms, the remaining cost may be the core or the framework. That is the §4.6 contingency, with fork drift as its cost.
+
+## 11. Amendments from the prototype
+
+The plan was prototyped and measured in Azahar before it was written. Where a measurement contradicted this spec, the spec yields to §11; each item names the section it replaces.
+
+### 11.1 Measurement (replaces parts of §3.1, §3.2)
+
+- **New 3DS = 300 % CPU clock.** Azahar runs the ARM11 at the Old 3DS clock in both models; the New 3DS speed-up is not emulated. The New model therefore sets `cpu_clock_percentage=300` (checked: 50 % doubled the JS time, 300 % cut it to a third). The Old model keeps 100 %.
+- **A `work` series replaces the sum of maxima.** `timingUs` gains `work: [mean, max]`, each frame's js + tick + draw, so the CPU max is one real frame's. Budgets read `work`.
+- **`stats.json` adds a `trace`:** the last 240 frames' `[js, tick, draw]` in µs.
+- **Tapes start later:** A at frame 2400, D-pad down from 2700, capture at 3000 (scan scenarios at 3600). The first scan took 20–35 s when the tapes were written; it now takes about 6 s, and the later start is kept as margin. The Azahar timeout is 240 s.
+
+### 11.2 Frame-cost fixes (replaces §4 items 1, 3, 5 and §4.6)
+
+What the measurements led to, in order (numbers in `docs/perf.md`):
+1. **Library key maps and Explorer memos** (§4 item 1, as specified).
+2. **Status polling** (§4 item 4, as specified), plus: while a song plays the session reads status every fourth frame (15 Hz); commands and failed reads still read at once; the player signal ignores status-only changes.
+3. **Marquee width cache** (§4 item 2, as specified), plus: an inactive marquee never measures.
+4. **Recycled rows, in the app.** The Explorer's list keeps a fixed, even pool of row slots (`app/explorer/recycled-list.tsx`); scrolling a row rebinds one slot and moves the list by a transform. This is §4.6's first contingency, built in ds-man instead of the fork, so it adds no fork drift.
+5. **A selection overlay.** The selected row is drawn once, above the list, and moved by a transform; rows ignore focus, so a focus move touches no row.
+6. **Settled state.** Values derived from the Explorer state (`key`, `view`, `tab`, `query`, `legend`, `focus`, `top`) are `settled()` signals (`app/reactive.ts`): a write reaches only the readers whose value changed. Solid marks every transitive reader of a written signal before it knows whether a memo's value changed, and that marking was most of a focus move's cost in QuickJS.
+7. **An empty root `FocusScope`** keeps the framework's D-pad traversal from walking the list's nodes on every press.
+
+Not built, because the budgets were met without them: §4 item 3 (one input router), §4 item 5 (fixed-size Now Playing text boxes), and the core-side `measureText` cache.
+
+### 11.3 Scanning (replaces §5.1 and the validity rule of §5.2)
+
+Measured in Azahar (Old): opening a file costs about 17 ms and closing it about 12 ms; a read costs about 0.9 ms plus 0.2 ms per KB; libctru's `stat()` opens the file (26 ms) and reports `st_mtime` 0; `archive_getmtime` costs 13 ms and returns a constant; reading all 324 directory entries 32 at a time costs 0.4 s; two threads overlap their opens almost perfectly, a third adds nothing.
+- **Listing:** names and sizes come from the SD card's directory entries (`FSDIR_Read`, 32 at a time, `localmedia_dir.c`); no file is opened to list it. On the host, the listing is `opendir` and `stat`.
+- **Key:** an entry is reused when its **name and size** match. The format drops the mtime field. A re-tag that keeps the file's size is missed until the cache is gone (deleting `sdmc:/pocketjs/localmedia/library.cache` forces a full read).
+- **Reads:** the stdio buffer is **4 KB**, not 16 KB (each refill is one SD read, priced by size).
+- **Two readers:** files the cache does not cover are read by the library thread and one helper thread at the same priority; the library thread serves art between its files.
+
+### 11.4 Minors (replaces rows of §6)
+
+- **4.4:** the long-name test uses a 250-byte UTF-8 name (host file systems cap names at 255 bytes) under a long folder path.
+- **4.6:** tested in the glue test with a hook that fails the scan's allocations of 64 bytes or more (on the console the big allocations fail first), plus a library test that fails each allocation in turn and gets no library or a whole one.
+- **4.9:** handle 0 is freed and the upload retried. A texture handle carries its slot's generation, so the retry gets another handle and nothing is held back; no 8×8 texture is needed.
+
+### 11.5 Testing (adds to §7)
+
+- ds-man unit tests run with `bun test --conditions=browser`, so Solid is reactive in them (`settled()` is unit-tested).
+- The fork's suite registers `tests/3ds-arguments.test.ts` and the three media.local test files in its unit stage; they were missing, which failed the suite's own declaration check.
+- The fork suite's ESP-IDF incremental test needs Ninja and fails on a machine without it, before and after this plan.
