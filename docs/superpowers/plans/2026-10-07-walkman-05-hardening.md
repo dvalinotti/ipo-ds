@@ -1,17 +1,17 @@
-# Ds Man Walkman — Plan 5: Hardening
+# iPoDS Walkman — Plan 5: Hardening
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** ds-man runs within its frame budgets on both 3DS models in Azahar (CPU work per frame ≤ 14 ms on New, ≤ 30 ms on Old), scans 324 files in under 10 s and shows a cached list within 1 s on later launches, and the deferred minors from Plans 3 and 4 are fixed. Every claim is measured by `bun run perf`.
+**Goal:** ipo-ds runs within its frame budgets on both 3DS models in Azahar (CPU work per frame ≤ 14 ms on New, ≤ 30 ms on Old), scans 324 files in under 10 s and shows a cached list within 1 s on later launches, and the deferred minors from Plans 3 and 4 are fixed. Every claim is measured by `bun run perf`.
 
 **Architecture:**
-- **Fork (`runtime/`, branch `ds-man`), Tasks 1–7:**
+- **Fork (`runtime/`, branch `ipo-ds`), Tasks 1–7:**
   - capture builds keep the host's frame timing and write `stats.json` (a per-frame `work` series, a 240-frame trace, the scan's timings);
   - the scan lists names and sizes from directory entries, reuses a checksummed cache keyed by name and size, and reads the rest on two threads;
   - the glue publishes the cached list first and confirms it in the background;
   - the contract gains `scanMs`, the SDK returns a stable status object, and the sim mirrors the cached-then-confirmed scan;
   - the minors (player position, failed-open duration, long paths, superseded opens, prefill load, handle 0, art during scans, out of memory).
-- **ds-man, Tasks 8–13:**
+- **ipo-ds, Tasks 8–13:**
   - a `bun run perf` harness that runs capture builds headless in Azahar as an Old and a New 3DS;
   - status read at 15 Hz while playing, and repeated statuses skipped;
   - library key maps and a text-width cache;
@@ -30,14 +30,14 @@
 | After task | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Fork tests named in the task | 9 | — | 9 | 18 | 9 | 1 | 9 | — | — | — | — | — | — |
-| ds-man `bun run test` | — | — | — | — | — | — | — | 118 | 120 | 122 | 128 | 131 | 131 |
+| ipo-ds `bun run test` | — | — | — | — | — | — | — | 118 | 120 | 122 | 128 | 131 | 131 |
 
 ## Global Constraints
 
-- **Where code lives:** framework and host code go in the fork (`runtime/`, branch `ds-man`, starting at `520950e8`). Each fork task commits there. **Pushing the fork is outward-facing: confirm with the user before the push in Task 7.** The ds-man pin moves in Task 8.
+- **Where code lives:** framework and host code go in the fork (`runtime/`, branch `ipo-ds`, starting at `520950e8`). Each fork task commits there. **Pushing the fork is outward-facing: confirm with the user before the push in Task 7.** The ipo-ds pin moves in Task 8.
 - **Commits:** Conventional Commits, each ending with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
 - **Tests:**
-  - In ds-man, run `bun run test` (it passes `--conditions=browser` from Task 11 on) or `bun test --conditions=browser ./tests/…`; never discover tests through `runtime/`.
+  - In ipo-ds, run `bun run test` (it passes `--conditions=browser` from Task 11 on) or `bun test --conditions=browser ./tests/…`; never discover tests through `runtime/`.
   - Fork tests run from `runtime/` with explicit paths (`bun test tests/…`).
   - `dist/` stays out of Git (perf output, gallery PNGs, the test library).
 - **Pure units stay pure:** no `#include <3ds.h>` in `localmedia_{ids,tags,mp3,art,library,player,cache}.c`. `localmedia_dir.c` is the one pure unit with a `#ifdef __3DS__` branch (the SD card's directory API); on the host it uses `opendir` and `stat`. Only `localmedia.c` uses libctru otherwise. Host tests compile with `cc -std=c11 -D_DEFAULT_SOURCE -pthread -Wall -Wextra -fsanitize=address,undefined`.
@@ -52,7 +52,7 @@
   - Capture: `TRACE_FRAMES` 240; `stats.json` = `{"host": <devStats>, "trace": [[js, tick, draw], …], "localmedia": {"cachedMs", "scanMs", "files", "parsed"}}`.
   - App: `POLL_EVERY` 4 (15 Hz while playing); marquee width cache 512 entries; row pool `min(count, rows + 1 + ((rows + 1) % 2))`; diagnostics `U:<underruns> D:<load>% A:<art> F:<mean>/<max>` (ms, rounded; `F:-` without timing).
 - **Refinements of the spec** are in spec §11 (written from the prototype's measurements). The ones a reviewer should weigh:
-  1. **Recycled rows live in ds-man, not the fork** (§11.2): §4.6's contingency, built without fork drift. The user approves this with the plan.
+  1. **Recycled rows live in ipo-ds, not the fork** (§11.2): §4.6's contingency, built without fork drift. The user approves this with the plan.
   2. **The cache key is name and size** (§11.3): libctru's `stat()` reports `st_mtime` 0, and `archive_getmtime` costs 13 ms per file in Azahar (and returns a constant there). A re-tag that keeps the file size is missed until the cache file is deleted.
   3. **4.9 frees handle 0 and retries** instead of reserving an 8×8 texture (§11.4): handles carry their slot's generation, so nothing needs holding back.
   4. **§4 items 3 and 5 are not built** (§11.2): the budgets were met without them.
@@ -2632,7 +2632,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 - [ ] **Step 6: Run the fork's suite.** `cd runtime && bun run test > $TMPDIR/fork-suite.log 2>&1; tail -20 $TMPDIR/fork-suite.log`.
   Expected: the unit stage fails only on `ESP-IDF incremental package build > Ninja learns new imports…` (`CMake was unable to find a build program corresponding to "Ninja"`), which fails at `520950e8` too (Global Constraints, refinement 6). Any other failure stops the task.
-- [ ] **Step 7: Push the fork — ask first.** Tell the user the fork's `ds-man` branch is 7 commits ahead of `fork/ds-man` and ask before `git -C runtime push fork ds-man`. Push only on a yes; on a no, continue (the pin works locally) and say so in the final report.
+- [ ] **Step 7: Push the fork — ask first.** Tell the user the fork's `ipo-ds` branch is 7 commits ahead of `fork/ipo-ds` and ask before `git -C runtime push fork ipo-ds`. Push only on a yes; on a no, continue (the pin works locally) and say so in the final report.
 
 ## Task 8: The perf harness; pin the hardened fork; the baselines
 
@@ -2700,7 +2700,7 @@ index 0000000000000000000000000000000000000000..55c6aef4527916264cbb1cafa1e06cb9
 --- /dev/null
 +++ b/scripts/perf.ts
 @@ -0,0 +1,212 @@
-+// Measures ds-man in Azahar (headless): builds a capture .3dsx per scenario with
++// Measures ipo-ds in Azahar (headless): builds a capture .3dsx per scenario with
 +// a baked input tape, boots it against a throwaway $HOME whose SD card holds the
 +// device test library, and reads the frame timings and scan timings the host
 +// writes to stats.json when the capture window ends.
@@ -2864,7 +2864,7 @@ index 0000000000000000000000000000000000000000..55c6aef4527916264cbb1cafa1e06cb9
 +  });
 +  if ((await proc.exited) !== 0) throw new Error(`perf: capture build for ${scenario.name} failed (see ${log})`);
 +  const rom = join(out, `${scenario.name}.3dsx`);
-+  cpSync(join(ROOT, "dist/ds-man-main.3dsx"), rom);
++  cpSync(join(ROOT, "dist/ipo-ds-main.3dsx"), rom);
 +  return rom;
 +}
 +
@@ -3346,7 +3346,7 @@ index ab4d8469fbcd0950d550a7a40adbb809b7db31ff..89eb9e9d727b535c42eff8f73bd3bc59
 --- a/app/app.tsx
 +++ b/app/app.tsx
 @@ -1,7 +1,7 @@
- // Ds Man — a walkman-style MP3 player. The top screen is the Explorer; the
+ // iPoDS — a walkman-style MP3 player. The top screen is the Explorer; the
  // bottom screen is Now Playing, or the search keyboard while it is open.
  import { Show } from "solid-js";
 -import { AuxiliarySurface, View } from "@pocketjs/framework/components";
@@ -3481,8 +3481,8 @@ index 2e7805f28a34dbba21110bbf6625f7ea31b20653..90b3788f245d0517709914fc87ed7e61
  
    return (
      <View class={AQUA.topScreen}>
--      <Toolbar title="Ds Man" line={lcdLine(props.session.available, props.session.scanning(), library())} active={state().tab} />
-+      <Toolbar title="Ds Man" line={lcdLine(props.session.available, props.session.scanning(), library())} active={tab()} />
+-      <Toolbar title="iPoDS" line={lcdLine(props.session.available, props.session.scanning(), library())} active={state().tab} />
++      <Toolbar title="iPoDS" line={lcdLine(props.session.available, props.session.scanning(), library())} active={tab()} />
        <Show when={panel()} fallback={
          <>
 -          <Show when={state().query}>

@@ -1,4 +1,4 @@
-# Ds Man Walkman — Staged Roadmap
+# iPoDS Walkman — Staged Roadmap
 
 **Spec:** `docs/superpowers/specs/2026-10-06-walkman-player-design.md`
 
@@ -32,7 +32,7 @@ Plan 1 ──┬─► Plan 2 ──► Plan 3 ──┐
 ```
 
 Plan 4 needs only the contract from Plan 1, so native work can proceed
-alongside the design and screen work. Until Plan 4 lands, ds-man declares
+alongside the design and screen work. Until Plan 4 lands, ipo-ds declares
 `media.local` as an **enhancement**: the 3DS build boots and reports
 "Music playback is unavailable on this build", and every behaviour is
 exercised headlessly against the sim fake. Plan 4 moves it to `requires`.
@@ -40,7 +40,7 @@ exercised headlessly against the sim fake. Plan 4 moves it to `requires`.
 ## Per-plan exit gates (from the spec)
 
 - **Plan 1:** `bun run check`, `bun run test`, `bun run 3ds --pocket-only`
-  green in ds-man on the fork pin; the fork's new tests green.
+  green in ipo-ds on the fork pin; the fork's new tests green.
 - **Plan 2:** an approved mockup; the parts kit renders in the sim.
 - **Plan 3:** headless tests drive tabs, search, drill-down, seek drag and
   transport taps through `bootBundle`.

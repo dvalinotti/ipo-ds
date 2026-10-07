@@ -1,4 +1,4 @@
-// Ds Man's Aqua / iTunes 4 theme: every slot is a complete class literal so the
+// iPoDS's Aqua / iTunes 4 theme: every slot is a complete class literal so the
 // build can compile it; state variants pick between literals.
 import type { GelClasses, IconInk, IconName, PlaceholderHue, Theme, TransportKind } from "./theme.ts";
 

@@ -1,4 +1,4 @@
-// @title PocketJS: Ds Man
+// @title PocketJS: iPoDS
 import App from "./app.tsx";
 import { mount } from "@pocketjs/framework/solid";
 

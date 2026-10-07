@@ -1,4 +1,4 @@
-// Measures ds-man in Azahar (headless): builds a capture .3dsx per scenario with
+// Measures ipo-ds in Azahar (headless): builds a capture .3dsx per scenario with
 // a baked input tape, boots it against a throwaway $HOME whose SD card holds the
 // device test library, and reads the frame timings and scan timings the host
 // writes to stats.json when the capture window ends.
@@ -162,7 +162,7 @@ async function build(scenario: Scenario, out: string): Promise<string> {
   });
   if ((await proc.exited) !== 0) throw new Error(`perf: capture build for ${scenario.name} failed (see ${log})`);
   const rom = join(out, `${scenario.name}.3dsx`);
-  cpSync(join(ROOT, "dist/ds-man-main.3dsx"), rom);
+  cpSync(join(ROOT, "dist/ipo-ds-main.3dsx"), rom);
   return rom;
 }
 

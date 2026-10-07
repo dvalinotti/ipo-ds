@@ -1,4 +1,4 @@
-// Builds a ds-man bundle (--pocket-only: no Docker) once per process and boots
+// Builds a ipo-ds bundle (--pocket-only: no Docker) once per process and boots
 // it on the PocketJS sim's WASM core with the 3DS geometry. Shared by the test
 // harness and scripts/gallery.ts.
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";

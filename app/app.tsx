@@ -1,4 +1,4 @@
-// Ds Man — a walkman-style MP3 player. The top screen is the Explorer; the
+// iPoDS — a walkman-style MP3 player. The top screen is the Explorer; the
 // bottom screen is Now Playing, or the search keyboard while it is open.
 import { Show } from "solid-js";
 import { AuxiliarySurface, FocusScope, View } from "@pocketjs/framework/components";

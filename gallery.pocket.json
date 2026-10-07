@@ -1,9 +1,9 @@
 {
   "$schema": "https://pocketjs.dev/schema/pocket-2.json",
   "pocket": 2,
-  "id": "dev.example.ds.man.gallery",
-  "name": "ds-man-gallery",
-  "title": "Ds Man Gallery",
+  "id": "io.github.dvalinotti.ipods.gallery",
+  "name": "ipo-ds-gallery",
+  "title": "iPoDS Gallery",
   "version": "0.1.0",
   "engine": {
     "capabilities": {
@@ -21,7 +21,7 @@
   },
   "app": {
     "entry": "app/gallery.tsx",
-    "output": "ds-man-gallery",
+    "output": "ipo-ds-gallery",
     "framework": "solid",
     "viewport": {
       "fixed": {

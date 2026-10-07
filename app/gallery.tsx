@@ -1,4 +1,4 @@
-// Ds Man theme gallery: a separate bundle (gallery.pocket.json) that shows the
+// iPoDS theme gallery: a separate bundle (gallery.pocket.json) that shows the
 // approved Aqua mockup states built from app/theme parts. L / R flip states.
 import { createSignal, For, Show } from "solid-js";
 import { AuxiliarySurface } from "@pocketjs/framework/components";

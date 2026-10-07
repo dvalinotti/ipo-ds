@@ -159,7 +159,7 @@ export function Explorer(props: { session: Session; store: ExplorerStore; search
 
   return (
     <View class={AQUA.topScreen}>
-      <Toolbar title="Ds Man" line={lcdLine(props.session.available, props.session.scanning(), library())} active={tab()} />
+      <Toolbar title="iPoDS" line={lcdLine(props.session.available, props.session.scanning(), library())} active={tab()} />
       <Show when={panel()} fallback={
         <>
           <Show when={query()}>

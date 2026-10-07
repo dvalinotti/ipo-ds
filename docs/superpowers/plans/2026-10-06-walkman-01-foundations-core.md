@@ -1,10 +1,10 @@
-# Ds Man Walkman — Plan 1: Foundations, `media.local` Contract, App Core
+# iPoDS Walkman — Plan 1: Foundations, `media.local` Contract, App Core
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Pin ds-man to a PocketJS fork, define the `media.local` host module (contract, SDK, sim fake), and build the app's tested core — library model, player reducer, player controller — behind a scanning two-screen app shell.
+**Goal:** Pin ipo-ds to a PocketJS fork, define the `media.local` host module (contract, SDK, sim fake), and build the app's tested core — library model, player reducer, player controller — behind a scanning two-screen app shell.
 
-**Architecture:** Framework pieces land in the fork (`runtime/` submodule, branch `ds-man`): `contracts/spec/localmedia.ts` (types + validators), `framework/src/localmedia.ts` (SDK over `globalThis.localmedia`), `hosts/sim/localmedia.ts` (deterministic fake on a virtual clock), plus two tooling fixes (font flags through the 3DS build; `extraGlobals` on `bootBundle`). ds-man gets framework-free TS modules (`app/library/`, `app/player/`) unit-tested with `bun test`, and a headless harness that builds the guest with `--pocket-only` and runs it through `bootBundle` at 400×240 + 320×240.
+**Architecture:** Framework pieces land in the fork (`runtime/` submodule, branch `ipo-ds`): `contracts/spec/localmedia.ts` (types + validators), `framework/src/localmedia.ts` (SDK over `globalThis.localmedia`), `hosts/sim/localmedia.ts` (deterministic fake on a virtual clock), plus two tooling fixes (font flags through the 3DS build; `extraGlobals` on `bootBundle`). ipo-ds gets framework-free TS modules (`app/library/`, `app/player/`) unit-tested with `bun test`, and a headless harness that builds the guest with `--pocket-only` and runs it through `bootBundle` at 400×240 + 320×240.
 
 **Tech Stack:** Bun (test runner, build scripts), TypeScript, SolidJS via `@pocketjs/framework`, PocketJS sim host (WASM core), git submodules.
 
@@ -12,15 +12,15 @@
 
 ## Global Constraints
 
-- Framework code belongs in the PocketJS fork (`runtime/`, branch `ds-man`); ds-man only bumps the submodule pin.
+- Framework code belongs in the PocketJS fork (`runtime/`, branch `ipo-ds`); ipo-ds only bumps the submodule pin.
 - Import framework APIs from `@pocketjs/framework/*` and Solid primitives/control flow from `solid-js`.
 - `pocket.json` declares the 400×240 top viewport and the 320×240 `surfaces.auxiliary` with `display.auxiliary`.
 - Commits and PRs use Conventional Commits (`feat: …`, `fix(scope): …`) in both repos.
-- Do not recursively discover tests or sources through the runtime submodule: ds-man runs `bun test ./tests`, never bare `bun test`.
+- Do not recursively discover tests or sources through the runtime submodule: ipo-ds runs `bun test ./tests`, never bare `bun test`.
 - Build products, logs and captures stay out of Git (`dist/`, temp dirs).
 - Before editing anything under `runtime/`, read `runtime/CLAUDE.md`: docs prose there states mechanisms, bolds concrete facts, uses no adverbs like "simply/just/properly"; validation artifacts never get committed.
 - Target: **New 3DS only**; format: **MP3 only**; music root: **`sdmc:/music/`** (non-recursive); text coverage: **Latin + accents**.
-- `media.local` stays **out of the 3DS profile** in this plan (the native host does not ship it yet); ds-man lists it under `enhances`. Plan 4 adds it to the profile with hostAbi 12.
+- `media.local` stays **out of the 3DS profile** in this plan (the native host does not ship it yet); ipo-ds lists it under `enhances`. Plan 4 adds it to the profile with hostAbi 12.
 - Binary audio data never enters JS. Every `media.local` command updates the status snapshot before it returns (spec §4.1 snapshot rule).
 - Fallback tags: title = filename without extension, artist = `Unknown Artist`, album = `Unknown Album`.
 - Previous-track rule threshold: **3000 ms**.
@@ -37,7 +37,7 @@
 
 ## File Structure
 
-**Fork (`runtime/`, branch `ds-man`)**
+**Fork (`runtime/`, branch `ipo-ds`)**
 
 | File | Responsibility |
 |---|---|
@@ -50,11 +50,11 @@
 | `hosts/sim/sim.ts` (modify) | `BundleOptions.extraGlobals`; reset `globalThis.localmedia` per boot |
 | `tests/localmedia.test.ts`, `tests/localmedia-sim.test.ts`, `tests/3ds-arguments.test.ts` (create); `tests/sim-bundle.test.ts` (modify) | fork tests |
 
-**ds-man**
+**ipo-ds**
 
 | File | Responsibility |
 |---|---|
-| `.gitmodules` (modify) | submodule URL → fork, branch `ds-man` |
+| `.gitmodules` (modify) | submodule URL → fork, branch `ipo-ds` |
 | `pocket.json` (modify) | `input.touch.auxiliary` required; `input.analog.left`, `media.local` enhanced |
 | `package.json`, `tsconfig.json` (modify) | `test` script; typecheck `tests/` |
 | `scripts/build.ts` (modify) | do not copy stale products when `--package-outdir` is given |
@@ -66,11 +66,11 @@
 | `app/player/reducer.ts` (create) | pure player reducer |
 | `app/player/controller.ts` (create) | runs reducer commands against `LocalMedia`, polls status |
 | `app/app.tsx` (modify) | two-screen shell; scans at launch |
-| `tests/library.test.ts`, `tests/player.test.ts`, `tests/controller.test.ts`, `tests/app.test.ts` (create) | ds-man tests |
+| `tests/library.test.ts`, `tests/player.test.ts`, `tests/controller.test.ts`, `tests/app.test.ts` (create) | ipo-ds tests |
 
 ---
 
-### Task 1: Pin ds-man to the PocketJS fork and build the WASM core
+### Task 1: Pin ipo-ds to the PocketJS fork and build the WASM core
 
 **Files:**
 - Modify: `.gitmodules`
@@ -78,7 +78,7 @@
 
 **Interfaces:**
 - Consumes: nothing.
-- Produces: `runtime/` tracking branch `ds-man` on the fork remote `fork`; `runtime/hosts/web/pocketjs.wasm` built locally (ignored by Git, needed by every `bootBundle` test). Shell variable `FORK_URL` used by later tasks' push steps means the fork's HTTPS/SSH URL.
+- Produces: `runtime/` tracking branch `ipo-ds` on the fork remote `fork`; `runtime/hosts/web/pocketjs.wasm` built locally (ignored by Git, needed by every `bootBundle` test). Shell variable `FORK_URL` used by later tasks' push steps means the fork's HTTPS/SSH URL.
 
 - [ ] **Step 1: Create the fork on GitHub (outward-facing — the user runs or approves this)**
 
@@ -91,20 +91,20 @@ Expected: prints the fork URL, e.g. `https://github.com/<user>/pocketjs`. Export
 export FORK_URL=https://github.com/<user>/pocketjs   # value printed above
 ```
 
-- [ ] **Step 2: Create the `ds-man` branch at the current pin and push it**
+- [ ] **Step 2: Create the `ipo-ds` branch at the current pin and push it**
 
 ```bash
 git -C runtime remote add fork "$FORK_URL"
-git -C runtime switch -c ds-man 12dd7535dff67d31874afad1bc5f7c145bf09bb0
-git -C runtime push -u fork ds-man
+git -C runtime switch -c ipo-ds 12dd7535dff67d31874afad1bc5f7c145bf09bb0
+git -C runtime push -u fork ipo-ds
 ```
-Expected: `branch 'ds-man' set up to track 'fork/ds-man'`.
+Expected: `branch 'ipo-ds' set up to track 'fork/ipo-ds'`.
 
 - [ ] **Step 3: Point the submodule at the fork**
 
 ```bash
 git config -f .gitmodules submodule.runtime.url "$FORK_URL"
-git config -f .gitmodules submodule.runtime.branch ds-man
+git config -f .gitmodules submodule.runtime.branch ipo-ds
 git submodule sync runtime
 cat .gitmodules
 ```
@@ -113,7 +113,7 @@ Expected:
 [submodule "runtime"]
 	path = runtime
 	url = https://github.com/<user>/pocketjs
-	branch = ds-man
+	branch = ipo-ds
 ```
 
 - [ ] **Step 4: Build the WASM core the sim host needs**
@@ -130,13 +130,13 @@ Expected: the file exists (a few MB). `git -C runtime status --short` shows noth
 ```bash
 bun run check && bun run 3ds --pocket-only
 ```
-Expected: no type errors; `dist/ds-man-main.pocket` written.
+Expected: no type errors; `dist/ipo-ds-main.pocket` written.
 
 - [ ] **Step 6: Commit**
 
 ```bash
 git add .gitmodules runtime
-git commit -m "chore: track the PocketJS fork's ds-man branch"
+git commit -m "chore: track the PocketJS fork's ipo-ds branch"
 ```
 
 ---
@@ -204,7 +204,7 @@ Expected: PASS.
 ```bash
 git -C runtime add tools/3ds.ts tests/3ds-arguments.test.ts
 git -C runtime commit -m "feat(3ds): forward font and extra-character flags to the guest build"
-git -C runtime push fork ds-man
+git -C runtime push fork ipo-ds
 git add runtime && git commit -m "chore(runtime): bump pin for 3DS font flags"
 ```
 
@@ -218,7 +218,7 @@ git add runtime && git commit -m "chore(runtime): bump pin for 3DS font flags"
 
 **Interfaces:**
 - Consumes: `bootBundle(options: BundleOptions)`.
-- Produces: `BundleOptions.extraGlobals?: Record<string, unknown>` — assigned onto `globalThis` after the per-boot resets and before the bundle evaluates. `globalThis.localmedia` is reset to `undefined` on every boot. ds-man's harness (Task 6) passes `{ localmedia: host.ns }`.
+- Produces: `BundleOptions.extraGlobals?: Record<string, unknown>` — assigned onto `globalThis` after the per-boot resets and before the bundle evaluates. `globalThis.localmedia` is reset to `undefined` on every boot. ipo-ds's harness (Task 6) passes `{ localmedia: host.ns }`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -265,7 +265,7 @@ Expected: PASS (the café tests need `dist/cafe-main.*`; they are not part of th
 ```bash
 git -C runtime add hosts/sim/sim.ts tests/sim-bundle.test.ts
 git -C runtime commit -m "feat(sim): bootBundle mounts host module namespaces through extraGlobals"
-git -C runtime push fork ds-man
+git -C runtime push fork ipo-ds
 git add runtime && git commit -m "chore(runtime): bump pin for bootBundle extraGlobals"
 ```
 
@@ -552,7 +552,7 @@ Expected: PASS.
 ```bash
 git -C runtime add contracts/spec/localmedia.ts framework/src/localmedia.ts contracts/spec/platforms.ts package.json tests/localmedia.test.ts
 git -C runtime commit -m "feat(localmedia): media.local contract and SDK for on-device encoded audio"
-git -C runtime push fork ds-man
+git -C runtime push fork ipo-ds
 git add runtime && git commit -m "chore(runtime): bump pin for the media.local contract"
 ```
 
@@ -850,13 +850,13 @@ Expected: PASS.
 ```bash
 git -C runtime add hosts/sim/localmedia.ts tests/localmedia-sim.test.ts
 git -C runtime commit -m "feat(sim): deterministic media.local host on a virtual clock"
-git -C runtime push fork ds-man
+git -C runtime push fork ipo-ds
 git add runtime && git commit -m "chore(runtime): bump pin for the media.local sim host"
 ```
 
 ---
 
-### Task 6: ds-man headless harness, capabilities and two-screen shell
+### Task 6: ipo-ds headless harness, capabilities and two-screen shell
 
 **Files:**
 - Modify: `pocket.json` (`engine.capabilities`)
@@ -920,7 +920,7 @@ if (!process.argv.some((a) => a.startsWith("--package-outdir="))) {
 
 `tests/support/app-world.ts`:
 ```ts
-// Builds the ds-man guest once per test process (--pocket-only: no Docker)
+// Builds the ipo-ds guest once per test process (--pocket-only: no Docker)
 // and boots it on the sim's WASM core with the 3DS geometry.
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -932,13 +932,13 @@ let built: { dir: string; js: string; pak: string } | null = null;
 
 function buildGuest() {
   if (built) return built;
-  const dir = mkdtempSync(join(tmpdir(), "ds-man-guest-"));
+  const dir = mkdtempSync(join(tmpdir(), "ipo-ds-guest-"));
   const run = Bun.spawnSync(
     [process.execPath, "scripts/build.ts", "--pocket-only", `--outdir=${join(dir, "guest")}`, `--package-outdir=${dir}`],
     { cwd: ROOT, stdout: "pipe", stderr: "pipe" },
   );
-  if (run.exitCode !== 0) throw new Error(`ds-man guest build failed\n${run.stdout}${run.stderr}`);
-  built = { dir, js: join(dir, "guest", "ds-man-main.js"), pak: join(dir, "guest", "ds-man-main.pak") };
+  if (run.exitCode !== 0) throw new Error(`ipo-ds guest build failed\n${run.stdout}${run.stderr}`);
+  built = { dir, js: join(dir, "guest", "ipo-ds-main.js"), pak: join(dir, "guest", "ipo-ds-main.pak") };
   return built;
 }
 
@@ -978,7 +978,7 @@ test("both screens mount: the explorer on top, the now-playing deck below", asyn
   const world = await bootApp();
   for (let frame = 0; frame < 5; frame++) world.step();
   expect(world.failure).toBeNull();
-  expect(screenText(world, "primary")).toContain("Ds Man");
+  expect(screenText(world, "primary")).toContain("iPoDS");
   expect(screenText(world, "auxiliary")).toContain("Nothing playing — pick a song above");
 }, 120_000);
 ```
@@ -992,7 +992,7 @@ Expected: FAIL — auxiliary text is `""` (the scaffold renders nothing on the b
 
 `app/app.tsx`:
 ```tsx
-// Ds Man — a walkman-style MP3 player. The top screen browses the library;
+// iPoDS — a walkman-style MP3 player. The top screen browses the library;
 // the bottom screen is the now-playing deck.
 import { AuxiliarySurface, Text, View } from "@pocketjs/framework/components";
 
@@ -1000,7 +1000,7 @@ export default function App() {
   return (
     <>
       <View class="w-full h-full flex-col items-center justify-center gap-2 bg-slate-950">
-        <Text class="text-xl text-white font-bold">Ds Man</Text>
+        <Text class="text-xl text-white font-bold">iPoDS</Text>
       </View>
       <AuxiliarySurface>
         <View class="w-full h-full flex-col items-center justify-center bg-slate-900">
@@ -1015,7 +1015,7 @@ export default function App() {
 - [ ] **Step 6: Run tests and checks**
 
 Run: `bun run test && bun run check && bun run 3ds --pocket-only`
-Expected: 1 test PASS; no type errors; `dist/ds-man-main.pocket` written.
+Expected: 1 test PASS; no type errors; `dist/ipo-ds-main.pocket` written.
 
 - [ ] **Step 7: Commit**
 
@@ -1807,7 +1807,7 @@ export function libraryLine(available: boolean, scanning: boolean, count: number
 
 `app/app.tsx`:
 ```tsx
-// Ds Man — a walkman-style MP3 player. The top screen browses the library;
+// iPoDS — a walkman-style MP3 player. The top screen browses the library;
 // the bottom screen is the now-playing deck.
 import { createSignal } from "solid-js";
 import { AuxiliarySurface, Text, View } from "@pocketjs/framework/components";
@@ -1843,7 +1843,7 @@ export default function App() {
   return (
     <>
       <View class="w-full h-full flex-col items-center justify-center gap-2 bg-slate-950">
-        <Text class="text-xl text-white font-bold">Ds Man</Text>
+        <Text class="text-xl text-white font-bold">iPoDS</Text>
         <Text class="text-sm text-slate-400">{libraryLine(media !== null, scanning(), tracks().length)}</Text>
       </View>
       <AuxiliarySurface>
@@ -1859,7 +1859,7 @@ export default function App() {
 - [ ] **Step 5: Run the whole gate**
 
 Run: `bun run test && bun run check && bun run 3ds --pocket-only`
-Expected: every ds-man test PASS; no type errors; `dist/ds-man-main.pocket` written.
+Expected: every ipo-ds test PASS; no type errors; `dist/ipo-ds-main.pocket` written.
 
 - [ ] **Step 6: Commit**
 
@@ -1872,6 +1872,6 @@ git commit -m "feat: scan the music folder at launch and report the library"
 
 ## Plan 1 exit gate
 
-- ds-man: `bun run test`, `bun run check`, `bun run 3ds --pocket-only` green on the fork pin.
+- ipo-ds: `bun run test`, `bun run check`, `bun run 3ds --pocket-only` green on the fork pin.
 - Fork: `cd runtime && bun test tests/3ds-arguments.test.ts tests/localmedia.test.ts tests/localmedia-sim.test.ts tests/platform-contracts.test.ts tests/3ds-profile.test.ts` green; `tests/sim-bundle.test.ts -t extraGlobals` green.
 - Next: write Plan 2 (visual design) per the roadmap; Plan 4 (native) can start in parallel from the Task 4 contract.

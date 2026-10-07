@@ -1,8 +1,8 @@
-# Ds Man Walkman — Plan 4: Native Local Media
+# iPoDS Walkman — Plan 4: Native Local Media
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement `media.local` natively in the PocketJS fork's 3DS host. It scans `sdmc:/music/`, reads ID3 tags and durations, plays MP3 through minimp3 and NDSP with seek and end-of-track, and decodes embedded covers into textures. ds-man then shows real covers, reports playback errors and diagnostics, and requires the capability.
+**Goal:** Implement `media.local` natively in the PocketJS fork's 3DS host. It scans `sdmc:/music/`, reads ID3 tags and durations, plays MP3 through minimp3 and NDSP with seek and end-of-track, and decodes embedded covers into textures. ipo-ds then shows real covers, reports playback errors and diagnostics, and requires the capability.
 
 **Architecture:**
 - **Fork pure C units, host-tested with `cc` + ASan/UBSan from bun tests:**
@@ -22,7 +22,7 @@
   - `artwork(id)` returns -1 while pending, then a handle (or 0);
   - status gains `decodeLoad` and `artHandles`;
   - a returning file keeps its id.
-- **ds-man:**
+- **ipo-ds:**
   - the session's cover lifecycle;
   - `CoverImage` in Now Playing;
   - playback errors and L+R diagnostics in the LCD;
@@ -42,14 +42,14 @@
 | After task | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
 |---|---|---|---|---|---|---|---|---|---|---|
 | Fork tests named in the task | 15 | 1 | 2 | 3 | 4 | 5 | 6 | 43 | — | — |
-| ds-man `bun run test` | — | — | — | — | — | — | — | — | 106 | 109 |
+| ipo-ds `bun run test` | — | — | — | — | — | — | — | — | 106 | 109 |
 
 ## Global Constraints
 
-- **Where code lives:** framework and host code go in the fork (`runtime/`, branch `ds-man`). Each fork task commits there. **Pushing the fork is outward-facing: confirm with the user before the push in Task 8.** The ds-man pin moves in Task 9.
+- **Where code lives:** framework and host code go in the fork (`runtime/`, branch `ipo-ds`). Each fork task commits there. **Pushing the fork is outward-facing: confirm with the user before the push in Task 8.** The ipo-ds pin moves in Task 9.
 - **Commits:** Conventional Commits with the session's attribution trailer.
 - **Tests:**
-  - In ds-man, run `bun run test` or `bun test ./tests/…`; never discover tests through `runtime/`.
+  - In ipo-ds, run `bun run test` or `bun test ./tests/…`; never discover tests through `runtime/`.
   - Fork tests run from `runtime/` with explicit paths.
   - `dist/` stays out of Git.
 - **Pure units stay pure:** no `#include <3ds.h>` in `localmedia_{ids,tags,mp3,art,library,player}.c`. Only `localmedia.c` uses libctru. The host tests compile with `cc -std=c11 -D_DEFAULT_SOURCE -Wall -Wextra -fsanitize=address,undefined`; the 3DS build uses `-std=gnu11`.
@@ -3889,21 +3889,21 @@ void localmedia_release_artwork(int32_t handle) {
   - Expected: `43 pass, 0 fail`, then `0`.
 
 - [ ] **Step 5: Compile for the 3DS.**
-  - From the ds-man root, with the fork's working tree in `runtime/`, run `bun run 3ds > $TMPDIR/t8-build.log 2>&1; echo $?; grep -cE 'src/localmedia[a-z_]*\.c:[0-9]+:[0-9]+: warning' $TMPDIR/t8-build.log; ls -la dist/ds-man-main.3dsx`.
+  - From the ipo-ds root, with the fork's working tree in `runtime/`, run `bun run 3ds > $TMPDIR/t8-build.log 2>&1; echo $?; grep -cE 'src/localmedia[a-z_]*\.c:[0-9]+:[0-9]+: warning' $TMPDIR/t8-build.log; ls -la dist/ipo-ds-main.3dsx`.
   - Expected: `0`, then `0`, and a fresh `.3dsx`.
-  - ds-man's manifest still lists `media.local` under `enhances`, which the 3DS profile now provides, so `POCKETJS_LOCALMEDIA` is on.
+  - ipo-ds's manifest still lists `media.local` under `enhances`, which the 3DS profile now provides, so `POCKETJS_LOCALMEDIA` is on.
 
 - [ ] **Step 6: Commit in the fork, then push after the user confirms.**
 
 ```bash
 git -C runtime add hosts/3ds/src/localmedia.h hosts/3ds/src/localmedia.c hosts/3ds/src/qjs.c hosts/3ds/src/main.c hosts/3ds/Makefile tools/3ds.ts tools/3ds-profile.ts tests/3ds-profile.test.ts tests/localmedia.test.ts
 git -C runtime commit -m "feat(localmedia): media.local in the 3DS host: audio thread, library worker, bindings, profile (hostAbi 12)"
-git -C runtime push fork ds-man
+git -C runtime push fork ipo-ds
 ```
 
 ---
 
-### Task 9: Covers in Now Playing; ds-man requires `media.local`
+### Task 9: Covers in Now Playing; ipo-ds requires `media.local`
 
 **Files:**
 - Modify: `runtime` (the pin);
@@ -4594,7 +4594,7 @@ index 96efeb2..2fab4fb 100644
 
 This task is run with the user, who drives Azahar and both consoles. The executor prepares the builds and records the results in the ledger.
 
-- [ ] **Step 1: Build.** Run `bun run 3ds`. Expected: `dist/ds-man-main.3dsx`. Also run `bun run 3ds --cia` for consoles that use installed titles.
+- [ ] **Step 1: Build.** Run `bun run 3ds`. Expected: `dist/ipo-ds-main.3dsx`. Also run `bun run 3ds --cia` for consoles that use installed titles.
 - [ ] **Step 2: Prepare the SD cards.**
   - Copy `dist/test-music/*` to `sdmc:/music/`. For Azahar that is `~/Library/Application Support/Azahar/sdmc/music/`; ask the user before writing there, because their own music already lives in that folder.
   - Azahar needs `sdmc:/3ds/dspfirm.cdc`. A file of 64 KiB of zeros works under its HLE DSP.

@@ -1,4 +1,4 @@
-# Ds Man
+# iPoDS
 
 - Framework code belongs in the PocketJS repository; update the `runtime` submodule pin here.
 - Import framework APIs from `@pocketjs/framework/*` and Solid primitives and control flow from `solid-js`.

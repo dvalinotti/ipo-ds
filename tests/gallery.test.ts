@@ -40,7 +40,7 @@ function expectAll(text: string, parts: readonly string[]): void {
 
 test("main: songs with a selected and a playing row; Now Playing with embedded art", () => {
   show("main");
-  expectAll(screenText(world, "primary"), ["Ds Man", "142 songs · 9.6 hrs", "Song Name", "Artist", "Digital Love", "Starálfur", "♪", "Now Playing"]);
+  expectAll(screenText(world, "primary"), ["iPoDS", "142 songs · 9.6 hrs", "Song Name", "Artist", "Digital Love", "Starálfur", "♪", "Now Playing"]);
   const selected = pathTo(world, "primary", "Digital Love");
   expect(backgroundOf(selected)).toBe(SELECTED_ROW);
   expect(textColorOf(selected)).toBe(WHITE);
@@ -88,7 +88,7 @@ test("design: art is centred in its frame; LCD lines clear the pill; tabs form o
   const [, ly, , lh] = rect(line.at(-2));
   // The line is a marquee: run → Text → clip box → LCD pill.
   const [, by, , bh] = rect(line.at(-4));
-  const [, ty] = rect(pathTo(world, "primary", "Ds Man").at(-2));
+  const [, ty] = rect(pathTo(world, "primary", "iPoDS").at(-2));
   expect(ty).toBeGreaterThanOrEqual(by + 2);
   expect(ly + lh).toBeLessThanOrEqual(by + bh - 2);
 

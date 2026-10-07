@@ -1,4 +1,4 @@
-# Ds Man — Visual Design (Plan 2): Aqua / iTunes 4
+# iPoDS — Visual Design (Plan 2): Aqua / iTunes 4
 
 Date: 2026-10-06
 Status: approved in conversation, pending written-spec review
@@ -6,7 +6,7 @@ Parent spec: `docs/superpowers/specs/2026-10-06-walkman-player-design.md` (§6 v
 
 ## 1. Outcome
 
-Ds Man adopts the **Mac OS X Aqua / iTunes 4 (2003)** look on both 3DS screens.
+iPoDS adopts the **Mac OS X Aqua / iTunes 4 (2003)** look on both 3DS screens.
 Plan 2 turns the approved mockups into an app-owned theme and a kit of
 presentational parts. A static gallery bundle built from those parts must
 reproduce the mockups in the PocketJS sim. Plan 3 then wires real data and input
@@ -114,7 +114,7 @@ Footer legends follow the mockups. For example search shows `Ⓐ Play Ⓧ Edit s
 
 ## 4. Architecture
 
-All of this lives in ds-man. There are no framework (fork) changes.
+All of this lives in ipo-ds. There are no framework (fork) changes.
 
 ```
 app/theme/theme.ts         Theme interface (semantic slots; functions for state variants)
@@ -146,7 +146,7 @@ scripts/png.ts, scripts/gallery.ts  writes dist/gallery/<n>-<state>-{top,bottom}
 
 **Parts** are Solid components with plain props and a `theme` prop that defaults to `AQUA`. They hold no state and no input handling, except `TransportButton`/`ListRow` exposing `onPress`, which Plan 3 wires. `ArtFrame` takes either `texture` (a `ResourceImage` handle, Plan 4) or `album` (placeholder).
 
-**Gallery.** It is a separate bundle (`ds-man-gallery`) so the app itself stays free of storyboard code. Its state index changes on L/R. `scripts/gallery.ts` boots it through the sim harness and steps to each state. It writes `dist/gallery/<n>-<state>-{top,bottom}.png` with a minimal PNG encoder (`node:zlib`). These go in `dist/`, which is not committed.
+**Gallery.** It is a separate bundle (`ipo-ds-gallery`) so the app itself stays free of storyboard code. Its state index changes on L/R. `scripts/gallery.ts` boots it through the sim harness and steps to each state. It writes `dist/gallery/<n>-<state>-{top,bottom}.png` with a minimal PNG encoder (`node:zlib`). These go in `dist/`, which is not committed.
 
 ## 5. Testing
 
