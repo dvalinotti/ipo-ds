@@ -636,3 +636,11 @@ test("closing the keyboard with the D-pad or X still held does not move, search 
   expect(screenText(rig.world, "auxiliary")).not.toContain("START confirm");
   expect(rig.host.log.filter((entry) => entry === "scan()")).toHaveLength(scans);
 }, 120_000);
+
+test("A on the frame a held D-pad steps plays the row the step lands on", async () => {
+  const rig = await boot();
+  frames(rig, 1, { buttons: BTN.DOWN | A }); // the step and the press land on one frame
+  frames(rig, 2);
+  expect(selectedRow(rig.world)).toContain("Around the World");
+  expect(opens(rig.host)).toEqual(["open(7)"]);
+}, 120_000);

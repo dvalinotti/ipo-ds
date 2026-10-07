@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { buildLibrary } from "../app/library/library.ts";
 import {
-  crumbOf, currentView, focusOf, headerOf, initialExplorer, lcdLine, legendOf, reduceExplorer, rowCells, rowsKey, visibleRows, visibleSongIds,
+  crumbOf, currentView, focusOf, headerOf, initialExplorer, lcdLine, legendOf, reduceExplorer, rowCells, rowsKey, visibleRows, songIds,
   type ExplorerAction, type ExplorerState,
 } from "../app/explorer/model.ts";
 import { TRACKS } from "./fixtures/tracks.ts";
@@ -42,7 +42,7 @@ test("focus is clamped to the visible rows; paging moves by a screenful", () => 
 
 test("one query filters whichever tab shows, resets focus, and B clears it once no drill-down is open", () => {
   let state = run(initialExplorer(), { type: "move", delta: 4, count: 7 }, { type: "setQuery", query: "daft" });
-  expect(visibleSongIds(library, state)).toEqual([1, 2, 0]);
+  expect(songIds(visibleRows(library, state))).toEqual([1, 2, 0]);
   expect(focusOf(state)).toBe(0);
   state = run(state, { type: "tab", delta: 1 });
   expect(visibleRows(library, state)).toEqual([{ kind: "artist", key: "daft punk" }]);

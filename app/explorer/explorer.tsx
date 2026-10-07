@@ -20,7 +20,7 @@ import { Toolbar } from "../theme/parts/toolbar.tsx";
 import type { RowKind } from "../theme/theme.ts";
 import {
   crumbOfView, currentView, focusOf, headerOfView, initialExplorer, lcdLine, legendOf, reduceExplorer, rowCellsIn, rowsKey, viewKey,
-  visibleRows, visibleSongIds, type ExplorerAction, type ExplorerState,
+  visibleRows, songIds, type ExplorerAction, type ExplorerState,
 } from "./model.ts";
 import type { LegendItem } from "../theme/parts/strips.tsx";
 
@@ -109,9 +109,14 @@ export function Explorer(props: { session: Session; store: ExplorerStore; search
   });
   onButtonPress(BTN.CIRCLE, () => {
     const lib = library();
-    const row = rows()[focus()];
-    if (!lib || !row) return;
-    if (row.kind === "song") props.session.dispatch({ type: "playFrom", ids: visibleSongIds(lib, state()), startId: row.id });
+    if (!lib) return;
+    // This frame's own move or tab step is in state() already but not yet in the settled focus or
+    // the rows memo (they catch up when the frame's batch ends): read the row from fresh state.
+    const now = state();
+    const list = visibleRows(lib, now);
+    const row = list[Math.min(focusOf(now), list.length - 1)];
+    if (!row) return;
+    if (row.kind === "song") props.session.dispatch({ type: "playFrom", ids: songIds(list), startId: row.id });
     else dispatch({ type: "open", row });
   }, { active });
   // X: tap searches (or scans again on an empty library; nothing over the read-error panel,

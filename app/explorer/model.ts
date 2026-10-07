@@ -111,9 +111,9 @@ export function visibleRows(library: Library, state: ExplorerState): Row[] {
   return rows(library, currentView(state), state.query);
 }
 
-/** Song ids of the visible rows, in order: the queue a song played from this view gets. */
-export function visibleSongIds(library: Library, state: ExplorerState): number[] {
-  return visibleRows(library, state).flatMap((row) => (row.kind === "song" ? [row.id] : []));
+/** The song ids among `rows`, in order: the queue a song played from a view gets. */
+export function songIds(rows: readonly Row[]): number[] {
+  return rows.flatMap((row) => (row.kind === "song" ? [row.id] : []));
 }
 
 export interface HeaderSpec {
