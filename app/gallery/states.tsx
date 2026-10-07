@@ -6,7 +6,7 @@ import { createOsk } from "@pocketjs/framework/osk";
 import { SearchKeyboard as KeyboardScreen } from "../search.tsx";
 import type { JSX as SolidJSX } from "solid-js";
 import { AQUA } from "../theme/aqua.ts";
-import { ArtFrame, InfoLcd, SeekCapsule, TransportRow } from "../theme/parts/deck.tsx";
+import { ArtFrame, CoverLoading, InfoLcd, SeekCapsule, TransportRow } from "../theme/parts/deck.tsx";
 import { ColumnHeader, ListRow, Scrollbar } from "../theme/parts/list.tsx";
 import { IdlePanel, StatePanel } from "../theme/parts/panels.tsx";
 import { Breadcrumb, FooterLegend, SearchStrip, type LegendItem } from "../theme/parts/strips.tsx";
@@ -89,10 +89,10 @@ function SunsetCover() {
   );
 }
 
-function NowPlaying(props: { album: string; title: string; artist: string; position: string; elapsed: string; remaining: string; fraction: number; playing: boolean; cover?: boolean }) {
+function NowPlaying(props: { album: string; title: string; artist: string; position: string; elapsed: string; remaining: string; fraction: number; playing: boolean; cover?: boolean; loading?: boolean }) {
   return (
     <View class={AQUA.bottomScreen}>
-      <ArtFrame album={props.album}>{props.cover ? <SunsetCover /> : undefined}</ArtFrame>
+      <ArtFrame album={props.album}>{props.loading ? <CoverLoading /> : props.cover ? <SunsetCover /> : undefined}</ArtFrame>
       <InfoLcd title={props.title} artist={props.artist} album={props.album} position={props.position} shuffle repeat="all" />
       <SeekCapsule elapsed={props.elapsed} remaining={props.remaining} fraction={props.fraction} enabled />
       <TransportRow playing={props.playing} shuffle repeat="all" enabled />
@@ -203,6 +203,11 @@ export const STATES: readonly GalleryState[] = [
         playing
       />
     ),
+  },
+  {
+    name: "loading",
+    top: () => <Top tab="Songs" header={["Song Name", "Artist"]} rows={SONG_ROWS} selected={4} playing={4} scroll={[18, 44]} legend={SONGS_LEGEND} />,
+    bottom: () => <NowPlaying album="Discovery" title="Digital Love" artist="Daft Punk" position="4 of 12" elapsed="0:00" remaining="-4:58" fraction={0} playing loading />,
   },
   {
     // Last: the open keyboard is modal and takes L/R while it is up.

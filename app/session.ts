@@ -1,7 +1,8 @@
 // The app's connection to the host's local media module: scans at launch,
 // rebuilds the library after every completed scan (composing decomposed
 // accents first), runs the player controller and polls status once per frame.
-// Everything the screens read is a Solid signal here.
+// Everything the screens read is a Solid signal here, including the open
+// track's cover texture.
 import { createMemo, createSignal, type Accessor } from "solid-js";
 import { onFrame } from "@pocketjs/framework/lifecycle";
 import { localMedia, type LocalMedia, type LocalStatus, type LocalTrack } from "@pocketjs/framework/localmedia";
@@ -23,6 +24,11 @@ export interface Session {
   /** The open track's details. A rescan can drop its file while the host keeps streaming it,
    * so the last details seen for the open id stay until another song opens. */
   track: Accessor<LocalTrack | null>;
+  /** The open track's cover texture; 0 shows the placeholder (or the spinner while loading). A
+   * track change releases the previous cover at once. */
+  cover: Accessor<number>;
+  /** The open track has art that is still decoding. */
+  coverLoading: Accessor<boolean>;
   dispatch(action: PlayerAction): void;
   rescan(): void;
 }
@@ -50,7 +56,12 @@ export function createSession(media: LocalMedia | null = connect()): Session {
   const [statusFailed, setStatusFailed] = createSignal(false);
   const [listFailed, setListFailed] = createSignal(false);
   const readFailed = () => statusFailed() || listFailed();
+  const [cover, setCover] = createSignal(0);
+  const [coverLoading, setCoverLoading] = createSignal(false);
   let controller: PlayerController | null = null;
+  // The id whose cover is shown or requested, and whether its request resolved.
+  let coverFor = -1;
+  let coverResolved = true;
 
   if (media) {
     controller = createPlayerController(media, { onChange: setPlayer });
@@ -70,6 +81,7 @@ export function createSession(media: LocalMedia | null = connect()): Session {
       setStatusFailed(false);
       setStatus(now);
       setScanning(now.scanning);
+      updateCover(now.trackId);
       if (now.scanGeneration === generation) return;
       generation = now.scanGeneration;
       try {
@@ -83,6 +95,33 @@ export function createSession(media: LocalMedia | null = connect()): Session {
     });
   }
 
+  /** Asks for the open track's art each frame until it resolves; tracks without art never ask. */
+  function updateCover(id: number): void {
+    if (!media) return;
+    if (id !== coverFor) {
+      coverFor = id;
+      coverResolved = false;
+      // The old cover belongs to another song: drop it now rather than show it under this one.
+      const previous = cover();
+      if (previous > 0) {
+        setCover(0);
+        media.releaseArtwork(previous);
+      }
+    }
+    if (coverResolved) return;
+    let next = 0;
+    if (id >= 0 && track()?.hasArt) {
+      const art = media.artwork(id);
+      if (art === "pending") {
+        setCoverLoading(true);
+        return;
+      }
+      next = art;
+    }
+    coverResolved = true;
+    setCoverLoading(false);
+    setCover(next);
+  }
   let last: LocalTrack | null = null;
   const track = createMemo(() => {
     const id = status().trackId;
@@ -100,6 +139,8 @@ export function createSession(media: LocalMedia | null = connect()): Session {
     scanning,
     readFailed,
     track,
+    cover,
+    coverLoading,
     // A command re-reads status; a reply that fails validation must not throw out of the frame.
     dispatch: (action) => {
       try {

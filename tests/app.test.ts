@@ -370,3 +370,112 @@ test("a tap on the remaining-time label does not seek", async () => {
   touch(rig, 290, 135);
   expect(rig.host.log.filter((entry) => entry.startsWith("seek("))).toEqual([]);
 }, 120_000);
+
+// ---------------------------------------------------------------------------
+// Covers, playback errors and diagnostics (Plan 4)
+// ---------------------------------------------------------------------------
+
+/** Four songs in title order; Bravo has no embedded art. */
+const COVERS: SimLocalTrack[] = [
+  { file: "a.mp3", title: "Alpha", artist: "Ann", album: "One", track: 1, durationMs: 60_000, art: true },
+  { file: "b.mp3", title: "Bravo", artist: "Ann", album: "One", track: 2, durationMs: 60_000 },
+  { file: "c.mp3", title: "Charlie", artist: "Ann", album: "One", track: 3, durationMs: 60_000, art: true },
+  { file: "d.mp3", title: "Delta", artist: "Ann", album: "One", track: 4, durationMs: 60_000, art: true },
+];
+
+/** The cover image node: drawn at the art frame's 98×98 interior. */
+const coverNode = (world: BundleWorld) =>
+  flat(world.tree("auxiliary")).find((node) => node.type === "image" && node.rect?.[2] === 98 && node.rect?.[3] === 98);
+
+/** The loading spinner: a 32×32 sprite inside the art frame (10..110 on both axes). */
+const spinnerNode = (world: BundleWorld) =>
+  flat(world.tree("auxiliary")).find((node) => node.type === "image" && node.rect?.[2] === 32 && node.rect?.[3] === 32
+    && node.rect[0] > 10 && node.rect[0] < 110 && node.rect[1] > 10 && node.rect[1] < 110);
+
+const artworkCalls = (host: SimLocalMediaHost) => host.log.filter((entry) => entry.startsWith("artwork("));
+const releases = (host: SimLocalMediaHost) => host.log.filter((entry) => entry.startsWith("releaseArtwork("));
+
+async function bootWith(library: SimLocalTrack[], options: { artworkMs?: number } = {}): Promise<Rig> {
+  const host = createSimLocalMedia(library, options);
+  const rig = { host, world: await bootApp({ localmedia: host.ns }) };
+  frames(rig, 4);
+  expect(rig.world.failure).toBeNull();
+  return rig;
+}
+
+test("a spinner shows while the cover decodes, then the cover; the art is asked for until then only", async () => {
+  const rig = await bootWith(COVERS, { artworkMs: 200 });
+  press(rig, A); // Alpha
+  expect(coverNode(rig.world)).toBeUndefined(); // pending: the spinner, not the placeholder
+  expect(spinnerNode(rig.world)).toBeDefined();
+  expect(pathsTo(rig.world, "auxiliary", "On")).toHaveLength(0); // the placeholder's initials
+  frames(rig, 15);
+  expect(coverNode(rig.world)).toBeDefined();
+  expect(spinnerNode(rig.world)).toBeUndefined();
+  expect(rig.host.liveArtwork()).toHaveLength(1);
+  const asked = artworkCalls(rig.host).length;
+  frames(rig, 10);
+  expect(artworkCalls(rig.host)).toHaveLength(asked);
+}, 120_000);
+
+test("a track without art never asks and shows the placeholder; a skip releases the old cover at once and spins until the next", async () => {
+  const rig = await bootWith(COVERS, { artworkMs: 200 });
+  press(rig, A); // Alpha
+  frames(rig, 15);
+  const alpha = rig.host.liveArtwork()[0]!;
+  press(rig, BTN.ZR); // Bravo: no art
+  expect(artworkCalls(rig.host)).not.toContain("artwork(1)");
+  expect(coverNode(rig.world)).toBeUndefined();
+  expect(spinnerNode(rig.world)).toBeUndefined();
+  expect(pathsTo(rig.world, "auxiliary", "On").length).toBeGreaterThan(0); // Bravo's placeholder
+  expect(releases(rig.host)).toEqual([`releaseArtwork(${alpha})`]);
+  press(rig, BTN.ZR); // Charlie
+  frames(rig, 15);
+  const charlie = rig.host.liveArtwork()[0]!;
+  press(rig, BTN.ZR); // Delta: pending for 200 ms
+  expect(coverNode(rig.world)).toBeUndefined(); // Charlie's cover is gone at once
+  expect(spinnerNode(rig.world)).toBeDefined();
+  expect(rig.host.liveArtwork()).toEqual([]);
+  frames(rig, 15);
+  expect(rig.host.liveArtwork()).toHaveLength(1);
+  expect(rig.host.liveArtwork()[0]).not.toBe(charlie);
+  expect(releases(rig.host)).toEqual([`releaseArtwork(${alpha})`, `releaseArtwork(${charlie})`]);
+}, 120_000);
+
+test("fifty track changes leave at most one live cover and release each exactly once", async () => {
+  const rig = await bootWith(COVERS);
+  press(rig, A);
+  for (let i = 0; i < 50; i++) {
+    press(rig, BTN.ZR);
+    frames(rig, 2);
+    expect(rig.host.liveArtwork().length).toBeLessThanOrEqual(1);
+  }
+  const released = releases(rig.host);
+  expect(new Set(released).size).toBe(released.length);
+  expect(rig.host.ns.status()).toContain('"artHandles":1');
+}, 120_000);
+
+test("a playback error shows in the LCD status row", async () => {
+  const rig = await bootWith([{ file: "broken.mp3", title: "Broken", durationMs: 1000, corrupt: true }]);
+  press(rig, A);
+  frames(rig, 3);
+  expect(screenText(rig.world, "auxiliary")).toContain("MP3 frame sync not found");
+}, 120_000);
+
+test("holding L+R shows underruns, decode load and live covers without stepping tabs", async () => {
+  const rig = await bootWith(COVERS);
+  press(rig, A);
+  frames(rig, 3);
+  rig.host.setDecodeLoad(23);
+  frames(rig, 3, { buttons: BTN.LTRIGGER });
+  frames(rig, 3, { buttons: BTN.LTRIGGER | BTN.RTRIGGER });
+  expect(screenText(rig.world, "auxiliary")).toContain("U:0 D:23% A:1");
+  frames(rig, 3);
+  expect(screenText(rig.world, "auxiliary")).toContain("1 of 4");
+  expect(header(rig.world, "Song Name")).toBeDefined(); // still the Songs tab (L alone could not step left of it)
+  press(rig, BTN.RTRIGGER); // Artists
+  frames(rig, 3, { buttons: BTN.RTRIGGER });
+  frames(rig, 3, { buttons: BTN.RTRIGGER | BTN.LTRIGGER });
+  frames(rig, 3);
+  expect(header(rig.world, "Song Name")).toBeUndefined(); // still Artists: the second shoulder did not step back
+}, 120_000);

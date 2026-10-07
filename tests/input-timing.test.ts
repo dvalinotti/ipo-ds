@@ -58,3 +58,20 @@ test("L / R alone step tabs; Y held with L / R skips songs; a Y tap alone reveal
   expect(run([1 | 4, 1, 0])).toEqual(["next"]);
   expect(run([1, 1 | 4, 4, 0])).toEqual(["next"]);
 });
+
+test("a shoulder pressed while the other is held (the L+R diagnostics chord) does not step tabs", () => {
+  const BITS = { y: 1, l: 2, r: 4 };
+  const run = (masks: number[]) => {
+    let state = SHOULDERS_UP;
+    const events: ShoulderEvent[] = [];
+    for (const mask of masks) {
+      const step = stepShoulders(state, mask, BITS);
+      state = step.state;
+      events.push(...step.events);
+    }
+    return events;
+  };
+  expect(run([2, 2 | 4, 2 | 4, 0])).toEqual(["tabPrev"]);
+  expect(run([4, 4 | 2, 0])).toEqual(["tabNext"]);
+  expect(run([2 | 4, 2 | 4, 0])).toEqual([]);
+});

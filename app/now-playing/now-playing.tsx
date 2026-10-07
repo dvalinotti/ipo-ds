@@ -1,13 +1,16 @@
 // The bottom screen while not searching: the playing song's art, info LCD,
-// a drag-to-seek capsule (one seek on release) and the transport row.
+// a drag-to-seek capsule (one seek on release) and the transport row. The
+// LCD's status row shows a playback error, or diagnostics while L+R are held.
 import { createSignal, Show } from "solid-js";
 import { View } from "@pocketjs/framework/components";
 import { createGesture } from "@pocketjs/framework/gesture";
+import { BTN } from "@pocketjs/framework/input";
+import { onFrame } from "@pocketjs/framework/lifecycle";
 import { createMediaScrubber } from "@pocketjs/framework/media";
 import { formatRemaining, formatTime, needsHours } from "../format.ts";
 import type { Session } from "../session.ts";
 import { AQUA } from "../theme/aqua.ts";
-import { ArtFrame, InfoLcd, SEEK_TRACK_PX, SEEK_TRACK_WIDE_PX, SeekCapsule, seekTrackLeft, TransportRow } from "../theme/parts/deck.tsx";
+import { ArtFrame, CoverImage, CoverLoading, InfoLcd, SEEK_TRACK_PX, SEEK_TRACK_WIDE_PX, SeekCapsule, seekTrackLeft, TransportRow } from "../theme/parts/deck.tsx";
 import { IdlePanel } from "../theme/parts/panels.tsx";
 
 export function NowPlaying(props: { session: Session }) {
@@ -51,12 +54,22 @@ export function NowPlaying(props: { session: Session }) {
     },
   });
   const position = () => preview() ?? status().positionMs;
+  const SHOULDERS = BTN.LTRIGGER | BTN.RTRIGGER;
+  const [diagnostics, setDiagnostics] = createSignal(false);
+  onFrame((buttons) => setDiagnostics((buttons & SHOULDERS) === SHOULDERS));
+  const note = () => {
+    const now = status();
+    if (diagnostics()) return `U:${now.underruns} D:${now.decodeLoad}% A:${now.artHandles}`;
+    return now.phase === "error" ? now.error : undefined;
+  };
   const playing = () => status().phase === "playing" || status().phase === "loading";
 
   return (
     <View class={AQUA.bottomScreen}>
       <Show when={!idle()} fallback={<IdlePanel />}>
-        <ArtFrame album={track()!.album} />
+        <ArtFrame album={track()!.album}>
+          {props.session.coverLoading() ? <CoverLoading /> : props.session.cover() > 0 ? <CoverImage handle={props.session.cover()} /> : undefined}
+        </ArtFrame>
         <InfoLcd
           title={track()!.title}
           artist={track()!.artist}
@@ -64,6 +77,8 @@ export function NowPlaying(props: { session: Session }) {
           position={`${player().index + 1} of ${player().order.length}`}
           shuffle={player().shuffle}
           repeat={player().repeat}
+          note={note()}
+          alert={!diagnostics() && status().phase === "error"}
         />
       </Show>
       <SeekCapsule

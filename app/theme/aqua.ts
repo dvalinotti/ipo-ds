@@ -114,6 +114,7 @@ export const AQUA: Theme = {
   progressFill: "h-[10] rounded-[5] bg-gradient-to-b from-[#b9dcff] via-[#5aa7f0] to-[#1c6fd1]",
 
   artFrame: "absolute left-[10] top-[10] w-[100] h-[100] items-center justify-center border border-[#7d7d7d] bg-white",
+  artLoading: "w-[98] h-[98] items-center justify-center bg-gradient-to-b from-[#f7f7f7] to-[#d8d8d8]",
   ring: (size) => (size === "outer"
     ? "absolute left-[8] top-[8] w-[76] h-[76] rounded-[38] border-[2] border-[#f4f6e6] opacity-85"
     : "absolute left-[22] top-[22] w-[48] h-[48] rounded-[24] border-[2] border-[#f4f6e6] opacity-85"),
@@ -124,6 +125,8 @@ export const AQUA: Theme = {
   infoAlbum: "w-full text-center text-xs text-[#6a6c5a] mt-[1]",
   infoStatus: "flex-row items-center gap-[6] mt-[8]",
   infoStatusText: "text-xs text-[#3c3e31]",
+  infoNote: "w-full text-center text-xs text-[#3c3e31]",
+  infoAlert: "w-full text-center text-xs font-bold text-[#b0281c]",
   infoFlagText: "text-xs font-bold text-[#1c6fd1]",
 
   seekCapsule: "absolute left-[10] top-[120] w-[300] h-[30] flex-row items-center px-[8] gap-[8] rounded-[15] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",

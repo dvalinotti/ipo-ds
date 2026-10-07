@@ -2,14 +2,15 @@
 // transport buttons. Presentational only: Plan 3 wires the seek gesture and
 // the handlers.
 import { children, Show } from "solid-js";
-import { Image, Text, View } from "@pocketjs/framework/components";
+import { Image, Sprite, Text, View } from "@pocketjs/framework/components";
 import { createGesture } from "@pocketjs/framework/gesture";
+import { ready, ResourceImage } from "@pocketjs/framework/resource";
 import type { JSX as SolidJSX } from "solid-js";
 import { AQUA } from "../aqua.ts";
 import { trackOffset } from "../geometry.ts";
 import { placeholderArt } from "../placeholder.ts";
 import type { RepeatMode, Theme, TransportKind } from "../theme.ts";
-import { FONT_12, FONT_16_BOLD } from "../fonts.ts";
+import { FONT_12, FONT_12_BOLD, FONT_16_BOLD } from "../fonts.ts";
 import { Marquee } from "./marquee.tsx";
 
 export function PlaceholderArt(props: { album: string; theme?: Theme }) {
@@ -42,6 +43,21 @@ export function ArtFrame(props: { album: string; children?: SolidJSX.Element; th
   );
 }
 
+/** An uploaded cover texture (128×128) drawn at the art frame's 98×98 interior. */
+export function CoverImage(props: { handle: number }) {
+  return <ResourceImage class="w-[98] h-[98]" state={() => ready({ handle: props.handle, width: 98, height: 98 })} fallback={() => null} />;
+}
+
+/** The art frame's interior while a cover decodes: the Aqua spinner on soft grey. */
+export function CoverLoading(props: { theme?: Theme }) {
+  const t = () => props.theme ?? AQUA;
+  return (
+    <View class={t().artLoading}>
+      <Sprite class="w-[32] h-[32]" sprite="theme/icons/spinner-atlas.svg" />
+    </View>
+  );
+}
+
 export function InfoLcd(props: {
   title: string;
   artist: string;
@@ -49,6 +65,9 @@ export function InfoLcd(props: {
   position: string;
   shuffle: boolean;
   repeat: RepeatMode;
+  /** Replaces the status row: diagnostics, or a playback error when `alert`. */
+  note?: string;
+  alert?: boolean;
   theme?: Theme;
 }) {
   const t = () => props.theme ?? AQUA;
@@ -57,18 +76,27 @@ export function InfoLcd(props: {
       <Marquee text={props.title} class={t().infoTitle} slot={FONT_16_BOLD} width={INFO_TEXT_PX} />
       <Marquee text={props.artist} class={t().infoArtist} slot={FONT_12} width={INFO_TEXT_PX} />
       <Marquee text={props.album} class={t().infoAlbum} slot={FONT_12} width={INFO_TEXT_PX} />
-      <View class={t().infoStatus}>
-        <Text class={t().infoStatusText}>{props.position}</Text>
-        <Show when={props.shuffle}>
-          <Image class="w-[16] h-[16]" src={t().icon("shuffle", "blue")} />
-        </Show>
-        <Show when={props.repeat !== "off"}>
-          <Image class="w-[16] h-[16]" src={t().icon("repeat", "blue")} />
-        </Show>
-        <Show when={props.repeat === "one"}>
-          <Text class={t().infoFlagText}>1</Text>
-        </Show>
-      </View>
+      <Show
+        when={!props.note}
+        fallback={
+          <View class={t().infoStatus}>
+            <Marquee text={props.note!} class={props.alert ? t().infoAlert : t().infoNote} slot={props.alert ? FONT_12_BOLD : FONT_12} width={INFO_TEXT_PX} />
+          </View>
+        }
+      >
+        <View class={t().infoStatus}>
+          <Text class={t().infoStatusText}>{props.position}</Text>
+          <Show when={props.shuffle}>
+            <Image class="w-[16] h-[16]" src={t().icon("shuffle", "blue")} />
+          </Show>
+          <Show when={props.repeat !== "off"}>
+            <Image class="w-[16] h-[16]" src={t().icon("repeat", "blue")} />
+          </Show>
+          <Show when={props.repeat === "one"}>
+            <Text class={t().infoFlagText}>1</Text>
+          </Show>
+        </View>
+      </Show>
     </View>
   );
 }

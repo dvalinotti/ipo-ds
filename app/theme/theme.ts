@@ -106,6 +106,8 @@ export interface Theme {
   progressFill: string;
 
   artFrame: string;
+  /** The art frame's interior while a cover decodes (holds the spinner sprite). */
+  artLoading: string;
   ring(size: "outer" | "inner"): string;
   hub: string;
   infoLcd: string;
@@ -114,6 +116,9 @@ export interface Theme {
   infoAlbum: string;
   infoStatus: string;
   infoStatusText: string;
+  /** The status row's replacement text: diagnostics, or (alert) a playback error. */
+  infoNote: string;
+  infoAlert: string;
   infoFlagText: string;
 
   seekCapsule: string;

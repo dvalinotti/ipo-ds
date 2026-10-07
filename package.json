@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "3ds": "bun scripts/build.ts",
+    "test-library": "bun scripts/make-test-library.ts",
     "check": "bun runtime/node_modules/typescript/bin/tsc --noEmit",
     "test": "bun test ./tests",
     "gallery": "bun scripts/gallery.ts"
