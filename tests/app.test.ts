@@ -387,6 +387,11 @@ const COVERS: SimLocalTrack[] = [
 const coverNode = (world: BundleWorld) =>
   flat(world.tree("auxiliary")).find((node) => node.type === "image" && node.rect?.[2] === 98 && node.rect?.[3] === 98);
 
+/** The loading spinner: a 32×32 sprite inside the art frame (10..110 on both axes). */
+const spinnerNode = (world: BundleWorld) =>
+  flat(world.tree("auxiliary")).find((node) => node.type === "image" && node.rect?.[2] === 32 && node.rect?.[3] === 32
+    && node.rect[0] > 10 && node.rect[0] < 110 && node.rect[1] > 10 && node.rect[1] < 110);
+
 const artworkCalls = (host: SimLocalMediaHost) => host.log.filter((entry) => entry.startsWith("artwork("));
 const releases = (host: SimLocalMediaHost) => host.log.filter((entry) => entry.startsWith("releaseArtwork("));
 
@@ -398,20 +403,22 @@ async function bootWith(library: SimLocalTrack[], options: { artworkMs?: number 
   return rig;
 }
 
-test("a cover replaces the placeholder once its art is ready, and is asked for until then only", async () => {
+test("a spinner shows while the cover decodes, then the cover; the art is asked for until then only", async () => {
   const rig = await bootWith(COVERS, { artworkMs: 200 });
   press(rig, A); // Alpha
-  expect(coverNode(rig.world)).toBeUndefined(); // pending: the placeholder shows
-  expect(screenText(rig.world, "auxiliary")).toContain("On");
+  expect(coverNode(rig.world)).toBeUndefined(); // pending: the spinner, not the placeholder
+  expect(spinnerNode(rig.world)).toBeDefined();
+  expect(pathsTo(rig.world, "auxiliary", "On")).toHaveLength(0); // the placeholder's initials
   frames(rig, 15);
   expect(coverNode(rig.world)).toBeDefined();
+  expect(spinnerNode(rig.world)).toBeUndefined();
   expect(rig.host.liveArtwork()).toHaveLength(1);
   const asked = artworkCalls(rig.host).length;
   frames(rig, 10);
   expect(artworkCalls(rig.host)).toHaveLength(asked);
 }, 120_000);
 
-test("a track without art never asks; the previous cover stays until the next resolves, then is released once", async () => {
+test("a track without art never asks and shows the placeholder; a skip releases the old cover at once and spins until the next", async () => {
   const rig = await bootWith(COVERS, { artworkMs: 200 });
   press(rig, A); // Alpha
   frames(rig, 15);
@@ -419,13 +426,16 @@ test("a track without art never asks; the previous cover stays until the next re
   press(rig, BTN.ZR); // Bravo: no art
   expect(artworkCalls(rig.host)).not.toContain("artwork(1)");
   expect(coverNode(rig.world)).toBeUndefined();
+  expect(spinnerNode(rig.world)).toBeUndefined();
+  expect(pathsTo(rig.world, "auxiliary", "On").length).toBeGreaterThan(0); // Bravo's placeholder
   expect(releases(rig.host)).toEqual([`releaseArtwork(${alpha})`]);
   press(rig, BTN.ZR); // Charlie
   frames(rig, 15);
   const charlie = rig.host.liveArtwork()[0]!;
   press(rig, BTN.ZR); // Delta: pending for 200 ms
-  expect(coverNode(rig.world)).toBeDefined(); // Charlie's cover is still up
-  expect(rig.host.liveArtwork()).toEqual([charlie]);
+  expect(coverNode(rig.world)).toBeUndefined(); // Charlie's cover is gone at once
+  expect(spinnerNode(rig.world)).toBeDefined();
+  expect(rig.host.liveArtwork()).toEqual([]);
   frames(rig, 15);
   expect(rig.host.liveArtwork()).toHaveLength(1);
   expect(rig.host.liveArtwork()[0]).not.toBe(charlie);

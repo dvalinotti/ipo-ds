@@ -114,6 +114,7 @@ export const AQUA: Theme = {
   progressFill: "h-[10] rounded-[5] bg-gradient-to-b from-[#b9dcff] via-[#5aa7f0] to-[#1c6fd1]",
 
   artFrame: "absolute left-[10] top-[10] w-[100] h-[100] items-center justify-center border border-[#7d7d7d] bg-white",
+  artLoading: "w-[98] h-[98] items-center justify-center bg-gradient-to-b from-[#f7f7f7] to-[#d8d8d8]",
   ring: (size) => (size === "outer"
     ? "absolute left-[8] top-[8] w-[76] h-[76] rounded-[38] border-[2] border-[#f4f6e6] opacity-85"
     : "absolute left-[22] top-[22] w-[48] h-[48] rounded-[24] border-[2] border-[#f4f6e6] opacity-85"),

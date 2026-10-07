@@ -10,7 +10,7 @@ import { createMediaScrubber } from "@pocketjs/framework/media";
 import { formatRemaining, formatTime, needsHours } from "../format.ts";
 import type { Session } from "../session.ts";
 import { AQUA } from "../theme/aqua.ts";
-import { ArtFrame, CoverImage, InfoLcd, SEEK_TRACK_PX, SEEK_TRACK_WIDE_PX, SeekCapsule, seekTrackLeft, TransportRow } from "../theme/parts/deck.tsx";
+import { ArtFrame, CoverImage, CoverLoading, InfoLcd, SEEK_TRACK_PX, SEEK_TRACK_WIDE_PX, SeekCapsule, seekTrackLeft, TransportRow } from "../theme/parts/deck.tsx";
 import { IdlePanel } from "../theme/parts/panels.tsx";
 
 export function NowPlaying(props: { session: Session }) {
@@ -67,7 +67,9 @@ export function NowPlaying(props: { session: Session }) {
   return (
     <View class={AQUA.bottomScreen}>
       <Show when={!idle()} fallback={<IdlePanel />}>
-        <ArtFrame album={track()!.album}>{props.session.cover() > 0 ? <CoverImage handle={props.session.cover()} /> : undefined}</ArtFrame>
+        <ArtFrame album={track()!.album}>
+          {props.session.coverLoading() ? <CoverLoading /> : props.session.cover() > 0 ? <CoverImage handle={props.session.cover()} /> : undefined}
+        </ArtFrame>
         <InfoLcd
           title={track()!.title}
           artist={track()!.artist}

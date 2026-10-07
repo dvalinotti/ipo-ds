@@ -106,6 +106,8 @@ export interface Theme {
   progressFill: string;
 
   artFrame: string;
+  /** The art frame's interior while a cover decodes (holds the spinner sprite). */
+  artLoading: string;
   ring(size: "outer" | "inner"): string;
   hub: string;
   infoLcd: string;

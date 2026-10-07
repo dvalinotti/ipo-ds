@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { BTN } from "@pocketjs/framework/input";
-import type { BundleWorld } from "../runtime/hosts/sim/sim.ts";
+import type { BundleWorld, SimNode } from "../runtime/hosts/sim/sim.ts";
 import { GALLERY_STATES, type GalleryStateName } from "../app/gallery/names.ts";
 import { backgroundOf, bootGallery, disposeGuest, pathTo, pathsTo, screenText, textColorOf } from "./support/app-world.ts";
 
@@ -177,6 +177,17 @@ test("stress: over-long LCD lines, query and breadcrumb clip in place; curly quo
   expectInside(pathTo(world, "auxiliary", "Champagne Supernova – Extended Remastered Version"));
   expectInside(pathTo(world, "auxiliary", "Oasis featuring Paul Weller on lead guitar and backing vocals"));
   expect(pathTo(world, "auxiliary", "Wh").length).toBeGreaterThan(0);
+});
+
+test("loading: while a cover decodes, the art frame shows the spinner centred on grey, not the placeholder", () => {
+  show("loading");
+  const all: SimNode[] = [];
+  const walk = (node: SimNode | null) => { if (node) { all.push(node); node.children.forEach(walk); } };
+  walk(world.tree("auxiliary"));
+  const spinner = all.find((node) => node.type === "image" && node.rect?.[2] === 32 && node.rect?.[3] === 32 && node.rect[0] < 110);
+  expect(spinner?.rect).toEqual([44, 44, 32, 32]);
+  expect(pathsTo(world, "auxiliary", "Di")).toHaveLength(0); // no placeholder initials
+  expect(screenText(world, "auxiliary")).toContain("Digital Love");
 });
 
 test("search: query strip with results; the classic keyboard on the bottom screen", () => {

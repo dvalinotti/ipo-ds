@@ -24,9 +24,11 @@ export interface Session {
   /** The open track's details. A rescan can drop its file while the host keeps streaming it,
    * so the last details seen for the open id stay until another song opens. */
   track: Accessor<LocalTrack | null>;
-  /** The open track's cover texture; 0 shows the placeholder. The previous cover stays until
-   * the next track's art resolves, then is released once. */
+  /** The open track's cover texture; 0 shows the placeholder (or the spinner while loading). A
+   * track change releases the previous cover at once. */
   cover: Accessor<number>;
+  /** The open track has art that is still decoding. */
+  coverLoading: Accessor<boolean>;
   dispatch(action: PlayerAction): void;
   rescan(): void;
 }
@@ -55,6 +57,7 @@ export function createSession(media: LocalMedia | null = connect()): Session {
   const [listFailed, setListFailed] = createSignal(false);
   const readFailed = () => statusFailed() || listFailed();
   const [cover, setCover] = createSignal(0);
+  const [coverLoading, setCoverLoading] = createSignal(false);
   let controller: PlayerController | null = null;
   // The id whose cover is shown or requested, and whether its request resolved.
   let coverFor = -1;
@@ -98,18 +101,26 @@ export function createSession(media: LocalMedia | null = connect()): Session {
     if (id !== coverFor) {
       coverFor = id;
       coverResolved = false;
+      // The old cover belongs to another song: drop it now rather than show it under this one.
+      const previous = cover();
+      if (previous > 0) {
+        setCover(0);
+        media.releaseArtwork(previous);
+      }
     }
     if (coverResolved) return;
     let next = 0;
     if (id >= 0 && track()?.hasArt) {
       const art = media.artwork(id);
-      if (art === "pending") return;
+      if (art === "pending") {
+        setCoverLoading(true);
+        return;
+      }
       next = art;
     }
     coverResolved = true;
-    const previous = cover();
+    setCoverLoading(false);
     setCover(next);
-    if (previous > 0 && previous !== next) media.releaseArtwork(previous);
   }
   let last: LocalTrack | null = null;
   const track = createMemo(() => {
@@ -129,6 +140,7 @@ export function createSession(media: LocalMedia | null = connect()): Session {
     readFailed,
     track,
     cover,
+    coverLoading,
     // A command re-reads status; a reply that fails validation must not throw out of the frame.
     dispatch: (action) => {
       try {
