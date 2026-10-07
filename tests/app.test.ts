@@ -615,3 +615,24 @@ test("a song without a known duration ignores touches on the seek track", async 
   touch(rig, 160, 135);
   expect(rig.host.log.filter((entry) => entry.startsWith("seek("))).toEqual([]);
 }, 120_000);
+
+test("closing the keyboard with the D-pad or X still held does not move, search or rescan", async () => {
+  const rig = await boot();
+  press(rig, X);
+  expect(screenText(rig.world, "auxiliary")).toContain("START confirm");
+  frames(rig, 3, { buttons: BTN.DOWN });
+  frames(rig, 1, { buttons: BTN.DOWN | BTN.START }); // commit with DOWN still held
+  frames(rig, 5, { buttons: BTN.DOWN });
+  frames(rig, 2);
+  expect(screenText(rig.world, "auxiliary")).not.toContain("START confirm");
+  expect(selectedRow(rig.world)).toContain("Aerodynamic");
+  press(rig, X);
+  expect(screenText(rig.world, "auxiliary")).toContain("START confirm");
+  const scans = rig.host.log.filter((entry) => entry === "scan()").length;
+  frames(rig, 3, { buttons: X }); // X types a space on the keyboard
+  frames(rig, 1, { buttons: X | BTN.START }); // commit with X still held
+  frames(rig, 70, { buttons: X }); // past the hold time
+  frames(rig, 2);
+  expect(screenText(rig.world, "auxiliary")).not.toContain("START confirm");
+  expect(rig.host.log.filter((entry) => entry === "scan()")).toHaveLength(scans);
+}, 120_000);
