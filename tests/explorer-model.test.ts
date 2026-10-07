@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { buildLibrary } from "../app/library/library.ts";
 import {
-  crumbOf, currentView, focusOf, headerOf, initialExplorer, lcdLine, legendOf, panelOf, reduceExplorer, rowCells, rowsKey, visibleRows, songIds,
+  crumbOfView, currentView, focusOf, headerOfView, initialExplorer, lcdLine, legendOf, panelOf, reduceExplorer, rowCellsIn, rowsKey, visibleRows, songIds,
   type ExplorerAction, type ExplorerState, type ListPanel,
 } from "../app/explorer/model.ts";
 import { TRACKS } from "./fixtures/tracks.ts";
@@ -83,6 +83,10 @@ test("reveal jumps to the playing song in Songs, clearing a query that hides it"
   expect([kept.query, focusOf(kept)]).toEqual(["daft", 1]);
   expect(run(initialExplorer(), { type: "reveal", id: 99, library })).toEqual(initialExplorer());
 });
+
+const headerOf = (state: ExplorerState) => headerOfView(currentView(state));
+const rowCells = (lib: typeof library, state: ExplorerState, row: Parameters<typeof rowCellsIn>[2]) => rowCellsIn(lib, currentView(state), row);
+const crumbOf = (lib: typeof library, state: ExplorerState) => crumbOfView(lib, currentView(state));
 
 test("headers, row cells and breadcrumbs follow the view", () => {
   let state = initialExplorer();

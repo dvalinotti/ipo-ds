@@ -123,10 +123,6 @@ export interface HeaderSpec {
   count: boolean;
 }
 
-export function headerOf(state: ExplorerState): HeaderSpec {
-  return headerOfView(currentView(state));
-}
-
 export function headerOfView(view: View): HeaderSpec {
   switch (view.kind) {
     case "songs":
@@ -149,10 +145,6 @@ export interface RowCells {
   lead?: string;
   /** `detail` is a right-aligned count. */
   count: boolean;
-}
-
-export function rowCells(library: Library, state: ExplorerState, row: Row): RowCells {
-  return rowCellsIn(library, currentView(state), row);
 }
 
 /** A row's cells in a view: the view (not the focus) is all a row's text depends on. */
@@ -178,10 +170,6 @@ export interface CrumbSpec {
 }
 
 const songsLabel = (n: number) => `${n} ${n === 1 ? "song" : "songs"}`;
-
-export function crumbOf(library: Library, state: ExplorerState): CrumbSpec | null {
-  return crumbOfView(library, currentView(state));
-}
 
 export function crumbOfView(library: Library, view: View): CrumbSpec | null {
   if (view.kind === "artist") {

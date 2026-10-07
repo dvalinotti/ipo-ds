@@ -1,6 +1,6 @@
 // The bottom screen's Now Playing deck: art frame, info LCD, seek capsule and
-// transport buttons. Presentational only: Plan 3 wires the seek gesture and
-// the handlers.
+// transport buttons. Each transport button owns its touch recognizer and calls
+// `onPress`; the screen (app/now-playing) wires the seek drag and the actions.
 import { children, Show } from "solid-js";
 import { Image, Sprite, Text, View } from "@pocketjs/framework/components";
 import { createGesture } from "@pocketjs/framework/gesture";
