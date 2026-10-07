@@ -1,7 +1,7 @@
 // The bottom screen while not searching: the playing song's art, info LCD,
 // a drag-to-seek capsule (one seek on release) and the transport row. The
 // LCD's status row shows a playback error, or diagnostics while L+R are held.
-import { createSignal, Show } from "solid-js";
+import { createEffect, createMemo, createSignal, on, Show } from "solid-js";
 import { getOps } from "@pocketjs/framework";
 import { View } from "@pocketjs/framework/components";
 import { createGesture } from "@pocketjs/framework/gesture";
@@ -27,6 +27,16 @@ export function NowPlaying(props: { session: Session }) {
   // Drag-to-seek: preview locally while the contact moves, one seek on release.
   const [preview, setPreview] = createSignal<number | null>(null);
   const scrubber = createMediaScrubber((seconds) => dispatch({ type: "seek", ms: seconds * 1000 }));
+  // A drag belongs to the song it started on. When another open lands under it (the song ended
+  // and the next one started, or a skip), the release must not seek the new song to the old
+  // preview. Every open carries a new serial (a skip, the next song, repeat-one's reopen), so the
+  // memo fires once per open and not on the 15 Hz status reads.
+  const opened = createMemo(() => status().openSerial);
+  createEffect(on(opened, () => {
+    if (!scrubber.active()) return;
+    scrubber.cancel();
+    setPreview(null);
+  }, { defer: true }));
   const trackPx = () => (hours() ? SEEK_TRACK_WIDE_PX : SEEK_TRACK_PX);
   const fractionAt = (x: number) => (x - seekTrackLeft(hours())) / trackPx();
   /** Downs on the time labels are not seeks (a tap on "-3:58" would jump to the end). */
@@ -37,7 +47,8 @@ export function NowPlaying(props: { session: Session }) {
     axis: "x",
     region: { node: () => capsule as never },
     onDown: (c) => {
-      if (idle() || !onTrack(c.x)) return;
+      // No duration (a VBR file without a header reports 0): nothing to map the contact to, so no seek.
+      if (idle() || duration() <= 0 || !onTrack(c.x)) return;
       scrubber.begin(fractionAt(c.x), duration() / 1000);
       setPreview(scrubber.preview() * 1000);
     },

@@ -576,3 +576,42 @@ test("holding L+R shows underruns, decode load and live covers without stepping 
   frames(rig, 3);
   expect(header(rig.world, "Song Name")).toBeUndefined(); // still Artists: the second shoulder did not step back
 }, 120_000);
+
+test("a seek drag that outlives its song does not seek the next one", async () => {
+  const rig = await boot([
+    { file: "a.mp3", title: "Alpha", artist: "Ab", album: "Ab", durationMs: 2000 },
+    { file: "b.mp3", title: "Beta", artist: "Ab", album: "Ab", durationMs: 60_000 },
+  ]);
+  press(rig, A); // Alpha, 2 s
+  frames(rig, 6);
+  const y = 135;
+  // A finger resting on the track through the end of Alpha: the queue moves on to Beta underneath it.
+  for (let i = 0; i < 130; i++) frames(rig, 1, { touches: [{ x: 80, y }], surface: "auxiliary" });
+  expect(opens(rig.host)).toEqual(["open(0)", "open(1)"]);
+  frames(rig, 3); // release
+  expect(rig.host.log.filter((entry) => entry.startsWith("seek("))).toEqual([]);
+}, 120_000);
+
+test("a seek drag released after the last song ended still seeks that song", async () => {
+  const rig = await boot([{ file: "a.mp3", title: "Alpha", artist: "Ab", album: "Ab", durationMs: 2000 }]);
+  press(rig, A);
+  frames(rig, 6);
+  const y = 135;
+  for (let i = 0; i < 130; i++) frames(rig, 1, { touches: [{ x: 80, y }], surface: "auxiliary" }); // Alpha ends; nothing else opens
+  expect(opens(rig.host)).toEqual(["open(0)"]);
+  frames(rig, 3); // release
+  // The host's own end-of-queue seek to 0 comes first; the drag's seek lands on the same song.
+  expect(rig.host.log.filter((entry) => entry.startsWith("seek("))).toEqual(["seek(0)", "seek(192)"]);
+}, 120_000);
+
+test("a song without a known duration ignores touches on the seek track", async () => {
+  const host = createSimLocalMedia(LIBRARY);
+  // A VBR file without a header: the host reports no duration while the song plays.
+  const ns = { ...host.ns, status: () => JSON.stringify({ ...JSON.parse(host.ns.status()), durationMs: 0 }) };
+  const rig = { host, world: await bootApp({ localmedia: ns }) };
+  frames(rig, 4);
+  press(rig, A);
+  frames(rig, 10);
+  touch(rig, 160, 135);
+  expect(rig.host.log.filter((entry) => entry.startsWith("seek("))).toEqual([]);
+}, 120_000);
