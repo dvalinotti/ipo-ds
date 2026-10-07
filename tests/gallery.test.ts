@@ -130,16 +130,16 @@ test("gels: each body's first child is its gloss; a blue label carries one shado
   expect(a[0]!.at(-3)).toBe(a[1]!.at(-3));
   expect(textColorOf(a[0]!)).toBe(LABEL_SHADOW);
   expect(rect(a[0]!.at(-2))[1]).toBe(rect(a[1]!.at(-2))[1] + 1);
-  expect(glossOffset(a[0]!.at(-4)!)).toEqual([2, 3, 10, 6]);
+  expect(glossOffset(a[0]!.at(-4)!)).toEqual([3, 3, 8, 2]);
   // Grey badge: one copy, straight in the body.
   const x = pathsTo(world, "primary", "X");
   expect(x).toHaveLength(1);
-  expect(glossOffset(x[0]!.at(-3)!)).toEqual([2, 3, 10, 6]);
-  // Tabs: the active one has a shadow copy and a square gloss over its top half; the others have one copy.
+  expect(glossOffset(x[0]!.at(-3)!)).toEqual([3, 3, 8, 2]);
+  // Tabs: the active one has a shadow copy and a square gloss over its top third; the others have one copy.
   const songs = tabLabel("Songs");
   expect(songs).toHaveLength(2);
   const segment = songs[0]!.at(-4)!;
-  expect(glossOffset(segment)).toEqual([0, 0, rect(segment)[2], 9]);
+  expect(glossOffset(segment)).toEqual([0, 0, rect(segment)[2], 6]);
   expect(tabLabel("Artists")).toHaveLength(1);
   // Transport (Now Playing): shuffle, prev, pause, next, repeat.
   const [row] = findAll(world.tree("auxiliary"), (node) => JSON.stringify(node.rect) === JSON.stringify([10, 160, 300, 72]));

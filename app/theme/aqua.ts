@@ -31,21 +31,23 @@ const LARGE_ICONS: Record<"play" | "pause", Record<"white" | "ink", string>> = {
 // Blue is sampled from the reference button; grey is the same build in graphite.
 // A disabled button keeps its grey body at 45 % opacity but draws no gloss and no
 // shadow: opacity applies per primitive, so they would show through.
+// White labels sit on the tabs and badges, so their gloss is short: the top
+// third of a tab and a 2 px band on a badge (spec §8), which keeps the label legible.
 const TAB_BLUE: GelClasses = {
   body: "relative h-[18] px-[8] items-center justify-center bg-gradient-to-b from-[#4a80da] via-[#4a80da] to-[#c8daf6]",
-  gloss: "absolute left-[0] right-[0] top-[0] h-[9] bg-gradient-to-b from-[#f5f8fe] via-[#d3e1f8] to-[#93b4eb]",
+  gloss: "absolute left-[0] right-[0] top-[0] h-[6] bg-gradient-to-b from-[#f5f8fe] via-[#d3e1f8] to-[#93b4eb]",
 };
 const TAB_GREY: GelClasses = {
   body: "relative h-[18] px-[8] items-center justify-center bg-gradient-to-b from-[#c4c4c4] via-[#c4c4c4] to-[#f4f4f4]",
-  gloss: "absolute left-[0] right-[0] top-[0] h-[9] bg-gradient-to-b from-[#fdfdfd] via-[#ececec] to-[#d6d6d6]",
+  gloss: "absolute left-[0] right-[0] top-[0] h-[6] bg-gradient-to-b from-[#fdfdfd] via-[#ececec] to-[#d6d6d6]",
 };
 const BADGE_BLUE: GelClasses = {
   body: "relative w-[14] h-[14] rounded-[7] items-center justify-center bg-gradient-to-b from-[#4a80da] via-[#4a80da] to-[#c8daf6] border border-[#2b4f8c]",
-  gloss: "absolute left-[2] top-[3] w-[10] h-[6] rounded-[3] bg-gradient-to-b from-[#f5f8fe] via-[#d3e1f8] to-[#93b4eb]",
+  gloss: "absolute left-[3] top-[3] w-[8] h-[2] rounded-[1] bg-gradient-to-b from-[#f5f8fe] via-[#d3e1f8] to-[#93b4eb]",
 };
 const BADGE_GREY: GelClasses = {
   body: "relative w-[14] h-[14] rounded-[7] items-center justify-center bg-gradient-to-b from-[#c4c4c4] via-[#c4c4c4] to-[#f4f4f4] border border-[#6e6e6e]",
-  gloss: "absolute left-[2] top-[3] w-[10] h-[6] rounded-[3] bg-gradient-to-b from-[#fdfdfd] via-[#ececec] to-[#d6d6d6]",
+  gloss: "absolute left-[3] top-[3] w-[8] h-[2] rounded-[1] bg-gradient-to-b from-[#fdfdfd] via-[#ececec] to-[#d6d6d6]",
 };
 const SCROLL_THUMB: GelClasses = {
   body: "absolute left-[1] w-[11] rounded-[6] bg-gradient-to-r from-[#4a80da] via-[#4a80da] to-[#c8daf6] border border-[#2b4f8c]",

@@ -134,3 +134,12 @@ Each gel adds a gloss box. The rounded ones are drawn as per-row spans, and the 
 - **The Old 3DS scroll budget:** §5's fallbacks; the user decides if they are not enough.
 - **Small gels:** the 14 px badges and the 18 px knob have 6–8 px glosses. If the badge reads as noise at 1×, its gloss can shrink to a 2 px band in review, without a new spec.
 - **Gradient banding:** the 3DS renders gradients per vertex (Gouraud) on square boxes and per row on rounded ones. If Azahar's capture differs visibly from the sim's (§6.3), the difference is reported to the user, not hidden.
+
+## 9. Amendments from review
+
+- **Labels on gels** (the user's choice of three rendered variants): white labels read poorly over a near-white gloss, so the tabs and badges get short glosses. The tab gloss is `h-[6]` (the top third), and the badge gloss is the §8 band, `left-[3] top-[3] w-[8] h-[2] rounded-[1]`. Grey tabs and badges match, so the segments and badges share one gloss line.
+- **Shadows** (§5 fallbacks, both applied): only play/pause casts a shadow. `docs/perf.md` has the runs.
+- **Disabled buttons** draw no gloss and no shadow, because opacity applies per primitive. They keep the grey body at 45 % opacity.
+- **The reference pill's label** is `text-base` (16 px), the size of the reference's label at the gallery's scale.
+- **The gels gallery state** is `8-gels`: `search` stays last.
+
