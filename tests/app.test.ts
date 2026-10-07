@@ -95,6 +95,37 @@ test("A plays the focused song; Now Playing shows it; the visible list is the qu
   expect(opens(rig.host)).toEqual(["open(7)", "open(16)"]);
 }, 120_000);
 
+/** Records every host op the guest issues from now on (the sim's `ui` object, wrapped in place). */
+function recordOps(): { calls: string[]; stop(): void } {
+  const ui = (globalThis as unknown as { ui: Record<string, unknown> }).ui;
+  const calls: string[] = [];
+  const originals = new Map<string, (...args: unknown[]) => unknown>();
+  for (const [key, fn] of Object.entries(ui)) {
+    if (typeof fn !== "function" || key === "frame" || key.startsWith("debug") || key.startsWith("hitTest")) continue;
+    originals.set(key, fn as (...args: unknown[]) => unknown);
+    ui[key] = (...args: unknown[]) => {
+      calls.push(key);
+      return (fn as (...args: unknown[]) => unknown).apply(ui, args);
+    };
+  }
+  return { calls, stop: () => { for (const [key, fn] of originals) ui[key] = fn; } };
+}
+
+test("a focus move touches only the selection: no row is rebuilt, scrolling included", async () => {
+  const rig = await boot();
+  const ops = recordOps();
+  press(rig, BTN.DOWN); // focus moves within the page
+  const focusOps = [...ops.calls];
+  ops.calls.length = 0;
+  for (let i = 0; i < 8; i++) press(rig, BTN.DOWN); // past the page: the list scrolls a row at a time
+  const scrollOps = [...ops.calls];
+  ops.stop();
+  expect(focusOps.filter((op) => op === "createNode")).toHaveLength(0);
+  expect(focusOps.length).toBeLessThanOrEqual(4);
+  expect(scrollOps.filter((op) => op === "createNode")).toHaveLength(0);
+  expect(selectedRow(rig.world)).not.toBe("");
+}, 120_000);
+
 test("while a song plays the status is read every fourth frame, and at once after a command", async () => {
   const host = createSimLocalMedia(LIBRARY);
   let reads = 0;

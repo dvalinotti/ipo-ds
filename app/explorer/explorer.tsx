@@ -1,11 +1,10 @@
 // The top screen: Toolbar, search strip / breadcrumb, column header, the
-// library list (app-owned focus over a VirtualList) and the footer legend.
+// library list (app-owned focus over a pool of recycled rows) and the footer legend.
 // Model logic lives in model.ts; this file renders it and maps buttons.
 import { createEffect, createMemo, createSignal, on, Show, untrack, type Accessor } from "solid-js";
 import { View } from "@pocketjs/framework/components";
 import { BTN } from "@pocketjs/framework/input";
 import { onButtonPress, onFrame } from "@pocketjs/framework/lifecycle";
-import { VirtualList, type VirtualListHandle } from "@pocketjs/framework/virtual-list";
 import { onAnalogRows, onRepeat, onTapOrHold } from "../input.ts";
 import { SHOULDERS_UP, stepShoulders } from "../input-timing.ts";
 import { currentId } from "../player/reducer.ts";
@@ -14,12 +13,16 @@ import { AQUA } from "../theme/aqua.ts";
 import { ColumnHeader, ListRow, Scrollbar } from "../theme/parts/list.tsx";
 import { StatePanel } from "../theme/parts/panels.tsx";
 import { Breadcrumb, FooterLegend, SearchStrip } from "../theme/parts/strips.tsx";
+import { RecycledList } from "./recycled-list.tsx";
+import { nearestTop } from "./window.ts";
+import { settled } from "../reactive.ts";
 import { Toolbar } from "../theme/parts/toolbar.tsx";
 import type { RowKind } from "../theme/theme.ts";
 import {
-  crumbOf, focusOf, headerOf, initialExplorer, lcdLine, legendOf, reduceExplorer, rowCells, rowsKey, visibleRows, visibleSongIds,
-  type ExplorerAction, type ExplorerState,
+  crumbOfView, currentView, focusOf, headerOfView, initialExplorer, lcdLine, legendOf, reduceExplorer, rowCellsIn, rowsKey, viewKey,
+  visibleRows, visibleSongIds, type ExplorerAction, type ExplorerState,
 } from "./model.ts";
+import type { LegendItem } from "../theme/parts/strips.tsx";
 
 export interface ExplorerStore {
   state: Accessor<ExplorerState>;
@@ -45,7 +48,9 @@ export function Explorer(props: { session: Session; store: ExplorerStore; search
   const active = () => !props.searching();
 
   // The rows depend on the library, view and query, not on focus: moving focus must not rebuild them.
-  const key = createMemo(() => rowsKey(state()));
+  // Every press writes the state; the values below are settled (see settled()), so a write only
+  // reaches the screen through the ones that actually changed.
+  const key = settled(() => rowsKey(state()));
   const rows = createMemo(() => {
     key();
     const lib = library();
@@ -53,16 +58,24 @@ export function Explorer(props: { session: Session; store: ExplorerStore; search
   });
   // A rescan can remove the artist or album a tab is drilled into.
   createEffect(on(library, (lib) => lib && dispatch({ type: "reconcile", library: lib }), { defer: true }));
+  // Focus moves replace the state object on every press; what the screen shows mostly depends on
+  // the view, so these memos only change with it (and the rows only rebuild their cells then).
+  const view = settled(() => currentView(state()), (a, b) => viewKey(a) === viewKey(b));
+  const tab = settled(() => state().tab);
+  const query = settled(() => state().query);
+  const header = createMemo(() => headerOfView(view()));
   const crumb = createMemo(() => {
     const lib = library();
-    return lib ? crumbOf(lib, state()) : null;
+    return lib ? crumbOfView(lib, view()) : null;
   });
   const hasSongs = () => (library()?.tracks.size ?? 0) > 0;
-  const strips = () => (state().query ? 1 : 0) + (crumb() ? 1 : 0);
+  const legend = settled<LegendItem[]>(() => legendOf(state(), hasSongs()),
+    (a, b) => a.length === b.length && a.every((item, i) => item.key === b[i]!.key && item.label === b[i]!.label));
+  const strips = () => (query() ? 1 : 0) + (crumb() ? 1 : 0);
   const bodyPx = () => BODY_PX - strips() * ROW_PX;
   const page = () => Math.floor(bodyPx() / ROW_PX);
   // Focus can sit past the end after the rows shrink (a rescan); clamp where it is used.
-  const focus = () => Math.min(focusOf(state()), Math.max(0, rows().length - 1));
+  const focus = settled(() => Math.min(focusOf(state()), Math.max(0, rows().length - 1)));
   const playingId = createMemo(() => currentId(props.session.player()));
 
   // --- input ---------------------------------------------------------------
@@ -105,20 +118,30 @@ export function Explorer(props: { session: Session; store: ExplorerStore; search
   onTapOrHold(BTN.TRIANGLE, () => (hasSongs() ? props.openSearch() : props.session.rescan()), () => props.session.rescan(), active);
 
   // --- list ----------------------------------------------------------------
-  const [handle, setHandle] = createSignal<VirtualListHandle | null>(null);
-  createEffect(() => {
-    const list = handle();
-    if (list && rows().length > 0) list.scrollToIndex(focus(), "nearest", false);
-  });
+  // The first row in the window: the least scrolling that keeps the focused row visible.
+  let previousTop = 0;
+  const top = settled(() => (previousTop = nearestTop(previousTop, focus(), page(), rows().length)));
   const thumb = createMemo(() => {
     const content = rows().length * ROW_PX;
     const view = bodyPx();
     if (content <= view) return null;
     const height = Math.max(16, Math.round((view * view) / content));
-    const offset = handle()?.scroller.offset() ?? 0;
+    const offset = top() * ROW_PX;
     return { top: Math.round((offset / (content - view)) * (view - height)), height };
   });
-  const kindAt = (index: number): RowKind => (index === focus() ? "selected" : index % 2 === 0 ? "odd" : "even");
+  // List rows keep their stripe; the focused row is drawn by one overlay row on top of them, so a
+  // focus move restyles nothing in the list (it moves the overlay and rebinds its three texts).
+  const kindAt = (index: number): RowKind => (index % 2 === 0 ? "odd" : "even");
+  const cellsAt = (index: number) => {
+    const r = rows()[index];
+    const lib = library();
+    return r && lib ? rowCellsIn(lib, view(), r) : { title: "", detail: "", count: false };
+  };
+  const isPlaying = (index: number) => {
+    const r = rows()[index];
+    return r?.kind === "song" && r.id === playingId();
+  };
+  const focusCells = createMemo(() => cellsAt(focus()));
 
   const panel = () => {
     if (!props.session.available) return { title: UNAVAILABLE, lines: ["This build has no media.local module."] };
@@ -130,48 +153,50 @@ export function Explorer(props: { session: Session; store: ExplorerStore; search
 
   return (
     <View class={AQUA.topScreen}>
-      <Toolbar title="Ds Man" line={lcdLine(props.session.available, props.session.scanning(), library())} active={state().tab} />
+      <Toolbar title="Ds Man" line={lcdLine(props.session.available, props.session.scanning(), library())} active={tab()} />
       <Show when={panel()} fallback={
         <>
-          <Show when={state().query}>
-            <SearchStrip query={state().query} count={rows().length} />
+          <Show when={query()}>
+            <SearchStrip query={query()} count={rows().length} />
           </Show>
           <Show when={crumb()}>{(c) => <Breadcrumb root={c().root} leaf={c().leaf} detail={c().detail} />}</Show>
-          <ColumnHeader left={headerOf(state()).left} right={headerOf(state()).right} lead={headerOf(state()).lead} count={headerOf(state()).count} />
+          <ColumnHeader left={header().left} right={header().right} lead={header().lead} count={header().count} />
           <View class={AQUA.listBody}>
-            <Show when={rows().length > 0} fallback={<StatePanel title="No matches" lines={[`Nothing here matches "${state().query}"`]} />}>
-            <VirtualList
+            <Show when={rows().length > 0} fallback={<StatePanel title="No matches" lines={[`Nothing here matches "${query()}"`]} />}>
+            <RecycledList
               count={rows().length}
               rowHeight={ROW_PX}
-              height={bodyPx()}
-              focusRows={false}
-              // The Explorer moves focus and scrolls itself; the list's own d-pad scrolling would
-              // run on top of it while a direction is held (the top screen has no touch).
-              inputActive={() => false}
-              ref={setHandle}
-              renderRow={(index) => {
-                // Rows can shrink under a mounted row (search, rescan) before it unmounts; every read is null-safe.
-                const row = () => rows()[index];
-                const cells = () => {
-                  const r = row();
-                  const lib = library();
-                  return r && lib ? rowCells(lib, state(), r) : { title: "", detail: "", count: false };
-                };
+              rows={page()}
+              top={top()}
+              slot={(index, slot) => {
+                // Rows can shrink under a slot (search, rescan) before the pool does; every read is null-safe.
+                const row = () => rows()[index()];
+                const cells = createMemo(() => cellsAt(index()));
                 return (
                   <Show when={row()}>
                     <ListRow
-                      kind={kindAt(index)}
+                      kind={kindAt(slot)}
                       title={cells().title}
                       detail={cells().detail}
                       lead={cells().lead}
                       count={cells().count}
-                      playing={row()?.kind === "song" && (row() as { id: number }).id === playingId()}
-                      marquee={index === focus()}
+                      playing={isPlaying(index())}
                     />
                   </Show>
                 );
               }}
             />
+            <View class="absolute left-[0] top-[0] w-full h-[21]" style={{ translateY: (focus() - top()) * ROW_PX }}>
+              <ListRow
+                kind="selected"
+                title={focusCells().title}
+                detail={focusCells().detail}
+                lead={focusCells().lead}
+                count={focusCells().count}
+                playing={isPlaying(focus())}
+                marquee
+              />
+            </View>
             <Show when={thumb()}>{(t) => <Scrollbar thumbTop={t().top} thumbHeight={t().height} />}</Show>
             </Show>
           </View>
@@ -179,7 +204,7 @@ export function Explorer(props: { session: Session; store: ExplorerStore; search
       }>
         {(p) => <StatePanel title={p().title} lines={p().lines} />}
       </Show>
-      <FooterLegend items={legendOf(state(), hasSongs())} />
+      <FooterLegend items={legend()} />
     </View>
   );
 }

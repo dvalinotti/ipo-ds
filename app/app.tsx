@@ -1,7 +1,7 @@
 // Ds Man — a walkman-style MP3 player. The top screen is the Explorer; the
 // bottom screen is Now Playing, or the search keyboard while it is open.
 import { Show } from "solid-js";
-import { AuxiliarySurface, View } from "@pocketjs/framework/components";
+import { AuxiliarySurface, FocusScope, View } from "@pocketjs/framework/components";
 import { BTN } from "@pocketjs/framework/input";
 import { onButtonPress } from "@pocketjs/framework/lifecycle";
 import { createExplorerStore, Explorer } from "./explorer/explorer.tsx";
@@ -20,6 +20,9 @@ export default function App() {
   onButtonPress(BTN.ZR, () => session.dispatch({ type: "next" }), { active: notSearching });
   return (
     <>
+      {/* The app moves its own focus; this empty scope keeps the framework's d-pad traversal
+          from walking the whole tree on every press (the keyboard pushes its own scope). */}
+      <FocusScope class="absolute left-[0] top-[0] w-[0] h-[0]" />
       <Explorer session={session} store={store} searching={osk.isOpen} openSearch={() => osk.open()} />
       <AuxiliarySurface>
         {/* A wrapping View: AuxiliarySurface does not track a lone reactive child (a bare <Show> renders once). */}
