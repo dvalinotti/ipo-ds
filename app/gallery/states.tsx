@@ -6,10 +6,13 @@ import { createOsk } from "@pocketjs/framework/osk";
 import { SearchKeyboard as KeyboardScreen } from "../search.tsx";
 import type { JSX as SolidJSX } from "solid-js";
 import { AQUA } from "../theme/aqua.ts";
-import { ArtFrame, CoverLoading, InfoLcd, SeekCapsule, TransportRow } from "../theme/parts/deck.tsx";
 import { ColumnHeader, ListRow, Scrollbar } from "../theme/parts/list.tsx";
-import { IdlePanel, StatePanel } from "../theme/parts/panels.tsx";
-import { Breadcrumb, FooterLegend, SearchStrip, type LegendItem } from "../theme/parts/strips.tsx";
+import { ArtFrame, CoverLoading, InfoLcd, SeekCapsule, TransportButton, TransportRow } from "../theme/parts/deck.tsx";
+import { Breadcrumb, FooterLegend, KeyBadge, SearchStrip, type LegendItem } from "../theme/parts/strips.tsx";
+import { Gel, GelLabel } from "../theme/parts/gel.tsx";
+import { trackOffset } from "../theme/geometry.ts";
+import { REFERENCE_LABEL, REFERENCE_LABEL_SHADOW, REFERENCE_PILL } from "./reference-pill.ts";
+import { IdlePanel, PROGRESS_TRACK_PX, StatePanel } from "../theme/parts/panels.tsx";
 import { Toolbar } from "../theme/parts/toolbar.tsx";
 import type { RowKind, Tab } from "../theme/theme.ts";
 import type { GalleryStateName } from "./names.ts";
@@ -122,6 +125,72 @@ const SONG_ROWS: Row[] = [
   ["Feel Good Inc.", "Gorillaz"], ["Hoppípolla", "Sigur Rós"], ["One More Time", "Daft Punk"], ["Starálfur", "Sigur Rós"],
 ];
 
+/** Every gel state (spec §6.2) on the list area: the reference pill, progress fills, scroll thumbs. */
+function GelSheetTop() {
+  return (
+    <View class={AQUA.listBody}>
+      <Gel classes={REFERENCE_PILL}>
+        <GelLabel text="default" class={REFERENCE_LABEL} shadow={REFERENCE_LABEL_SHADOW} />
+      </Gel>
+      <View class="absolute left-[20] top-[78] flex-col">
+        <For each={[0.02, 0.1, 0.6]}>
+          {(progress) => (
+            <View class={AQUA.progressTrack}>
+              <Gel classes={AQUA.progressFill} style={{ width: trackOffset(progress, PROGRESS_TRACK_PX) }} />
+            </View>
+          )}
+        </For>
+      </View>
+      <View class="absolute left-[300] top-[8] w-[14] h-[150]">
+        <Scrollbar thumbTop={0} thumbHeight={16} />
+      </View>
+      <View class="absolute left-[330] top-[8] w-[14] h-[150]">
+        <Scrollbar thumbTop={20} thumbHeight={100} />
+      </View>
+      <Scrollbar thumbTop={40} thumbHeight={60} />
+    </View>
+  );
+}
+
+/** Transport in every state (blue and grey enabled, grey enabled, disabled), both badges and the knob. */
+function GelSheetBottom() {
+  return (
+    <View class={AQUA.bottomScreen}>
+      <View class="w-full h-full flex-col items-center justify-center gap-[4]">
+        <View class="flex-row items-center gap-[10]">
+          <TransportButton kind="shuffle" on />
+          <TransportButton kind="prev" />
+          <TransportButton kind="pause" />
+          <TransportButton kind="next" />
+          <TransportButton kind="repeat" on />
+        </View>
+        <View class="flex-row items-center gap-[10]">
+          <TransportButton kind="shuffle" />
+          <TransportButton kind="prev" />
+          <TransportButton kind="play" />
+          <TransportButton kind="next" />
+          <TransportButton kind="repeat" />
+        </View>
+        <View class="flex-row items-center gap-[10]">
+          <TransportButton kind="shuffle" enabled={false} />
+          <TransportButton kind="prev" enabled={false} />
+          <TransportButton kind="play" enabled={false} />
+          <TransportButton kind="next" enabled={false} />
+          <TransportButton kind="repeat" enabled={false} />
+        </View>
+        <View class="flex-row items-center gap-[8] mt-[8]">
+          <KeyBadge letter="A" primary />
+          <KeyBadge letter="X" />
+          <View class={AQUA.seekTrack}>
+            <View class={AQUA.seekFill} style={{ width: 100 }} />
+            <Gel classes={AQUA.seekKnob} style={{ insetL: 92 }} />
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 export const STATES: readonly GalleryState[] = [
   {
     name: "main",
@@ -208,6 +277,11 @@ export const STATES: readonly GalleryState[] = [
     name: "loading",
     top: () => <Top tab="Songs" header={["Song Name", "Artist"]} rows={SONG_ROWS} selected={4} playing={4} scroll={[18, 44]} legend={SONGS_LEGEND} />,
     bottom: () => <NowPlaying album="Discovery" title="Digital Love" artist="Daft Punk" position="4 of 12" elapsed="0:00" remaining="-4:58" fraction={0} playing loading />,
+  },
+  {
+    name: "gels",
+    top: () => <Top tab="Songs" body={<GelSheetTop />} legend={SONGS_LEGEND} />,
+    bottom: () => <GelSheetBottom />,
   },
   {
     // Last: the open keyboard is modal and takes L/R while it is up.

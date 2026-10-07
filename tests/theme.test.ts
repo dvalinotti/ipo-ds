@@ -4,24 +4,32 @@ import { join } from "node:path";
 import { bakeSvg } from "../runtime/framework/compiler/bake-svg.ts";
 import { unknownUtilities } from "../runtime/framework/compiler/tailwind.ts";
 import { AQUA } from "../app/theme/aqua.ts";
-import type { IconInk, IconName, RowKind, TransportKind } from "../app/theme/theme.ts";
+import type { GelClasses, IconInk, IconName, RowKind, TransportKind } from "../app/theme/theme.ts";
 
 const ROOT = new URL("..", import.meta.url).pathname;
 
 /** Every class literal the theme can return, each variant included. */
 function aquaLiterals(): string[] {
   const out: string[] = [];
+  const gel = (classes: GelClasses) => out.push(classes.body, classes.gloss);
   for (const [key, value] of Object.entries(AQUA)) {
     if (typeof value === "string" && key !== "name" && key !== "osk" && !value.endsWith(".svg")) out.push(value);
   }
-  for (const flag of [true, false]) out.push(AQUA.tab(flag), AQUA.tabText(flag), AQUA.headerLeft(flag), AQUA.badge(flag), AQUA.badgeText(flag));
+  for (const flag of [true, false]) {
+    gel(AQUA.tab(flag));
+    gel(AQUA.badge(flag));
+    out.push(AQUA.tabText(flag), AQUA.headerLeft(flag), AQUA.badgeText(flag));
+  }
+  gel(AQUA.scrollThumb);
+  gel(AQUA.progressFill);
+  gel(AQUA.seekKnob);
   for (const kind of ["odd", "even", "selected"] as RowKind[]) {
     out.push(AQUA.row(kind), AQUA.rowTitle(kind), AQUA.rowDetail(kind), AQUA.rowMuted(kind), AQUA.rowMarker(kind));
   }
   for (const color of ["red", "amber", "green"] as const) out.push(AQUA.light(color));
   out.push(AQUA.ring("outer"), AQUA.ring("inner"));
   for (const kind of ["shuffle", "prev", "play", "pause", "next", "repeat"] as TransportKind[]) {
-    for (const on of [true, false]) for (const enabled of [true, false]) out.push(AQUA.transport(kind, on, enabled));
+    for (const on of [true, false]) for (const enabled of [true, false]) gel(AQUA.transport(kind, on, enabled));
   }
   for (const hue of AQUA.placeholderHues) out.push(hue.cover, hue.hubText);
   return out;

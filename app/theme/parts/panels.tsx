@@ -3,6 +3,7 @@
 import { For, Show } from "solid-js";
 import { Text, View } from "@pocketjs/framework/components";
 import { AQUA } from "../aqua.ts";
+import { Gel } from "./gel.tsx";
 import { KeyBadge } from "./strips.tsx";
 import { trackOffset } from "../geometry.ts";
 import type { Theme } from "../theme.ts";
@@ -40,7 +41,7 @@ export function StatePanel(props: { title: string; lines: readonly PanelLine[]; 
       <For each={props.lines}>{(line) => <Line line={line} theme={props.theme} />}</For>
       <Show when={props.progress !== undefined}>
         <View class={t().progressTrack}>
-          <View class={t().progressFill} style={{ width: trackOffset(props.progress ?? 0, PROGRESS_TRACK_PX) }} />
+          <Gel classes={t().progressFill} style={{ width: trackOffset(props.progress ?? 0, PROGRESS_TRACK_PX) }} />
         </View>
       </Show>
     </View>

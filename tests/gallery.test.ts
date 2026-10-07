@@ -25,6 +25,7 @@ afterAll(disposeGuest);
 /** R advances one state; the tests visit states in GALLERY_STATES order (search, with its modal keyboard, last). */
 function show(name: GalleryStateName): void {
   const target = GALLERY_STATES.indexOf(name);
+  if (target < 0) throw new Error(`no gallery state ${JSON.stringify(name)}`);
   while (current !== target) {
     world.step({ buttons: BTN.RTRIGGER });
     for (let frame = 0; frame < 3; frame++) world.step();
@@ -52,6 +53,29 @@ test("main: songs with a selected and a playing row; Now Playing with embedded a
 type Rect = [number, number, number, number];
 const rect = (node: { rect: Rect | null } | undefined): Rect => node!.rect!;
 
+// A blue label's shadow copy: #1d3f80 at 0x99 alpha, as the core holds it (0xAABBGGRR).
+const LABEL_SHADOW = 0x99803f1d;
+
+/** A gel body's gloss (its first child) relative to the body: [x, y, w, h]. */
+function glossOffset(body: SimNode): Rect {
+  const [bx, by] = rect(body);
+  const [x, y, w, h] = rect(body.children[0]);
+  return [x - bx, y - by, w, h];
+}
+
+/** Every node under `node` that `match` accepts, in tree order. */
+function findAll(node: SimNode | null, match: (node: SimNode) => boolean, out: SimNode[] = []): SimNode[] {
+  if (!node) return out;
+  if (match(node)) out.push(node);
+  for (const child of node.children) findAll(child, match, out);
+  return out;
+}
+
+/** Paths to a tab label's copies (the toolbar is the top 34 px). */
+function tabLabel(text: string): SimNode[][] {
+  return pathsTo(world, "primary", text).filter((path) => rect(path.at(-2))[1] < 30);
+}
+
 test("design: art is centred in its frame; LCD lines clear the pill; tabs form one segmented control; header text aligns with its column", () => {
   // Main state (still showing).
   const art = pathTo(world, "auxiliary", "DISCOVERY");
@@ -70,13 +94,15 @@ test("design: art is centred in its frame; LCD lines clear the pill; tabs form o
 
   // The group's rounded border is drawn over the segments: a pixel inside its
   // top-right corner arc is border grey, not the segment's light gradient.
-  const [gx, gy, gw] = rect(pathTo(world, "primary", "Songs").at(-4));
+  // The active tab's label is a GelLabel: run → Text → wrapper → segment → group.
+  const songs = pathTo(world, "primary", "Songs");
+  const [gx, gy, gw] = rect(songs.at(-5));
   const { width, rgba } = world.pixels("primary");
   const at = ((gy + 1) * width + (gx + gw - 2)) * 4;
   expect((rgba[at]! + rgba[at + 1]! + rgba[at + 2]!) / 3).toBeLessThan(200);
 
   // Segments touch, separated by a 1 px divider, inside one group.
-  const [sx, , sw] = rect(pathTo(world, "primary", "Songs").at(-3));
+  const [sx, , sw] = rect(songs.at(-4));
   const [ax, , aw] = rect(pathTo(world, "primary", "Artists").at(-3));
   const [bx] = rect(pathTo(world, "primary", "Albums").at(-3));
   expect(ax).toBe(sx + sw + 1);
@@ -94,6 +120,33 @@ test("design: art is centred in its frame; LCD lines clear the pill; tabs form o
   const [tx, tyy] = rect(track);
   const [qx, qy] = rect(track.children[0]);
   expect([qx, qy]).toEqual([tx + 1, tyy + 1]);
+});
+
+test("gels: each body's first child is its gloss; a blue label carries one shadow copy, a grey label none", () => {
+  show("main");
+  // Primary badge: two copies of "A" in one GelLabel wrapper, the shadow first, 1 px lower, translucent navy.
+  const a = pathsTo(world, "primary", "A");
+  expect(a).toHaveLength(2);
+  expect(a[0]!.at(-3)).toBe(a[1]!.at(-3));
+  expect(textColorOf(a[0]!)).toBe(LABEL_SHADOW);
+  expect(rect(a[0]!.at(-2))[1]).toBe(rect(a[1]!.at(-2))[1] + 1);
+  expect(glossOffset(a[0]!.at(-4)!)).toEqual([3, 3, 8, 2]);
+  // Grey badge: one copy, straight in the body.
+  const x = pathsTo(world, "primary", "X");
+  expect(x).toHaveLength(1);
+  expect(glossOffset(x[0]!.at(-3)!)).toEqual([3, 3, 8, 2]);
+  // Tabs: the active one has a shadow copy and a square gloss over its top third; the others have one copy.
+  const songs = tabLabel("Songs");
+  expect(songs).toHaveLength(2);
+  const segment = songs[0]!.at(-4)!;
+  expect(glossOffset(segment)).toEqual([0, 0, rect(segment)[2], 6]);
+  expect(tabLabel("Artists")).toHaveLength(1);
+  // Transport (Now Playing): shuffle, prev, pause, next, repeat.
+  const [row] = findAll(world.tree("auxiliary"), (node) => JSON.stringify(node.rect) === JSON.stringify([10, 160, 300, 72]));
+  expect(row!.children.map(glossOffset)).toEqual([[5, 3, 24, 16], [6, 3, 30, 20], [10, 3, 44, 30], [6, 3, 30, 20], [5, 3, 24, 16]]);
+  // Seek knob: the track's second child.
+  const capsule = pathTo(world, "auxiliary", "1:42").at(-3)!;
+  expect(glossOffset(capsule.children[1]!.children[1]!)).toEqual([2, 3, 14, 8]);
 });
 
 test("artists: names with right-hand counts, Queen selected; idle Now Playing", () => {
@@ -114,6 +167,13 @@ test("artists: names with right-hand counts, Queen selected; idle Now Playing", 
   // The A in "press A" is a drawn key badge, not the circled glyph that clipped.
   expect(screenText(world, "auxiliary")).not.toContain("Ⓐ");
   expect(pathTo(world, "auxiliary", "A").length).toBeGreaterThan(0);
+});
+
+test("gels: the label shadow follows the active tab", () => {
+  show("artists");
+  expect(tabLabel("Artists")).toHaveLength(2);
+  expect(tabLabel("Songs")).toHaveLength(1);
+  expect(tabLabel("Albums")).toHaveLength(1);
 });
 
 test("album drill-down: breadcrumb and numbered rows; Now Playing with placeholder art", () => {
@@ -188,6 +248,31 @@ test("loading: while a cover decodes, the art frame shows the spinner centred on
   expect(spinner?.rect).toEqual([44, 44, 32, 32]);
   expect(pathsTo(world, "auxiliary", "Di")).toHaveLength(0); // no placeholder initials
   expect(screenText(world, "auxiliary")).toContain("Digital Love");
+});
+
+test("gels: the reference pill, every transport state, and a fill too narrow for its gloss draws nothing outside it", () => {
+  show("gels");
+  // The reference pill: 115×44 with its label and shadow copy; gloss per spec §3.1.
+  const pill = pathsTo(world, "primary", "default");
+  expect(pill).toHaveLength(2);
+  const body = pill[0]!.at(-4)!;
+  expect(rect(body).slice(2)).toEqual([115, 44]);
+  expect(glossOffset(body)).toEqual([9, 2, 97, 18]);
+  // Three progress tracks (2 %, 10 %, 60 %): the 4 px fill's gloss has no room and paints nothing outside the fill.
+  const tracks = findAll(world.tree("primary"), (node) => node.rect !== null && node.rect[2] === 220 && node.rect[3] === 12);
+  expect(tracks).toHaveLength(3);
+  const fill = tracks[0]!.children[0]!;
+  expect(rect(fill)[2]).toBe(4);
+  const gloss = fill.children[0]!.rect;
+  if (gloss && gloss[2] > 0 && gloss[3] > 0) {
+    expect(gloss[0]).toBeGreaterThanOrEqual(rect(fill)[0]);
+    expect(gloss[0] + gloss[2]).toBeLessThanOrEqual(rect(fill)[0] + rect(fill)[2]);
+  }
+  // Transport: an enabled blue/grey row, an enabled grey row, a disabled row (no gloss: it would show through at 45 %).
+  const rows = findAll(world.tree("auxiliary"), (node) => node.children.length === 5 && node.children.every((child) => child.rect !== null && child.rect[2] === child.rect[3] && child.rect[2] >= 34));
+  expect(rows).toHaveLength(3);
+  expect(rows[0]!.children.map(glossOffset)).toEqual([[5, 3, 24, 16], [6, 3, 30, 20], [10, 3, 44, 30], [6, 3, 30, 20], [5, 3, 24, 16]]);
+  expect(rows[2]!.children.every((button) => button.children[0]!.hidden)).toBe(true);
 });
 
 test("search: query strip with results; the classic keyboard on the bottom screen", () => {

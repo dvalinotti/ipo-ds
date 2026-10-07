@@ -5,6 +5,7 @@ import { Text, View } from "@pocketjs/framework/components";
 import { AQUA } from "../aqua.ts";
 import type { Tab, Theme } from "../theme.ts";
 import { FONT_12 } from "../fonts.ts";
+import { Gel, GelLabel } from "./gel.tsx";
 import { Marquee } from "./marquee.tsx";
 
 /** Text width inside the 144 px LCD (6 px padding each side). */
@@ -45,9 +46,9 @@ export function SegmentedTabs(props: { active: Tab; theme?: Theme }) {
               <Show when={i() > 0}>
                 <View class={t().tabDivider} />
               </Show>
-              <View class={t().tab(tab === props.active)}>
-                <Text class={t().tabText(tab === props.active)}>{tab}</Text>
-              </View>
+              <Gel classes={t().tab(tab === props.active)}>
+                <GelLabel text={tab} class={t().tabText(tab === props.active)} shadow={tab === props.active ? t().tabTextShadow : undefined} />
+              </Gel>
             </>
           )}
         </For>

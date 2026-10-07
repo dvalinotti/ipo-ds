@@ -17,6 +17,12 @@ export interface PlaceholderHue {
   hubText: string;
 }
 
+/** An Aqua gel: the body box and its gloss, an absolutely placed first child (parts/gel.tsx). Both are complete class literals. */
+export interface GelClasses {
+  body: string;
+  gloss: string;
+}
+
 export interface Theme {
   name: string;
   /** The framework Osk theme the search keyboard uses. */
@@ -36,12 +42,14 @@ export interface Theme {
   tabs: string;
   /** The bordered box that joins the tabs into one segmented control. */
   tabGroup: string;
-  tab(active: boolean): string;
+  tab(active: boolean): GelClasses;
   /** The group's rounded border, drawn over the segments so their square corners do not cover it. */
   tabFrame: string;
   /** 1 px rule between adjacent segments. */
   tabDivider: string;
   tabText(active: boolean): string;
+  /** The active tab label's 1 px navy shadow copy (GelLabel). */
+  tabTextShadow: string;
   hint: string;
 
   header: string;
@@ -71,14 +79,16 @@ export interface Theme {
   rowMarker(kind: RowKind): string;
 
   scrollTrack: string;
-  scrollThumb: string;
+  scrollThumb: GelClasses;
 
   footer: string;
   footerRule: string;
   footerItem: string;
   footerText: string;
-  badge(primary: boolean): string;
+  badge(primary: boolean): GelClasses;
   badgeText(primary: boolean): string;
+  /** The primary badge letter's 1 px navy shadow copy (GelLabel). */
+  badgeTextShadow: string;
 
   strip: string;
   stripRule: string;
@@ -103,7 +113,7 @@ export interface Theme {
   /** A panel line that holds a key badge between two runs of text. */
   panelKeyLine: string;
   progressTrack: string;
-  progressFill: string;
+  progressFill: GelClasses;
 
   artFrame: string;
   /** The art frame's interior while a cover decodes (holds the spinner sprite). */
@@ -130,10 +140,10 @@ export interface Theme {
   seekTrack: string;
   seekTrackWide: string;
   seekFill: string;
-  seekKnob: string;
+  seekKnob: GelClasses;
 
   transportRow: string;
-  transport(kind: TransportKind, on: boolean, enabled: boolean): string;
+  transport(kind: TransportKind, on: boolean, enabled: boolean): GelClasses;
 
   idlePanel: string;
 
