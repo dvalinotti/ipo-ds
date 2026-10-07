@@ -1,13 +1,13 @@
-# Ds Man Walkman — Plan 2: Aqua Theme, Parts Kit and Gallery
+# iPoDS Walkman — Plan 2: Aqua Theme, Parts Kit and Gallery
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Turn the approved Aqua / iTunes 4 mockups into an app-owned `Theme` (`AQUA`), baked icons, font coverage and presentational parts. A separate gallery bundle uses those parts to reproduce the six mockup states in the PocketJS sim and renders them to PNG for the user's visual sign-off.
 
-**Architecture:** Everything lives in ds-man; there are no fork changes.
+**Architecture:** Everything lives in ipo-ds; there are no fork changes.
 - **Theme:** `app/theme/theme.ts` declares semantic slots. `app/theme/aqua.ts` fills them with complete class literals, because the build compiles only literal strings and variants are functions choosing between literals.
 - **Parts:** `app/theme/parts/*.tsx` are stateless Solid components that read only from a `Theme`.
-- **Gallery:** `gallery.pocket.json` builds `app/gallery.tsx`, a storyboard of the mockup states, into its own bundle (`ds-man-gallery`).
+- **Gallery:** `gallery.pocket.json` builds `app/gallery.tsx`, a storyboard of the mockup states, into its own bundle (`ipo-ds-gallery`).
 - **Build:** `scripts/build.ts` gains `--manifest=`. `scripts/sim.ts` builds and boots any manifest for both tests and `scripts/gallery.ts`.
 
 **Tech Stack:** Bun, TypeScript, SolidJS via `@pocketjs/framework`, PocketJS build pipeline (class compiler, SVG baker, font baker), PocketJS sim (WASM core).
@@ -63,7 +63,7 @@
 | `app/theme/parts/strips.tsx` (create) | `SearchStrip`, `Breadcrumb`, `KeyBadge`, `FooterLegend`, `LegendItem` |
 | `app/theme/parts/panels.tsx` (create) | `StatePanel`, `IdlePanel`, `PROGRESS_TRACK_PX` |
 | `app/theme/parts/deck.tsx` (create) | `PlaceholderArt`, `ArtFrame`, `InfoLcd`, `SeekCapsule`, `TransportButton`, `TransportRow`, `SEEK_TRACK_PX` |
-| `gallery.pocket.json` (create) | gallery manifest (entry `app/gallery.tsx`, output `ds-man-gallery`) |
+| `gallery.pocket.json` (create) | gallery manifest (entry `app/gallery.tsx`, output `ipo-ds-gallery`) |
 | `app/gallery.tsx`, `app/gallery/names.ts`, `app/gallery/states.tsx` (create) | the storyboard bundle |
 | `scripts/png.ts` (create) | `encodePng`, `scale` |
 | `scripts/gallery.ts` (create) | writes `dist/gallery/<n>-<state>-{top,bottom}@2x.png` |
@@ -99,18 +99,18 @@ import { join } from "node:path";
 const ROOT = new URL("..", import.meta.url).pathname;
 
 test("--manifest builds the bundle that manifest names and keeps it out of dist/", () => {
-  const dir = mkdtempSync(join(tmpdir(), "ds-man-manifest-"));
+  const dir = mkdtempSync(join(tmpdir(), "ipo-ds-manifest-"));
   try {
     const manifest = JSON.parse(readFileSync(join(ROOT, "pocket.json"), "utf8"));
-    manifest.app.output = "ds-man-probe";
+    manifest.app.output = "ipo-ds-probe";
     writeFileSync(join(dir, "probe.pocket.json"), JSON.stringify(manifest));
     const run = Bun.spawnSync(
       [process.execPath, "scripts/build.ts", "--pocket-only", `--manifest=${join(dir, "probe.pocket.json")}`, `--outdir=${join(dir, "guest")}`, `--package-outdir=${dir}`],
       { cwd: ROOT, stdout: "pipe", stderr: "pipe" },
     );
     expect(run.exitCode, `${run.stdout}${run.stderr}`).toBe(0);
-    expect(existsSync(join(dir, "guest", "ds-man-probe.js"))).toBe(true);
-    expect(existsSync(join(ROOT, "dist", "ds-man-probe.pocket"))).toBe(false);
+    expect(existsSync(join(dir, "guest", "ipo-ds-probe.js"))).toBe(true);
+    expect(existsSync(join(ROOT, "dist", "ipo-ds-probe.pocket"))).toBe(false);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -120,7 +120,7 @@ test("--manifest builds the bundle that manifest names and keeps it out of dist/
 - [ ] **Step 2: Run it to verify it fails**
 
 Run: `bun test ./tests/build.test.ts`
-Expected: FAIL with a non-zero exit. The current script resolves `pocket.json` (output `ds-man-main`) while `build3ds` checks it against the probe manifest: "…has drifted from …probe.pocket.json…".
+Expected: FAIL with a non-zero exit. The current script resolves `pocket.json` (output `ipo-ds-main`) while `build3ds` checks it against the probe manifest: "…has drifted from …probe.pocket.json…".
 
 - [ ] **Step 3: Implement `scripts/build.ts`**
 
@@ -158,7 +158,7 @@ if (!passthrough.some((a) => a.startsWith("--package-outdir="))) {
 
 `scripts/sim.ts`:
 ```ts
-// Builds a ds-man bundle (--pocket-only: no Docker) once per process and boots
+// Builds a ipo-ds bundle (--pocket-only: no Docker) once per process and boots
 // it on the PocketJS sim's WASM core with the 3DS geometry. Shared by the test
 // harness and scripts/gallery.ts.
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -204,7 +204,7 @@ export function bootBuilt(bundle: BuiltBundle, extraGlobals?: Record<string, unk
 
 Replace `tests/support/app-world.ts` with:
 ```ts
-// Boots the ds-man app or the theme gallery in the PocketJS sim (bundles are
+// Boots the ipo-ds app or the theme gallery in the PocketJS sim (bundles are
 // built once per test process by scripts/sim.ts) and reads what a screen shows.
 import type { BundleWorld, SimNode } from "../../runtime/hosts/sim/sim.ts";
 import { bootBuilt, buildBundle, disposeBundles } from "../../scripts/sim.ts";
@@ -491,7 +491,7 @@ Expected: `ls app/theme/icons | wc -l` prints `19`.
 
 `app/theme/theme.ts`:
 ```ts
-// The semantic slots every Ds Man theme fills. Slots are complete class
+// The semantic slots every iPoDS theme fills. Slots are complete class
 // literals (the build compiles only literal class strings); variants are
 // functions that choose between literals. Parts read only from a Theme, so a
 // second theme (v2 theme switching) is a new object, not a refactor.
@@ -613,7 +613,7 @@ export interface Theme {
 
 `app/theme/aqua.ts`:
 ```ts
-// Ds Man's Aqua / iTunes 4 theme: every slot is a complete class literal so the
+// iPoDS's Aqua / iTunes 4 theme: every slot is a complete class literal so the
 // build can compile it; state variants pick between literals.
 import type { IconInk, IconName, PlaceholderHue, Theme, TransportKind } from "./theme.ts";
 
@@ -840,7 +840,7 @@ Expected: FAIL — `ENOENT … app/fonts.json`.
 - [ ] **Step 4: Run tests and the build**
 
 Run: `bun test ./tests/fonts.test.ts && bun run 3ds --pocket-only`
-Expected: 1 pass. The build prints `output: …ds-man-main.pocket (…, 3ds-dev abi 11)`, larger than before (about 0.27 MB to about 0.67 MB) because of the added Latin coverage.
+Expected: 1 pass. The build prints `output: …ipo-ds-main.pocket (…, 3ds-dev abi 11)`, larger than before (about 0.27 MB to about 0.67 MB) because of the added Latin coverage.
 
 - [ ] **Step 5: Commit**
 
@@ -890,7 +890,7 @@ git commit -m "feat(theme): bake Latin-1, Latin Extended-A and UI symbols"
     - `TransportRow { playing; shuffle; repeat; enabled; onShuffle?; onPrev?; onToggle?; onNext?; onRepeat? }`
     - `SEEK_TRACK_PX = 198`
   - Every part also takes an optional `theme?: Theme`, defaulting to `AQUA`.
-  - `GALLERY_STATES = ["main", "artists", "album", "scanning", "empty", "search"]`. `gallery.pocket.json` builds output `ds-man-gallery`; R and L step forward and back through the states.
+  - `GALLERY_STATES = ["main", "artists", "album", "scanning", "empty", "search"]`. `gallery.pocket.json` builds output `ipo-ds-gallery`; R and L step forward and back through the states.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -947,7 +947,7 @@ function expectAll(text: string, parts: readonly string[]): void {
 
 test("main: songs with a selected and a playing row; Now Playing with embedded art", () => {
   show("main");
-  expectAll(screenText(world, "primary"), ["Ds Man", "142 songs · 9.6 hrs", "Song Name", "Artist", "Digital Love", "Starálfur", "♪", "Now Playing"]);
+  expectAll(screenText(world, "primary"), ["iPoDS", "142 songs · 9.6 hrs", "Song Name", "Artist", "Digital Love", "Starálfur", "♪", "Now Playing"]);
   const selected = pathTo(world, "primary", "Digital Love");
   expect(backgroundOf(selected)).toBe(SELECTED_ROW);
   expect(textColorOf(selected)).toBe(WHITE);
@@ -1427,9 +1427,9 @@ export function TransportRow(props: {
 {
   "$schema": "https://pocketjs.dev/schema/pocket-2.json",
   "pocket": 2,
-  "id": "dev.example.ds.man.gallery",
-  "name": "ds-man-gallery",
-  "title": "Ds Man Gallery",
+  "id": "io.github.dvalinotti.ipods.gallery",
+  "name": "ipo-ds-gallery",
+  "title": "iPoDS Gallery",
   "version": "0.1.0",
   "engine": {
     "capabilities": {
@@ -1447,7 +1447,7 @@ export function TransportRow(props: {
   },
   "app": {
     "entry": "app/gallery.tsx",
-    "output": "ds-man-gallery",
+    "output": "ipo-ds-gallery",
     "framework": "solid",
     "viewport": {
       "fixed": {
@@ -1531,7 +1531,7 @@ function Top(props: {
 }) {
   return (
     <View class={AQUA.topScreen}>
-      <Toolbar title="Ds Man" line={props.line ?? LIBRARY_LINE} active={props.tab} />
+      <Toolbar title="iPoDS" line={props.line ?? LIBRARY_LINE} active={props.tab} />
       {props.strip}
       {props.header ? <ColumnHeader left={props.header[0]} right={props.header[1]} /> : null}
       {props.body ?? (
@@ -1672,7 +1672,7 @@ export const STATES: readonly GalleryState[] = [
 
 `app/gallery.tsx`:
 ```tsx
-// Ds Man theme gallery: a separate bundle (gallery.pocket.json) that shows the
+// iPoDS theme gallery: a separate bundle (gallery.pocket.json) that shows the
 // approved Aqua mockup states built from app/theme parts. L / R flip states.
 import { createSignal, For, Show } from "solid-js";
 import { AuxiliarySurface } from "@pocketjs/framework/components";
@@ -1701,7 +1701,7 @@ mount(() => <Gallery />);
 - [ ] **Step 7: Run the whole gate**
 
 Run: `bun run test && bun run check && bun run 3ds --pocket-only`
-Expected: 55 pass, 0 fail (47 before this task + 2 geometry + 6 gallery); no type errors; the app build still prints `output: …ds-man-main.pocket`.
+Expected: 55 pass, 0 fail (47 before this task + 2 geometry + 6 gallery); no type errors; the app build still prints `output: …ipo-ds-main.pocket`.
 
 - [ ] **Step 8: Commit**
 

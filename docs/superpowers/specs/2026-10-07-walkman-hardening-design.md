@@ -1,4 +1,4 @@
-# Ds Man — Hardening (Plan 5)
+# iPoDS — Hardening (Plan 5)
 
 Date: 2026-10-07
 Status: approved; amended after the prototype (§11)
@@ -7,7 +7,7 @@ Roadmap: `docs/superpowers/plans/2026-10-06-walkman-roadmap.md` (Plan 5)
 
 ## 1. Outcome
 
-ds-man runs smoothly on both 3DS models in Azahar:
+ipo-ds runs smoothly on both 3DS models in Azahar:
 - **New 3DS:** 60 fps, idle and while scrolling.
 - **Old 3DS:** a steady 30 fps, idle and while scrolling.
 
@@ -45,7 +45,7 @@ Every claim is measured. A `bun run perf` tool runs scripted scenarios in Azahar
     - `parsed`: files fully read in that scan.
 - Capture builds wait for each GPU frame (`C3D_FRAME_SYNCDRAW`), which inflates `frame` and `gpu`. Budgets therefore use **CPU work = js + tick + draw**, for which the host already provides per-phase means and maxes. The tool reports the sum of the maxes as a pessimistic CPU max.
 
-### 3.2 `bun run perf` (ds-man, `scripts/perf.ts`)
+### 3.2 `bun run perf` (ipo-ds, `scripts/perf.ts`)
 
 - **Usage:** `bun run perf [scenario…] [--model old|new|both] [--out <dir>]`. The defaults are all scenarios, both models, and `dist/perf/`.
 - **For each scenario and model:**
@@ -88,7 +88,7 @@ Every claim is measured. A `bun run perf` tool runs scripted scenarios in Azahar
   - the final table against the targets.
 - An optimization that doesn't move its scenario's numbers is reverted, and the attempt is recorded.
 
-## 4. Frame-cost fixes (ds-man, in order; each measured)
+## 4. Frame-cost fixes (ipo-ds, in order; each measured)
 
 1. **Explorer reactivity:** focus moves touch only the rows whose highlight changes.
    - Each row's `cells` becomes a `createMemo` that depends on `rows()[index]`, `library()` and `currentView(state())` through `rowsKey`, not on the focus.
@@ -191,7 +191,7 @@ Left as they are:
   - **`localmedia.test.ts` / `localmedia-sim.test.ts`:** `scanMs`, stable `status()` objects, and the sim's cached-then-confirmed scan.
   - **`3ds-profile.test.ts`:** unchanged.
   - **Existing e2e goldens:** unchanged, because capture timing doesn't touch rendering.
-- **ds-man:**
+- **ipo-ds:**
   - **App tests:**
     - a focus move recomputes no other row's cells (counted through an `extraGlobals`-injected op-counting wrapper on `setText` / `setProp`);
     - the input router keeps every existing key behavior;
@@ -199,7 +199,7 @@ Left as they are:
     - X does nothing on the read-error panel.
   - **Controller tests:** `onChange` only on change; a repeated status is skipped.
   - **Gallery:** the PNGs are byte-identical to the baseline captured before Task 1 of the optimizations.
-- The existing suites stay green: ds-man 115 and fork 44 at the start.
+- The existing suites stay green: ipo-ds 115 and fork 44 at the start.
 
 ## 8. Exit gate
 
@@ -241,7 +241,7 @@ What the measurements led to, in order (numbers in `docs/perf.md`):
 1. **Library key maps and Explorer memos** (§4 item 1, as specified).
 2. **Status polling** (§4 item 4, as specified), plus: while a song plays the session reads status every fourth frame (15 Hz); commands and failed reads still read at once; the player signal ignores status-only changes.
 3. **Marquee width cache** (§4 item 2, as specified), plus: an inactive marquee never measures.
-4. **Recycled rows, in the app.** The Explorer's list keeps a fixed, even pool of row slots (`app/explorer/recycled-list.tsx`); scrolling a row rebinds one slot and moves the list by a transform. This is §4.6's first contingency, built in ds-man instead of the fork, so it adds no fork drift.
+4. **Recycled rows, in the app.** The Explorer's list keeps a fixed, even pool of row slots (`app/explorer/recycled-list.tsx`); scrolling a row rebinds one slot and moves the list by a transform. This is §4.6's first contingency, built in ipo-ds instead of the fork, so it adds no fork drift.
 5. **A selection overlay.** The selected row is drawn once, above the list, and moved by a transform; rows ignore focus, so a focus move touches no row.
 6. **Settled state.** Values derived from the Explorer state (`key`, `view`, `tab`, `query`, `legend`, `focus`, `top`) are `settled()` signals (`app/reactive.ts`): a write reaches only the readers whose value changed. Solid marks every transitive reader of a written signal before it knows whether a memo's value changed, and that marking was most of a focus move's cost in QuickJS.
 7. **An empty root `FocusScope`** keeps the framework's D-pad traversal from walking the list's nodes on every press.
@@ -264,6 +264,6 @@ Measured in Azahar (Old): opening a file costs about 17 ms and closing it about 
 
 ### 11.5 Testing (adds to §7)
 
-- ds-man unit tests run with `bun test --conditions=browser`, so Solid is reactive in them (`settled()` is unit-tested).
+- ipo-ds unit tests run with `bun test --conditions=browser`, so Solid is reactive in them (`settled()` is unit-tested).
 - The fork's suite registers `tests/3ds-arguments.test.ts` and the three media.local test files in its unit stage; they were missing, which failed the suite's own declaration check.
 - The fork suite's ESP-IDF incremental test needs Ninja and fails on a machine without it, before and after this plan.

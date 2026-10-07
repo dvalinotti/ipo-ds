@@ -1,4 +1,4 @@
-# Ds Man — Screens (Plan 3): Explorer and Now Playing
+# iPoDS — Screens (Plan 3): Explorer and Now Playing
 
 Date: 2026-10-06
 Status: approved in conversation, pending written-spec review
@@ -164,7 +164,7 @@ Every Explorer handler is inactive while the search keyboard is open.
   - **Rescan:** holding X rescans with playback continuing, and a removed fixture file drops from the queue.
   - **Y and the marquee:** Y focuses the playing row; the long title's x changes over frames while a short title's x does not.
   - **Geometry:** the focused row is always within the list viewport.
-- **Device:** a manual pass in Azahar of `ds-man-main.3dsx` (without `media.local` until Plan 4) and of the gallery.
+- **Device:** a manual pass in Azahar of `ipo-ds-main.3dsx` (without `media.local` until Plan 4) and of the gallery.
 
 ## 6. Out of scope
 

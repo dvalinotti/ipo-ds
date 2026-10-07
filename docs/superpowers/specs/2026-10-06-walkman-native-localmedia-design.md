@@ -1,4 +1,4 @@
-# Ds Man — Native Local Media (Plan 4)
+# iPoDS — Native Local Media (Plan 4)
 
 Date: 2026-10-06
 Status: approved in conversation, pending written-spec review
@@ -13,7 +13,7 @@ The PocketJS fork's 3DS host implements `media.local` natively:
 - it seeks, ends tracks and publishes the status snapshot;
 - it decodes embedded cover art into textures.
 
-ds-man then plays a real library from the SD card, shows real covers on Now Playing, and requires the capability.
+ipo-ds then plays a real library from the SD card, shows real covers on Now Playing, and requires the capability.
 
 This replaces the parent spec's §4.2 where the two differ. §2 lists every difference.
 
@@ -57,7 +57,7 @@ tools/3ds-profile.ts                         + media.local, hostAbi 11 → 12
 tests/localmedia-native-*.test.ts            host-compiled C tests (cc, ASan/UBSan)
 tests/fixtures/localmedia/                   generated MP3 + cover fixtures and the script that makes them
 
-ds-man
+ipo-ds
 app/session.ts                               cover lifecycle (§5.1), diagnostics accessor
 app/now-playing/now-playing.tsx              cover in ArtFrame; SELECT diagnostics line
 app/theme/parts/deck.tsx                     cover child sized to the frame interior
@@ -119,7 +119,7 @@ It reads the file in 64 KB chunks into a read-ahead buffer. Decoding runs only w
 
 ## 4. Contract v2 (`contracts/spec/localmedia.ts`)
 
-`LOCALMEDIA.version` becomes **2**. `root`, `maxTracks` and `artMax` (128) are unchanged. ds-man is the only consumer.
+`LOCALMEDIA.version` becomes **2**. `root`, `maxTracks` and `artMax` (128) are unchanged. ipo-ds is the only consumer.
 
 ### 4.1 Ids
 
@@ -267,7 +267,7 @@ artHandles: number;
 - **Decode load:** ticks spent in `mp3dec_decode_frame` (`svcGetSystemTick`) over a rolling 1 s window, divided by the window's ticks, as a percentage rounded down.
 - **Read error:** if a read fails mid-track, the queued audio drains, then the phase becomes `error` with "Read error", and the position stays where it stopped.
 
-## 6. ds-man changes
+## 6. ipo-ds changes
 
 ### 6.1 Cover lifecycle (`app/session.ts`)
 
@@ -352,7 +352,7 @@ artHandles: number;
   - `tools/3ds.ts` rejects `media.playback` + `media.local`;
   - the Makefile receives `POCKETJS_LOCALMEDIA`.
 
-### 7.3 ds-man headless (`bootBundle` + sim fake)
+### 7.3 ipo-ds headless (`bootBundle` + sim fake)
 
 - The cover appears once art is ready. The placeholder shows while it's pending and for tracks without art.
 - No `artwork()` call happens for tracks without art.

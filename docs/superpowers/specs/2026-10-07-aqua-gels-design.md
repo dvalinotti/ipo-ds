@@ -1,9 +1,9 @@
-# Ds Man — Aqua Gels
+# iPoDS — Aqua Gels
 
 Date: 2026-10-07
 Status: approved in brainstorming (sections 1–3); awaiting review of this document
 Parent spec: `docs/superpowers/specs/2026-10-06-walkman-player-design.md` (the Aqua / iTunes 4 theme)
-Reference: `~/Pictures/Screenshot 2026-10-06 at 4.25.53 PM.png` (a Mac OS X "default" push button, 274×150)
+Reference: a screenshot of a Mac OS X "default" push button, 274×150 (not in the repo)
 
 ## 1. Outcome
 

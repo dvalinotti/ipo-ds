@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { LIBRARY_MARKER, prepareLibraryDir } from "../scripts/test-library-dir.ts";
 
-const scratch = mkdtempSync(join(tmpdir(), "ds-man-library-"));
+const scratch = mkdtempSync(join(tmpdir(), "ipo-ds-library-"));
 afterAll(() => rmSync(scratch, { recursive: true, force: true }));
 
 test("a folder holding other files (real music) is refused and left untouched", () => {

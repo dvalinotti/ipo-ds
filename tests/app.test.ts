@@ -77,7 +77,7 @@ const header = (world: BundleWorld, text: string) => pathsTo(world, "primary", t
 test("launch: the Explorer lists the library, sorted, first row focused; Now Playing is idle", async () => {
   const rig = await boot();
   const top = screenText(rig.world, "primary");
-  for (const part of ["Ds Man", "20 songs · 1.6 hrs", "Song Name", "Artist", "Aerodynamic", "Around the World", "A", "Play", "Search"]) expect(top).toContain(part);
+  for (const part of ["iPoDS", "20 songs · 1.6 hrs", "Song Name", "Artist", "Aerodynamic", "Around the World", "A", "Play", "Search"]) expect(top).toContain(part);
   expect(selectedRow(rig.world)).toContain("Aerodynamic");
   expect(screenText(rig.world, "auxiliary")).toContain("Nothing playing");
 }, 120_000);

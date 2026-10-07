@@ -1,4 +1,4 @@
-// Boots the ds-man app or the theme gallery in the PocketJS sim (bundles are
+// Boots the ipo-ds app or the theme gallery in the PocketJS sim (bundles are
 // built once per test process by scripts/sim.ts) and reads what a screen shows.
 import type { BundleWorld, SimNode } from "../../runtime/hosts/sim/sim.ts";
 import { bootBuilt, buildBundle, disposeBundles } from "../../scripts/sim.ts";

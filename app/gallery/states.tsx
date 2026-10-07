@@ -53,7 +53,7 @@ function Top(props: {
 }) {
   return (
     <View class={AQUA.topScreen}>
-      <Toolbar title="Ds Man" line={props.line ?? LIBRARY_LINE} active={props.tab} />
+      <Toolbar title="iPoDS" line={props.line ?? LIBRARY_LINE} active={props.tab} />
       {props.strip}
       {props.header ? <ColumnHeader left={props.header[0]} right={props.header[1]} lead={props.headerLead} count={props.count} /> : null}
       {props.body ?? (

@@ -1,4 +1,4 @@
-# Ds Man — Walkman Music Player Design
+# iPoDS — Walkman Music Player Design
 
 Date: 2026-10-06
 Status: approved in conversation, pending written-spec review
@@ -80,7 +80,7 @@ Verified against the pinned runtime (`12dd7535`):
 ## 4. Architecture
 
 ```
-ds-man (this repo)                         PocketJS fork (runtime/ submodule)
+ipo-ds (this repo)                         PocketJS fork (runtime/ submodule)
 ─────────────────                          ─────────────────────────────────
 app/app.tsx        top tree + <AuxiliarySurface>
 app/library/       tracks → indexes, search    contracts/spec/localmedia.ts
@@ -191,7 +191,7 @@ Capability: `media.local` added to the registry in
   Handles are freed by `releaseArtwork`; the module also frees any live handle
   on shutdown.
 - **NDSP ownership:** if NDSP is already initialised by another module, `open`
-  fails with an error status. ds-man does not declare `media.playback`.
+  fails with an error status. ipo-ds does not declare `media.playback`.
 - **Errors:** unreadable/corrupt files produce a track with `durationMs: 0`
   at scan, and `phase: "error"` with a message on open; the decoder skips
   bad frames rather than aborting.
@@ -203,9 +203,9 @@ Implements `LocalMediaOps` over an in-memory fixture library injected via
 position advances per tick, reaching `durationMs` sets `ended`; `seek`,
 `paused`, `scan` (immediate) behave per contract; `artwork` returns a fake
 handle for `hasArt` tracks and tracks live handles so tests can assert
-releases. This is what all ds-man headless tests run against.
+releases. This is what all ipo-ds headless tests run against.
 
-### 4.4 App core (ds-man, pure TS)
+### 4.4 App core (ipo-ds, pure TS)
 
 - **Library model** (`app/library/`): builds `songs` (sorted by title),
   `artists` (name + track count), `albums` (name + artist, songs sorted by
@@ -240,7 +240,7 @@ releases. This is what all ds-man headless tests run against.
 ### 5.1 Top screen (400×240) — Explorer
 
 ```
-┌ Ds Man ─────── ◄L [Songs] Artists  Albums R► ┐  title bar + tabs (~24px)
+┌ iPoDS ─────── ◄L [Songs] Artists  Albums R► ┐  title bar + tabs (~24px)
 │ Search: "daft"                      12 found │  only while a query is set
 │ ♪ One More Time            Daft Punk         │  VirtualList, ~30px rows
 │ ▸ Aerodynamic              Daft Punk         │
@@ -316,16 +316,16 @@ glyphs are unsuitable).
   gating), sim-fake behaviour tests, and native parser tests for ID3 /
   Xing / frame-walk against fixture MP3s where the fork's harness allows
   host-compiled C tests; otherwise verified on device.
-- **ds-man unit:** library indexes, normalization/search, every reducer rule
+- **ipo-ds unit:** library indexes, normalization/search, every reducer rule
   in Section 4.4 (deterministic shuffle).
-- **ds-man headless:** `bootBundle` at 400×240 + auxiliary 320×240 with the
+- **ipo-ds headless:** `bootBundle` at 400×240 + auxiliary 320×240 with the
   sim fake; scripted buttons and auxiliary touches assert tab switching,
   drill-down, search filtering, play/queue, seek drag (one seek on release),
   transport taps, auto-advance.
 - **Device:** Azahar and New 3DS hardware checklist — scan of a few hundred
   real MP3s, playback quality, seek accuracy (CBR and VBR), auto-advance,
   art display, no texture leaks across 50+ track changes, underrun count.
-- Test discovery stays within ds-man's own `tests/`; do not discover through
+- Test discovery stays within ipo-ds's own `tests/`; do not discover through
   the runtime submodule.
 
 ## 8. Implementation stages
@@ -335,14 +335,14 @@ with Stages 3–5.
 
 | # | Stage | Repo | Exit criteria |
 |---|---|---|---|
-| 0 | Foundations: fork PocketJS, repoint submodule to the fork's `ds-man` branch; add `input.touch.auxiliary` + `input.analog.left` (enhances) to `pocket.json`; forward font flags in `tools/3ds.ts`; headless sim test harness in ds-man | both | `bun run check`, `bun run 3ds --pocket-only`, smoke sim test green on the fork pin |
+| 0 | Foundations: fork PocketJS, repoint submodule to the fork's `ipo-ds` branch; add `input.touch.auxiliary` + `input.analog.left` (enhances) to `pocket.json`; forward font flags in `tools/3ds.ts`; headless sim test harness in ipo-ds | both | `bun run check`, `bun run 3ds --pocket-only`, smoke sim test green on the fork pin |
 | 1 | `media.local` contract, SDK, capability registration, sim fake | fork | contract + fake tests green; sim plays/seeks/ends a fake track |
-| 2 | App core: library model + player reducer | ds-man | unit tests cover Section 4.4 rules |
-| 3 | Visual design: mockups → chosen direction → tokens, parts kit, font, `fonts.json` | ds-man | approved mockup; kit renders in sim |
-| 4 | Top screen Explorer | ds-man | headless tests drive tabs/search/drill-down |
-| 5 | Bottom screen Now Playing | ds-man | headless tests drag seek, tap transport |
+| 2 | App core: library model + player reducer | ipo-ds | unit tests cover Section 4.4 rules |
+| 3 | Visual design: mockups → chosen direction → tokens, parts kit, font, `fonts.json` | ipo-ds | approved mockup; kit renders in sim |
+| 4 | Top screen Explorer | ipo-ds | headless tests drive tabs/search/drill-down |
+| 5 | Bottom screen Now Playing | ipo-ds | headless tests drag seek, tap transport |
 | 6 | Native playback: scan, ID3, duration, minimp3 → NDSP, seek, status | fork | real library plays/seeks/auto-advances in Azahar and on New 3DS |
-| 7 | Native album art: APIC → stb_image → RGB565 texture, release | fork + ds-man | covers display on device; no leaks across 50+ changes |
+| 7 | Native album art: APIC → stb_image → RGB565 texture, release | fork + ipo-ds | covers display on device; no leaks across 50+ changes |
 | 8 | Hardening: scan time, CPU, memory, underruns, corrupt files, Azahar e2e capture | both | device checklist passes |
 | v2 | Lid-closed playback (APT sleep hooks), resume-on-launch (persistence), theme switching (second theme + setting) | both | — |
 
@@ -350,7 +350,7 @@ with Stages 3–5.
 
 - **DSP firmware:** NDSP needs `/3ds/dspfirm.cdc` on the console and in Azahar.
   The app should surface a clear error if `ndspInit` fails.
-- **NDSP contention:** `media.c` also initialises NDSP; ds-man must not declare
+- **NDSP contention:** `media.c` also initialises NDSP; ipo-ds must not declare
   `media.playback`, and `localmedia` refuses to start if NDSP is owned.
 - **VBR seek accuracy:** files without a Xing TOC seek approximately.
 - **Fork drift:** the fork diverges from upstream PocketJS; periodic rebase is

@@ -1,4 +1,4 @@
-# Ds Man Walkman — Plan 3: Explorer and Now Playing Screens
+# iPoDS Walkman — Plan 3: Explorer and Now Playing Screens
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -23,7 +23,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-10-06-walkman-screens-design.md` (parents: `…-walkman-player-design.md` §5, `…-walkman-visual-design.md`)
 
-**Provenance:** this exact file set was built and run before the plan was written. Every task was then rehearsed in order on a clean tree, and the cumulative ds-man test counts below come from that run:
+**Provenance:** this exact file set was built and run before the plan was written. Every task was then rehearsed in order on a clean tree, and the cumulative ipo-ds test counts below come from that run:
 
 | After task | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -33,7 +33,7 @@ Fork: 12/12 `localmedia` tests, with the typecheck clean.
 
 ## Global Constraints
 
-- Framework code changes go in the fork (`runtime/`, branch `ds-man`). **Pushing the fork is outward-facing: confirm with the user before the first push of this plan.**
+- Framework code changes go in the fork (`runtime/`, branch `ipo-ds`). **Pushing the fork is outward-facing: confirm with the user before the first push of this plan.**
 - Import framework APIs from `@pocketjs/framework/*` and Solid primitives/control flow from `solid-js`. Never run bare `bun test` at the repo root; use `bun run test` / `bun test ./tests/…`.
 - Conventional Commits with the session's attribution trailer. `dist/` stays out of Git.
 - **Class strings stay complete literals.** Text is single-line. Boxes default to `flex-row`. Borders paint inside a box without insetting content.
@@ -259,7 +259,7 @@ Expected: 12 pass; `0`.
 ```bash
 git -C runtime add contracts/spec/localmedia.ts hosts/sim/localmedia.ts tests/localmedia-sim.test.ts tests/localmedia.test.ts
 git -C runtime commit -m "feat(localmedia): ids stay with their files across rescans"
-git -C runtime push fork ds-man
+git -C runtime push fork ipo-ds
 git add runtime && git commit -m "chore(runtime): bump pin for stable media.local ids"
 ```
 Run: `bun run test`. Expected: 63 pass.
@@ -1291,7 +1291,7 @@ export function Marquee(props: {
 -  const [, by, , bh] = rect(line.at(-3));
 +  // The line is a marquee: run → Text → clip box → LCD pill.
 +  const [, by, , bh] = rect(line.at(-4));
-   const [, ty] = rect(pathTo(world, "primary", "Ds Man").at(-2));
+   const [, ty] = rect(pathTo(world, "primary", "iPoDS").at(-2));
    expect(ty).toBeGreaterThanOrEqual(by + 2);
    expect(ly + lh).toBeLessThanOrEqual(by + bh - 2);
 @@ -157,10 +158,10 @@
@@ -1432,7 +1432,7 @@ const opens = (host: SimLocalMediaHost) => host.log.filter((entry) => entry.star
 test("launch: the Explorer lists the library, sorted, first row focused; Now Playing is idle", async () => {
   const rig = await boot();
   const top = screenText(rig.world, "primary");
-  for (const part of ["Ds Man", "20 songs · 1.6 hrs", "Song Name", "Artist", "Aerodynamic", "Around the World", "A", "Play", "Search"]) expect(top).toContain(part);
+  for (const part of ["iPoDS", "20 songs · 1.6 hrs", "Song Name", "Artist", "Aerodynamic", "Around the World", "A", "Play", "Search"]) expect(top).toContain(part);
   expect(selectedRow(rig.world)).toContain("Aerodynamic");
   expect(screenText(rig.world, "auxiliary")).toContain("Nothing playing");
 }, 120_000);
@@ -1895,7 +1895,7 @@ export function Explorer(props: { session: Session; store: ExplorerStore; search
 
   return (
     <View class={AQUA.topScreen}>
-      <Toolbar title="Ds Man" line={lcdLine(props.session.available, props.session.scanning(), library())} active={state().tab} />
+      <Toolbar title="iPoDS" line={lcdLine(props.session.available, props.session.scanning(), library())} active={state().tab} />
       <Show when={panel()} fallback={
         <>
           <Show when={state().query}>
@@ -2051,7 +2051,7 @@ export function NowPlaying(props: { session: Session }) {
 --- a/app/app.tsx
 +++ b/app/app.tsx
 @@ -1,53 +1,32 @@
--// Ds Man — a walkman-style MP3 player. The top screen browses the library;
+-// iPoDS — a walkman-style MP3 player. The top screen browses the library;
 -// the bottom screen is the now-playing deck.
 -import { createSignal } from "solid-js";
 -import { AuxiliarySurface, Text, View } from "@pocketjs/framework/components";
@@ -2067,7 +2067,7 @@ export function NowPlaying(props: { session: Session }) {
 -    return null;
 -  }
 -}
-+// Ds Man — a walkman-style MP3 player. The top screen is the Explorer; the
++// iPoDS — a walkman-style MP3 player. The top screen is the Explorer; the
 +// bottom screen is Now Playing, or the search keyboard while it is open.
 +import { Show } from "solid-js";
 +import { AuxiliarySurface, View } from "@pocketjs/framework/components";
@@ -2113,7 +2113,7 @@ export function NowPlaying(props: { session: Session }) {
    return (
      <>
 -      <View class="w-full h-full flex-col items-center justify-center gap-2 bg-slate-950">
--        <Text class="text-xl text-white font-bold">Ds Man</Text>
+-        <Text class="text-xl text-white font-bold">iPoDS</Text>
 -        <Text class="text-sm text-slate-400">{readFailed() ? LIBRARY_READ_ERROR : libraryLine(media !== null, scanning(), tracks().length)}</Text>
 -      </View>
 +      <Explorer session={session} store={store} searching={osk.isOpen} openSearch={() => osk.open()} />
@@ -2156,7 +2156,7 @@ export function NowPlaying(props: { session: Session }) {
 
 Then run `git rm app/library/status.ts`.
 
-- [ ] **Step 6: Run the whole gate.** `bun run test && bun run check && bun run 3ds --pocket-only`. Expected: 90 pass, 0 fail; no type errors; `output: …ds-man-main.pocket (≈1151000 bytes …)`. The package grows because the app now bakes the keyboard's 14 and 16 px atlases.
+- [ ] **Step 6: Run the whole gate.** `bun run test && bun run check && bun run 3ds --pocket-only`. Expected: 90 pass, 0 fail; no type errors; `output: …ipo-ds-main.pocket (≈1151000 bytes …)`. The package grows because the app now bakes the keyboard's 14 and 16 px atlases.
 
 - [ ] **Step 7: Commit.** `git add -A app tests && git commit -m "feat: the Explorer and Now Playing screens on live data"`
 
@@ -2432,5 +2432,5 @@ Run: `bun test ./tests/input-timing.test.ts && bun test ./tests/app.test.ts -t "
 ## Plan 3 exit gate
 
 - `bun run test` (92), `bun run check`, `bun run 3ds --pocket-only` and `bun run gallery` are green. The fork's `localmedia` tests pass (12).
-- **Manual device pass:** `bun run 3ds` then `open -a Azahar dist/ds-man-main.3dsx`. Without `media.local` (until Plan 4), the Explorer shows "Music playback is unavailable on this build". The gallery build shows the theme.
+- **Manual device pass:** `bun run 3ds` then `open -a Azahar dist/ipo-ds-main.3dsx`. Without `media.local` (until Plan 4), the Explorer shows "Music playback is unavailable on this build". The gallery build shows the theme.
 - Next: Plan 4 (native `media.local` in the fork, with stable ids, album art and a hostAbi bump), or Plan 5 hardening.

@@ -1,4 +1,4 @@
-# Ds Man
+# iPoDS
 
 A PocketJS app for the Nintendo 3DS. The app owns the **400x240 top screen**
 and the **320x240 bottom screen** (`surfaces.auxiliary`). PocketJS is a pinned
@@ -14,16 +14,16 @@ Prerequisites, from the pinned runtime's `hosts/3ds/README.md`:
   `runtime/hosts/3ds/core/rust-toolchain.toml`.
 
 ```sh
-git clone --recursive <this repo> ds-man
-cd ds-man
+git clone --recursive <this repo> ipo-ds
+cd ipo-ds
 bun install --cwd runtime --frozen-lockfile
 bun scripts/setup.ts
-bun run 3ds                # dist/ds-man-main.3dsx and dist/ds-man-main.pocket
-bun run 3ds --cia          # also dist/ds-man-main.cia
+bun run 3ds                # dist/ipo-ds-main.3dsx and dist/ipo-ds-main.pocket
+bun run 3ds --cia          # also dist/ipo-ds-main.cia
 bun run 3ds --pocket-only  # only the guest package; no Docker
 ```
 
-Boot the `.3dsx` in Azahar with `open -a Azahar dist/ds-man-main.3dsx`, or
+Boot the `.3dsx` in Azahar with `open -a Azahar dist/ipo-ds-main.3dsx`, or
 launch it from the Homebrew Launcher on a console.
 
 ## Check

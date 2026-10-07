@@ -1,4 +1,4 @@
-// The semantic slots every Ds Man theme fills. Slots are complete class
+// The semantic slots every iPoDS theme fills. Slots are complete class
 // literals (the build compiles only literal class strings); variants are
 // functions that choose between literals. Parts read only from a Theme, so a
 // second theme (v2 theme switching) is a new object, not a refactor.

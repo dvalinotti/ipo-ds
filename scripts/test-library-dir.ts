@@ -3,7 +3,7 @@
 import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-export const LIBRARY_MARKER = ".ds-man-test-library";
+export const LIBRARY_MARKER = ".ipo-ds-test-library";
 
 /** Leaves `dir` empty except for the marker; throws for a folder holding files this script did not write. */
 export function prepareLibraryDir(dir: string): void {
