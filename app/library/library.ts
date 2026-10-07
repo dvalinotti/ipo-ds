@@ -3,7 +3,15 @@ import { normalize } from "./normalize.ts";
 
 export interface Artist { key: string; name: string; trackIds: number[] }
 export interface Album { key: string; name: string; artist: string; trackIds: number[] }
-export interface Library { tracks: Map<number, LocalTrack>; songs: number[]; artists: Artist[]; albums: Album[] }
+export interface Library {
+  tracks: Map<number, LocalTrack>;
+  songs: number[];
+  artists: Artist[];
+  albums: Album[];
+  /** Lookups by key, so a row renders without a search. */
+  artistByKey: Map<string, Artist>;
+  albumByKey: Map<string, Album>;
+}
 
 export type View =
   | { kind: "songs" } | { kind: "artists" } | { kind: "albums" }
@@ -61,7 +69,7 @@ export function buildLibrary(input: readonly LocalTrack[]): Library {
   const artists = [...artistMap.values()].sort((a, b) => compare(a.key, b.key));
   for (const artist of artists) artist.trackIds.sort((a, b) => albumRank.get(a)! - albumRank.get(b)! || byAlbumTrack(a, b));
 
-  return { tracks, songs: [...tracks.keys()].sort(byTitle), artists, albums };
+  return { tracks, songs: [...tracks.keys()].sort(byTitle), artists, albums, artistByKey: artistMap, albumByKey: albumMap };
 }
 
 function songMatches(track: LocalTrack, query: string): boolean {
@@ -80,8 +88,8 @@ export function rows(library: Library, view: View, query: string): Row[] {
     case "albums":
       return library.albums.filter((a) => q === "" || normalize(a.name).includes(q)).map((a) => ({ kind: "album", key: a.key }));
     case "artist":
-      return songs(library.artists.find((a) => a.key === view.key)?.trackIds ?? []);
+      return songs(library.artistByKey.get(view.key)?.trackIds ?? []);
     case "album":
-      return songs(library.albums.find((a) => a.key === view.key)?.trackIds ?? []);
+      return songs(library.albumByKey.get(view.key)?.trackIds ?? []);
   }
 }

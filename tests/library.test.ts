@@ -76,3 +76,11 @@ test("normalize strips decomposed accents and folds the rest of Latin Extended-A
   expect(ids(rows(library, { kind: "songs" }, "hoppipolla"))).toEqual([0]);
   expect(ids(rows(library, { kind: "artists" }, "sigur ros"))).toEqual(["sigur ros"]);
 });
+
+test("artists and albums are found by key", () => {
+  const library = buildLibrary(TRACKS);
+  for (const artist of library.artists) expect(library.artistByKey.get(artist.key)).toBe(artist);
+  for (const album of library.albums) expect(library.albumByKey.get(album.key)).toBe(album);
+  expect(library.artistByKey.size).toBe(library.artists.length);
+  expect(library.albumByKey.size).toBe(library.albums.length);
+});
