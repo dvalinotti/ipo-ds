@@ -58,6 +58,10 @@ export function createPlayerController(
   return {
     state: () => state,
     dispatch: step,
-    poll: () => step({ type: "hostStatus", status: media.status() }),
+    // An unchanged status (the SDK returns the same object) changes nothing: skip the step.
+    poll: () => {
+      const status = media.status();
+      if (status !== state.status) step({ type: "hostStatus", status });
+    },
   };
 }

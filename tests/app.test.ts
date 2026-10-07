@@ -95,6 +95,25 @@ test("A plays the focused song; Now Playing shows it; the visible list is the qu
   expect(opens(rig.host)).toEqual(["open(7)", "open(16)"]);
 }, 120_000);
 
+test("while a song plays the status is read every fourth frame, and at once after a command", async () => {
+  const host = createSimLocalMedia(LIBRARY);
+  let reads = 0;
+  const rig = { host, world: await bootApp({ localmedia: { ...host.ns, status: () => (reads++, host.ns.status()) } }) };
+  frames(rig, 4);
+  press(rig, A);
+  frames(rig, 4);
+  reads = 0;
+  frames(rig, 60);
+  expect(reads).toBeGreaterThanOrEqual(15);
+  expect(reads).toBeLessThanOrEqual(16);
+  reads = 0;
+  frames(rig, 1, { buttons: BTN.START }); // pause: the command reads the status itself
+  const afterCommand = reads;
+  frames(rig, 1);
+  expect(afterCommand).toBeGreaterThanOrEqual(1);
+  expect(reads).toBeGreaterThan(afterCommand); // and the next frame polls regardless of the cadence
+}, 120_000);
+
 test("tabs do not wrap; drilling into an artist and backing out restores the focused row", async () => {
   const rig = await boot();
   press(rig, BTN.LTRIGGER);

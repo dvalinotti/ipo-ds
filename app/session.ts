@@ -46,9 +46,19 @@ function composed(track: LocalTrack): LocalTrack {
   return { ...track, title: composeMarks(track.title), artist: composeMarks(track.artist), album: composeMarks(track.album) };
 }
 
+/** Frames between status reads while a song plays (15 Hz at 60 fps). */
+export const POLL_EVERY = 4;
+
+function samePlayer(a: PlayerState, b: PlayerState): boolean {
+  return a.queue === b.queue && a.order === b.order && a.index === b.index && a.shuffle === b.shuffle
+    && a.repeat === b.repeat && a.serial === b.serial && a.failures === b.failures;
+}
+
 export function createSession(media: LocalMedia | null = connect()): Session {
   const [library, setLibrary] = createSignal<Library | null>(null);
-  const [player, setPlayer] = createSignal<PlayerState>(initialPlayer(), { equals: false });
+  // The status inside the player state changes every frame of playback; screens read it from
+  // `status`, so the player signal only fires when the queue or its position in it changes.
+  const [player, setPlayer] = createSignal<PlayerState>(initialPlayer(), { equals: samePlayer });
   const [status, setStatus] = createSignal<LocalStatus>(IDLE_STATUS);
   const [scanning, setScanning] = createSignal(media !== null);
   // Two kinds of bad host reply: a status read (cleared by the next good poll) and a
@@ -62,6 +72,8 @@ export function createSession(media: LocalMedia | null = connect()): Session {
   // The id whose cover is shown or requested, and whether its request resolved.
   let coverFor = -1;
   let coverResolved = true;
+  // Read the status on the next frame regardless of the playing cadence (after a command).
+  let pollNext = true;
 
   if (media) {
     controller = createPlayerController(media, { onChange: setPlayer });
@@ -69,7 +81,13 @@ export function createSession(media: LocalMedia | null = connect()): Session {
     media.scan();
     // A frame that throws tears the guest down on the 3DS host, so a host
     // reply that does not validate becomes an on-screen error instead.
+    let frame = 0;
     onFrame(() => {
+      // While a song plays only its position moves from frame to frame: every POLL_EVERY frames
+      // is enough for the time labels and the seek bar (commands re-read the status at once).
+      frame++;
+      if (status().phase === "playing" && !pollNext && !statusFailed() && frame % POLL_EVERY !== 0) return;
+      pollNext = false;
       let now: LocalStatus;
       try {
         controller!.poll();
@@ -143,6 +161,7 @@ export function createSession(media: LocalMedia | null = connect()): Session {
     coverLoading,
     // A command re-reads status; a reply that fails validation must not throw out of the frame.
     dispatch: (action) => {
+      pollNext = true;
       try {
         controller?.dispatch(action);
       } catch {
