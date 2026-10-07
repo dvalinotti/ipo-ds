@@ -145,6 +145,35 @@ test("while a song plays the status is read every fourth frame, and at once afte
   expect(reads).toBeGreaterThan(afterCommand); // and the next frame polls regardless of the cadence
 }, 120_000);
 
+test("a skip shows the next song's title on the same frame as its new place in the queue", async () => {
+  const rig = await boot();
+  press(rig, A); // Aerodynamic, 1 of 20
+  frames(rig, 3);
+  frames(rig, 1, { buttons: BTN.ZR }); // the frame of the skip, nothing after it
+  const bottom = screenText(rig.world, "auxiliary");
+  expect(bottom).toContain("2 of 20");
+  expect(bottom).toContain("Around the World");
+  expect(bottom).not.toContain("Aerodynamic");
+}, 120_000);
+
+test("while nothing plays, or a song is paused, the status is read every fourth frame too", async () => {
+  const host = createSimLocalMedia(LIBRARY);
+  let reads = 0;
+  const rig = { host, world: await bootApp({ localmedia: { ...host.ns, status: () => (reads++, host.ns.status()) } }) };
+  frames(rig, 4);
+  reads = 0;
+  frames(rig, 60); // idle on the list
+  expect(reads).toBeGreaterThanOrEqual(15);
+  expect(reads).toBeLessThanOrEqual(16);
+  press(rig, A);
+  press(rig, BTN.START); // pause
+  frames(rig, 4);
+  reads = 0;
+  frames(rig, 60);
+  expect(reads).toBeGreaterThanOrEqual(15);
+  expect(reads).toBeLessThanOrEqual(16);
+}, 120_000);
+
 test("tabs do not wrap; drilling into an artist and backing out restores the focused row", async () => {
   const rig = await boot();
   press(rig, BTN.LTRIGGER);
@@ -420,7 +449,7 @@ test("over the read-error panel an X tap does nothing; holding X still scans aga
   const rig = { host, world: await bootApp({ localmedia: ns }) };
   frames(rig, 4);
   garbled = true;
-  frames(rig, 3);
+  frames(rig, 4);
   expect(screenText(rig.world, "primary")).toContain("Could not read the music library");
   const scans = () => host.log.filter((entry) => entry === "scan()").length;
   const before = scans();
