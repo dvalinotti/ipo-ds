@@ -252,7 +252,7 @@ Not built, because the budgets were met without them: §4 item 3 (one input rout
 
 Measured in Azahar (Old): opening a file costs about 17 ms and closing it about 12 ms; a read costs about 0.9 ms plus 0.2 ms per KB; libctru's `stat()` opens the file (26 ms) and reports `st_mtime` 0; `archive_getmtime` costs 13 ms and returns a constant; reading all 324 directory entries 32 at a time costs 0.4 s; two threads overlap their opens almost perfectly, a third adds nothing.
 - **Listing:** names and sizes come from the SD card's directory entries (`FSDIR_Read`, 32 at a time, `localmedia_dir.c`); no file is opened to list it. On the host, the listing is `opendir` and `stat`.
-- **Key:** an entry is reused when its **name and size** match. The format drops the mtime field. A re-tag that keeps the file's size is missed until the cache is gone (deleting `sdmc:/pocketjs/localmedia/library.cache` forces a full read).
+- **Key:** an entry is reused when its **name and size** match. The format drops the mtime field. The cache serves only a launch's first scan, so a re-tag that keeps the file's size is missed until a manual rescan (hold X), which reads every file. A cache that lists no track publishes nothing, so a launch after an empty card shows the scan in progress, not "No music found" (final review).
 - **Reads:** the stdio buffer is **4 KB**, not 16 KB (each refill is one SD read, priced by size).
 - **Two readers:** files the cache does not cover are read by the library thread and one helper thread at the same priority; the library thread serves art between its files.
 
