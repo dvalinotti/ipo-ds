@@ -197,8 +197,23 @@ export function crumbOfView(library: Library, view: View): CrumbSpec | null {
   return null;
 }
 
-export function legendOf(state: ExplorerState, hasSongs: boolean): LegendItem[] {
-  if (!hasSongs) return [{ key: "X", label: "Scan again", primary: true }];
+/** What replaces the list: no media module, a host read that failed, the first scan, or no songs. */
+export type ListPanel = "unavailable" | "readError" | "scanning" | "empty";
+
+export function panelOf(available: boolean, readFailed: boolean, library: Library | null): ListPanel | null {
+  if (!available) return "unavailable";
+  if (readFailed) return "readError";
+  if (!library) return "scanning";
+  if (library.tracks.size === 0) return "empty";
+  return null;
+}
+
+/** The footer legend: the list's buttons in this view, or what the panel over the list asks for. */
+export function legendOf(state: ExplorerState, panel: ListPanel | null): LegendItem[] {
+  if (panel === "unavailable") return [];
+  if (panel === "scanning") return [{ key: "Y", label: "Now Playing" }];
+  if (panel === "readError") return [{ key: "X", label: "Hold to scan again", primary: true }];
+  if (panel === "empty") return [{ key: "X", label: "Scan again", primary: true }];
   const view = currentView(state);
   const opens = view.kind === "artists" || view.kind === "albums";
   const back = state.drill[state.tab] ? (state.tab === "Artists" ? "Artists" : "Albums") : state.query ? "Clear" : "Back";

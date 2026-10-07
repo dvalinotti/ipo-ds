@@ -644,3 +644,51 @@ test("A on the frame a held D-pad steps plays the row the step lands on", async 
   expect(selectedRow(rig.world)).toContain("Around the World");
   expect(opens(rig.host)).toEqual(["open(7)"]);
 }, 120_000);
+
+test("over the read-error panel the list's buttons sleep: nothing plays, the drill-down and focus survive", async () => {
+  const host = createSimLocalMedia(LIBRARY);
+  let garbled = false;
+  const ns = { ...host.ns, status: () => (garbled ? "{" : host.ns.status()) };
+  const rig = { host, world: await bootApp({ localmedia: ns }) };
+  frames(rig, 4);
+  press(rig, BTN.RTRIGGER); // Artists
+  press(rig, A); // Daft Punk: 8 songs, One More Time first
+  expect(screenText(rig.world, "primary")).toContain("8 songs");
+  garbled = true;
+  frames(rig, 3);
+  let top = screenText(rig.world, "primary");
+  expect(top).toContain("Could not read the music library");
+  expect(top).toContain("Hold to scan again");
+  press(rig, A);
+  press(rig, B);
+  press(rig, BTN.DOWN);
+  expect(opens(rig.host)).toEqual([]);
+  garbled = false;
+  frames(rig, 3);
+  top = screenText(rig.world, "primary");
+  expect(top).toContain("8 songs");
+  expect(selectedRow(rig.world)).toContain("One More Time");
+}, 120_000);
+
+test("while the first scan runs the legend offers Now Playing only, and an X tap starts no second scan", async () => {
+  const host = createSimLocalMedia(LIBRARY, { scanMs: 5000 });
+  const rig = { host, world: await bootApp({ localmedia: host.ns }) };
+  frames(rig, 2);
+  const top = screenText(rig.world, "primary");
+  expect(top).toContain("Scanning your music");
+  expect(top).toContain("Now Playing");
+  expect(top).not.toContain("Scan again");
+  press(rig, X);
+  expect(rig.host.log.filter((entry) => entry === "scan()")).toEqual(["scan()"]);
+  frames(rig, 310); // the scan completes
+  expect(selectedRow(rig.world)).toContain("Aerodynamic");
+}, 120_000);
+
+test("over the empty-library panel an X tap scans again", async () => {
+  const rig = await boot([]);
+  const top = screenText(rig.world, "primary");
+  expect(top).toContain("No music found");
+  expect(top).toContain("Scan again");
+  press(rig, X);
+  expect(rig.host.log.filter((entry) => entry === "scan()")).toEqual(["scan()", "scan()"]);
+}, 120_000);

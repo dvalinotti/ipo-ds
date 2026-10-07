@@ -19,7 +19,7 @@ import { settled } from "../reactive.ts";
 import { Toolbar } from "../theme/parts/toolbar.tsx";
 import type { RowKind } from "../theme/theme.ts";
 import {
-  crumbOfView, currentView, focusOf, headerOfView, initialExplorer, lcdLine, legendOf, reduceExplorer, rowCellsIn, rowsKey, viewKey,
+  crumbOfView, currentView, focusOf, headerOfView, initialExplorer, lcdLine, legendOf, panelOf, reduceExplorer, rowCellsIn, rowsKey, viewKey,
   visibleRows, songIds, type ExplorerAction, type ExplorerState,
 } from "./model.ts";
 import type { LegendItem } from "../theme/parts/strips.tsx";
@@ -68,8 +68,12 @@ export function Explorer(props: { session: Session; store: ExplorerStore; search
     const lib = library();
     return lib ? crumbOfView(lib, view()) : null;
   });
-  const hasSongs = () => (library()?.tracks.size ?? 0) > 0;
-  const legend = settled<LegendItem[]>(() => legendOf(state(), hasSongs()),
+  // A plain function, not settled(): the session's poll flips readFailed in the same batch the
+  // handlers below run in, and a settled value would still say "no panel" on that frame.
+  const kind = () => panelOf(props.session.available, props.session.readFailed(), library());
+  // The list's buttons sleep under a panel (and under the keyboard); tabs, the Y chords and X do not.
+  const listActive = () => active() && kind() === null;
+  const legend = settled<LegendItem[]>(() => legendOf(state(), kind()),
     (a, b) => a.length === b.length && a.every((item, i) => item.key === b[i]!.key && item.label === b[i]!.label));
   const strips = () => (query() ? 1 : 0) + (crumb() ? 1 : 0);
   const bodyPx = () => BODY_PX - strips() * ROW_PX;
@@ -80,12 +84,12 @@ export function Explorer(props: { session: Session; store: ExplorerStore; search
 
   // --- input ---------------------------------------------------------------
   const move = (delta: number) => dispatch({ type: "move", delta, count: rows().length });
-  onRepeat(BTN.UP, () => move(-1), active);
-  onRepeat(BTN.DOWN, () => move(1), active);
-  onRepeat(BTN.LEFT, () => move(-page()), active);
-  onRepeat(BTN.RIGHT, () => move(page()), active);
-  onAnalogRows(move, active);
-  onButtonPress(BTN.CROSS, () => dispatch({ type: "back" }), { active });
+  onRepeat(BTN.UP, () => move(-1), listActive);
+  onRepeat(BTN.DOWN, () => move(1), listActive);
+  onRepeat(BTN.LEFT, () => move(-page()), listActive);
+  onRepeat(BTN.RIGHT, () => move(page()), listActive);
+  onAnalogRows(move, listActive);
+  onButtonPress(BTN.CROSS, () => dispatch({ type: "back" }), { active: listActive });
   // L / R step tabs; held with Y they skip songs (the path without ZL / ZR on an
   // Old 3DS); a Y tap alone reveals the playing song when it is released.
   let shoulders = SHOULDERS_UP;
@@ -118,13 +122,13 @@ export function Explorer(props: { session: Session; store: ExplorerStore; search
     if (!row) return;
     if (row.kind === "song") props.session.dispatch({ type: "playFrom", ids: songIds(list), startId: row.id });
     else dispatch({ type: "open", row });
-  }, { active });
-  // X: tap searches (or scans again on an empty library; nothing over the read-error panel,
-  // which asks for a hold); a 1 s hold rescans.
+  }, { active: listActive });
+  // X: a tap searches, or scans again over the empty-library panel. The read-error panel asks
+  // for a hold (a tap does nothing); scanning and unavailable ignore it. A 1 s hold always rescans.
   const tapX = () => {
-    if (props.session.readFailed()) return;
-    if (hasSongs()) props.openSearch();
-    else props.session.rescan();
+    const panel = kind();
+    if (panel === null) props.openSearch();
+    else if (panel === "empty") props.session.rescan();
   };
   onTapOrHold(BTN.TRIANGLE, tapX, () => props.session.rescan(), active);
 
@@ -155,11 +159,13 @@ export function Explorer(props: { session: Session; store: ExplorerStore; search
   const focusCells = createMemo(() => cellsAt(focus()));
 
   const panel = () => {
-    if (!props.session.available) return { title: UNAVAILABLE, lines: ["This build has no media.local module."] };
-    if (props.session.readFailed()) return { title: READ_ERROR, lines: [["Press and hold", "X", "to scan again."] as const] };
-    if (!library()) return { title: "Scanning your music…", lines: ["sdmc:/music/"] };
-    if (!hasSongs()) return { title: "No music found", lines: ["Copy .mp3 files to the /music folder on your SD card,", ["then press", "X", "to scan again."] as const] };
-    return null;
+    switch (kind()) {
+      case "unavailable": return { title: UNAVAILABLE, lines: ["This build has no media.local module."] };
+      case "readError": return { title: READ_ERROR, lines: [["Press and hold", "X", "to scan again."] as const] };
+      case "scanning": return { title: "Scanning your music…", lines: ["sdmc:/music/"] };
+      case "empty": return { title: "No music found", lines: ["Copy .mp3 files to the /music folder on your SD card,", ["then press", "X", "to scan again."] as const] };
+      default: return null;
+    }
   };
 
   return (

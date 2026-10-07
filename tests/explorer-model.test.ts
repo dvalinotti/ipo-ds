@@ -1,8 +1,8 @@
 import { expect, test } from "bun:test";
 import { buildLibrary } from "../app/library/library.ts";
 import {
-  crumbOf, currentView, focusOf, headerOf, initialExplorer, lcdLine, legendOf, reduceExplorer, rowCells, rowsKey, visibleRows, songIds,
-  type ExplorerAction, type ExplorerState,
+  crumbOf, currentView, focusOf, headerOf, initialExplorer, lcdLine, legendOf, panelOf, reduceExplorer, rowCells, rowsKey, visibleRows, songIds,
+  type ExplorerAction, type ExplorerState, type ListPanel,
 } from "../app/explorer/model.ts";
 import { TRACKS } from "./fixtures/tracks.ts";
 
@@ -105,13 +105,24 @@ test("headers, row cells and breadcrumbs follow the view", () => {
   expect(count(state)).toBe(3);
 });
 
-test("legends name what each button does in this view", () => {
-  const labels = (state: ExplorerState, songs = true) => legendOf(state, songs).map((item) => `${item.key} ${item.label}`);
+test("legends name what each button does in this view, or what a panel asks for", () => {
+  const labels = (state: ExplorerState, panel: ListPanel | null = null) => legendOf(state, panel).map((item) => `${item.key} ${item.label}`);
   expect(labels(initialExplorer())).toEqual(["A Play", "X Search", "B Back", "Y Now Playing"]);
   expect(labels(run(initialExplorer(), { type: "setQuery", query: "x" }))).toEqual(["A Play", "X Edit search", "B Clear", "Y Now Playing"]);
   expect(labels(run(initialExplorer(), { type: "tab", delta: 1 }))).toEqual(["A Open", "X Search", "B Back", "Y Now Playing"]);
   expect(labels(run(initialExplorer(), { type: "tab", delta: 1 }, { type: "open", row: { kind: "artist", key: "queen" } }))[2]).toBe("B Artists");
-  expect(labels(initialExplorer(), false)).toEqual(["X Scan again"]);
+  expect(labels(initialExplorer(), "empty")).toEqual(["X Scan again"]);
+  expect(labels(initialExplorer(), "scanning")).toEqual(["Y Now Playing"]);
+  expect(labels(initialExplorer(), "readError")).toEqual(["X Hold to scan again"]);
+  expect(labels(initialExplorer(), "unavailable")).toEqual([]);
+});
+
+test("the panel follows availability, a failed read, the first scan and an empty library, in that order", () => {
+  expect(panelOf(false, true, null)).toBe("unavailable");
+  expect(panelOf(true, true, library)).toBe("readError");
+  expect(panelOf(true, false, null)).toBe("scanning");
+  expect(panelOf(true, false, buildLibrary([]))).toBe("empty");
+  expect(panelOf(true, false, library)).toBeNull();
 });
 
 test("the LCD line reports availability, scanning, and the library's size and length", () => {
