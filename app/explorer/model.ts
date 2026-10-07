@@ -126,7 +126,10 @@ export interface HeaderSpec {
 }
 
 export function headerOf(state: ExplorerState): HeaderSpec {
-  const view = currentView(state);
+  return headerOfView(currentView(state));
+}
+
+export function headerOfView(view: View): HeaderSpec {
   switch (view.kind) {
     case "songs":
       return { left: "Song Name", right: "Artist", count: false };
@@ -151,16 +154,20 @@ export interface RowCells {
 }
 
 export function rowCells(library: Library, state: ExplorerState, row: Row): RowCells {
+  return rowCellsIn(library, currentView(state), row);
+}
+
+/** A row's cells in a view: the view (not the focus) is all a row's text depends on. */
+export function rowCellsIn(library: Library, view: View, row: Row): RowCells {
   if (row.kind === "artist") {
-    const artist = library.artists.find((a) => a.key === row.key)!;
+    const artist = library.artistByKey.get(row.key)!;
     return { title: artist.name, detail: String(artist.trackIds.length), count: true };
   }
   if (row.kind === "album") {
-    const album = library.albums.find((a) => a.key === row.key)!;
+    const album = library.albumByKey.get(row.key)!;
     return { title: album.name, detail: album.artist, count: false };
   }
   const track = library.tracks.get(row.id)!;
-  const view = currentView(state);
   if (view.kind === "artist") return { title: track.title, detail: track.album, count: false };
   if (view.kind === "album") return { title: track.title, detail: formatTime(track.durationMs), lead: track.track > 0 ? String(track.track) : "", count: false };
   return { title: track.title, detail: track.artist, count: false };
@@ -175,13 +182,16 @@ export interface CrumbSpec {
 const songsLabel = (n: number) => `${n} ${n === 1 ? "song" : "songs"}`;
 
 export function crumbOf(library: Library, state: ExplorerState): CrumbSpec | null {
-  const view = currentView(state);
+  return crumbOfView(library, currentView(state));
+}
+
+export function crumbOfView(library: Library, view: View): CrumbSpec | null {
   if (view.kind === "artist") {
-    const artist = library.artists.find((a) => a.key === view.key);
+    const artist = library.artistByKey.get(view.key);
     return artist ? { root: "Artists", leaf: artist.name, detail: songsLabel(artist.trackIds.length) } : null;
   }
   if (view.kind === "album") {
-    const album = library.albums.find((a) => a.key === view.key);
+    const album = library.albumByKey.get(view.key);
     return album ? { root: "Albums", leaf: album.name, detail: `${album.artist} · ${songsLabel(album.trackIds.length)}` } : null;
   }
   return null;

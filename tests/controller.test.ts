@@ -118,3 +118,15 @@ test("repeat one replays once even when the host reports the previous end after 
   expect(opens()).toBe(2);
   expect(player.state().status).toMatchObject({ trackId: 0, phase: "playing", openSerial: 2 });
 });
+
+test("a poll that reads the same status object changes nothing; a new status reaches onChange", () => {
+  const { host, player, changes } = setup([song("a.mp3")]);
+  player.poll();
+  const settled = changes.length;
+  for (let i = 0; i < 5; i++) player.poll(); // the host clock stands still: the SDK returns the same object
+  expect(changes.length).toBe(settled);
+  player.dispatch({ type: "playFrom", ids: [0], startId: 0 });
+  host.advance(100);
+  player.poll();
+  expect(changes.length).toBe(settled + 2); // the dispatch, then the poll that saw playback move
+});

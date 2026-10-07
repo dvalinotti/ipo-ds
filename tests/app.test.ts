@@ -95,6 +95,56 @@ test("A plays the focused song; Now Playing shows it; the visible list is the qu
   expect(opens(rig.host)).toEqual(["open(7)", "open(16)"]);
 }, 120_000);
 
+/** Records every host op the guest issues from now on (the sim's `ui` object, wrapped in place). */
+function recordOps(): { calls: string[]; stop(): void } {
+  const ui = (globalThis as unknown as { ui: Record<string, unknown> }).ui;
+  const calls: string[] = [];
+  const originals = new Map<string, (...args: unknown[]) => unknown>();
+  for (const [key, fn] of Object.entries(ui)) {
+    if (typeof fn !== "function" || key === "frame" || key.startsWith("debug") || key.startsWith("hitTest")) continue;
+    originals.set(key, fn as (...args: unknown[]) => unknown);
+    ui[key] = (...args: unknown[]) => {
+      calls.push(key);
+      return (fn as (...args: unknown[]) => unknown).apply(ui, args);
+    };
+  }
+  return { calls, stop: () => { for (const [key, fn] of originals) ui[key] = fn; } };
+}
+
+test("a focus move touches only the selection: no row is rebuilt, scrolling included", async () => {
+  const rig = await boot();
+  const ops = recordOps();
+  press(rig, BTN.DOWN); // focus moves within the page
+  const focusOps = [...ops.calls];
+  ops.calls.length = 0;
+  for (let i = 0; i < 8; i++) press(rig, BTN.DOWN); // past the page: the list scrolls a row at a time
+  const scrollOps = [...ops.calls];
+  ops.stop();
+  expect(focusOps.filter((op) => op === "createNode")).toHaveLength(0);
+  expect(focusOps.length).toBeLessThanOrEqual(4);
+  expect(scrollOps.filter((op) => op === "createNode")).toHaveLength(0);
+  expect(selectedRow(rig.world)).not.toBe("");
+}, 120_000);
+
+test("while a song plays the status is read every fourth frame, and at once after a command", async () => {
+  const host = createSimLocalMedia(LIBRARY);
+  let reads = 0;
+  const rig = { host, world: await bootApp({ localmedia: { ...host.ns, status: () => (reads++, host.ns.status()) } }) };
+  frames(rig, 4);
+  press(rig, A);
+  frames(rig, 4);
+  reads = 0;
+  frames(rig, 60);
+  expect(reads).toBeGreaterThanOrEqual(15);
+  expect(reads).toBeLessThanOrEqual(16);
+  reads = 0;
+  frames(rig, 1, { buttons: BTN.START }); // pause: the command reads the status itself
+  const afterCommand = reads;
+  frames(rig, 1);
+  expect(afterCommand).toBeGreaterThanOrEqual(1);
+  expect(reads).toBeGreaterThan(afterCommand); // and the next frame polls regardless of the cadence
+}, 120_000);
+
 test("tabs do not wrap; drilling into an artist and backing out restores the focused row", async () => {
   const rig = await boot();
   press(rig, BTN.LTRIGGER);
@@ -363,6 +413,24 @@ test("a host whose status reads start failing is reported, survives taps, and re
   expect(selectedRow(rig.world)).toContain("Aerodynamic");
 }, 120_000);
 
+test("over the read-error panel an X tap does nothing; holding X still scans again", async () => {
+  const host = createSimLocalMedia(LIBRARY);
+  let garbled = false;
+  const ns = { ...host.ns, status: () => (garbled ? "{" : host.ns.status()) };
+  const rig = { host, world: await bootApp({ localmedia: ns }) };
+  frames(rig, 4);
+  garbled = true;
+  frames(rig, 3);
+  expect(screenText(rig.world, "primary")).toContain("Could not read the music library");
+  const scans = () => host.log.filter((entry) => entry === "scan()").length;
+  const before = scans();
+  press(rig, X);
+  expect(scans()).toBe(before);
+  expect(screenText(rig.world, "primary")).not.toContain("Search:"); // no keyboard
+  rescan(rig);
+  expect(scans()).toBe(before + 1);
+}, 120_000);
+
 test("a tap on the remaining-time label does not seek", async () => {
   const rig = await boot();
   press(rig, A);
@@ -469,7 +537,7 @@ test("holding L+R shows underruns, decode load and live covers without stepping 
   rig.host.setDecodeLoad(23);
   frames(rig, 3, { buttons: BTN.LTRIGGER });
   frames(rig, 3, { buttons: BTN.LTRIGGER | BTN.RTRIGGER });
-  expect(screenText(rig.world, "auxiliary")).toContain("U:0 D:23% A:1");
+  expect(screenText(rig.world, "auxiliary")).toContain("U:0 D:23% A:1 F:-"); // the sim has no frame timing
   frames(rig, 3);
   expect(screenText(rig.world, "auxiliary")).toContain("1 of 4");
   expect(header(rig.world, "Song Name")).toBeDefined(); // still the Songs tab (L alone could not step left of it)

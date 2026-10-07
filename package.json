@@ -6,8 +6,9 @@
   "scripts": {
     "3ds": "bun scripts/build.ts",
     "test-library": "bun scripts/make-test-library.ts",
+    "perf": "bun scripts/perf.ts",
     "check": "bun runtime/node_modules/typescript/bin/tsc --noEmit",
-    "test": "bun test ./tests",
+    "test": "bun test --conditions=browser ./tests",
     "gallery": "bun scripts/gallery.ts"
   }
 }

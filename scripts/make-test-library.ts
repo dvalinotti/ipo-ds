@@ -97,6 +97,8 @@ for (let a = 0; a < ARTISTS.length; a++) {
   }
 }
 jobs.push({ file: "Mono Field Recording.mp3", title: "Mono Field Recording", artist: "Atlas Hum", album: "Field Notes", track: 1, seconds: 45, kind: "mono22", tag: "v23" });
+// Sorts first in the Songs list and overflows the LCD: the perf scenarios start from it.
+jobs.push({ file: "000 A Very Long Title.mp3", title: "A Very Long Title That Keeps Scrolling Across The Display (Extended Mix)", artist: "Glass Lantern", album: "Endurance", track: 2, seconds: 240, kind: "cbr320", tag: "v23", cover: "jpeg" });
 jobs.push({ file: "The Long One.mp3", title: "The Long One (65 minutes)", artist: "Low Tide Choir", album: "Endurance", track: 1, seconds: 65 * 60, kind: "cbr128", tag: "v24", cover: "jpeg" });
 
 async function encode(job: Job): Promise<void> {
