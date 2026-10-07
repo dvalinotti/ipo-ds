@@ -413,6 +413,24 @@ test("a host whose status reads start failing is reported, survives taps, and re
   expect(selectedRow(rig.world)).toContain("Aerodynamic");
 }, 120_000);
 
+test("over the read-error panel an X tap does nothing; holding X still scans again", async () => {
+  const host = createSimLocalMedia(LIBRARY);
+  let garbled = false;
+  const ns = { ...host.ns, status: () => (garbled ? "{" : host.ns.status()) };
+  const rig = { host, world: await bootApp({ localmedia: ns }) };
+  frames(rig, 4);
+  garbled = true;
+  frames(rig, 3);
+  expect(screenText(rig.world, "primary")).toContain("Could not read the music library");
+  const scans = () => host.log.filter((entry) => entry === "scan()").length;
+  const before = scans();
+  press(rig, X);
+  expect(scans()).toBe(before);
+  expect(screenText(rig.world, "primary")).not.toContain("Search:"); // no keyboard
+  rescan(rig);
+  expect(scans()).toBe(before + 1);
+}, 120_000);
+
 test("a tap on the remaining-time label does not seek", async () => {
   const rig = await boot();
   press(rig, A);
@@ -519,7 +537,7 @@ test("holding L+R shows underruns, decode load and live covers without stepping 
   rig.host.setDecodeLoad(23);
   frames(rig, 3, { buttons: BTN.LTRIGGER });
   frames(rig, 3, { buttons: BTN.LTRIGGER | BTN.RTRIGGER });
-  expect(screenText(rig.world, "auxiliary")).toContain("U:0 D:23% A:1");
+  expect(screenText(rig.world, "auxiliary")).toContain("U:0 D:23% A:1 F:-"); // the sim has no frame timing
   frames(rig, 3);
   expect(screenText(rig.world, "auxiliary")).toContain("1 of 4");
   expect(header(rig.world, "Song Name")).toBeDefined(); // still the Songs tab (L alone could not step left of it)

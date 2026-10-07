@@ -2,6 +2,7 @@
 // a drag-to-seek capsule (one seek on release) and the transport row. The
 // LCD's status row shows a playback error, or diagnostics while L+R are held.
 import { createSignal, Show } from "solid-js";
+import { getOps } from "@pocketjs/framework";
 import { View } from "@pocketjs/framework/components";
 import { createGesture } from "@pocketjs/framework/gesture";
 import { BTN } from "@pocketjs/framework/input";
@@ -9,6 +10,7 @@ import { onFrame } from "@pocketjs/framework/lifecycle";
 import { createMediaScrubber } from "@pocketjs/framework/media";
 import { formatRemaining, formatTime, needsHours } from "../format.ts";
 import type { Session } from "../session.ts";
+import { frameNote } from "./frame-time.ts";
 import { AQUA } from "../theme/aqua.ts";
 import { ArtFrame, CoverImage, CoverLoading, InfoLcd, SEEK_TRACK_PX, SEEK_TRACK_WIDE_PX, SeekCapsule, seekTrackLeft, TransportRow } from "../theme/parts/deck.tsx";
 import { IdlePanel } from "../theme/parts/panels.tsx";
@@ -56,10 +58,18 @@ export function NowPlaying(props: { session: Session }) {
   const position = () => preview() ?? status().positionMs;
   const SHOULDERS = BTN.LTRIGGER | BTN.RTRIGGER;
   const [diagnostics, setDiagnostics] = createSignal(false);
-  onFrame((buttons) => setDiagnostics((buttons & SHOULDERS) === SHOULDERS));
+  const [frameTime, setFrameTime] = createSignal("F:-");
+  let heldFrames = 0;
+  onFrame((buttons) => {
+    const held = (buttons & SHOULDERS) === SHOULDERS;
+    // The host's frame time is read only while L+R are held: at once, then twice a second.
+    if (held && heldFrames++ % 30 === 0) setFrameTime(frameNote(getOps().debugStats?.()));
+    if (!held) heldFrames = 0;
+    setDiagnostics(held);
+  });
   const note = () => {
     const now = status();
-    if (diagnostics()) return `U:${now.underruns} D:${now.decodeLoad}% A:${now.artHandles}`;
+    if (diagnostics()) return `U:${now.underruns} D:${now.decodeLoad}% A:${now.artHandles} ${frameTime()}`;
     return now.phase === "error" ? now.error : undefined;
   };
   const playing = () => status().phase === "playing" || status().phase === "loading";

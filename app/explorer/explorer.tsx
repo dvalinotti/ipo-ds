@@ -114,8 +114,14 @@ export function Explorer(props: { session: Session; store: ExplorerStore; search
     if (row.kind === "song") props.session.dispatch({ type: "playFrom", ids: visibleSongIds(lib, state()), startId: row.id });
     else dispatch({ type: "open", row });
   }, { active });
-  // X: tap searches (or scans again on an empty library); a 1 s hold rescans.
-  onTapOrHold(BTN.TRIANGLE, () => (hasSongs() ? props.openSearch() : props.session.rescan()), () => props.session.rescan(), active);
+  // X: tap searches (or scans again on an empty library; nothing over the read-error panel,
+  // which asks for a hold); a 1 s hold rescans.
+  const tapX = () => {
+    if (props.session.readFailed()) return;
+    if (hasSongs()) props.openSearch();
+    else props.session.rescan();
+  };
+  onTapOrHold(BTN.TRIANGLE, tapX, () => props.session.rescan(), active);
 
   // --- list ----------------------------------------------------------------
   // The first row in the window: the least scrolling that keeps the focused row visible.
