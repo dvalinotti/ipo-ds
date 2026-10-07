@@ -113,9 +113,11 @@ export function reducePlayer(state: PlayerState, action: PlayerAction, random: (
     case "prune": {
       const id = currentId(state);
       const keep = new Set(action.ids);
-      const kept = (list: readonly number[]) => list.filter((queued) => queued === id || keep.has(queued));
-      const order = kept(state.order);
-      return none({ ...state, queue: kept(state.queue), order, index: id < 0 ? -1 : order.indexOf(id) });
+      const survives = (queued: number) => queued === id || keep.has(queued);
+      // A scan that still lists every queued song changes nothing; the same state keeps the screens quiet.
+      if (state.queue.every(survives) && state.order.every(survives)) return none(state);
+      const order = state.order.filter(survives);
+      return none({ ...state, queue: state.queue.filter(survives), order, index: id < 0 ? -1 : order.indexOf(id) });
     }
     case "cycleRepeat":
       return none({ ...state, repeat: state.repeat === "off" ? "all" : state.repeat === "all" ? "one" : "off" });
