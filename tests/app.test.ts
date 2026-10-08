@@ -626,6 +626,8 @@ test("closing the keyboard with the D-pad or X still held does not move, search 
   frames(rig, 2);
   expect(screenText(rig.world, "auxiliary")).not.toContain("START confirm");
   expect(selectedRow(rig.world)).toContain("Aerodynamic");
+  press(rig, BTN.DOWN); // released and pressed again: the latch has cleared
+  expect(selectedRow(rig.world)).toContain("Around the World");
   press(rig, X);
   expect(screenText(rig.world, "auxiliary")).toContain("START confirm");
   const scans = rig.host.log.filter((entry) => entry === "scan()").length;
@@ -691,4 +693,20 @@ test("over the empty-library panel an X tap scans again", async () => {
   expect(top).toContain("Scan again");
   press(rig, X);
   expect(rig.host.log.filter((entry) => entry === "scan()")).toEqual(["scan()", "scan()"]);
+}, 120_000);
+
+test("over the read-error panel a transport press with nothing queued leaves the panel in place", async () => {
+  const host = createSimLocalMedia(LIBRARY);
+  let garbled = false;
+  const ns = { ...host.ns, status: () => (garbled ? "{" : host.ns.status()) };
+  const rig = { host, world: await bootApp({ localmedia: ns }) };
+  frames(rig, 4);
+  garbled = true;
+  frames(rig, 4);
+  expect(screenText(rig.world, "primary")).toContain("Could not read the music library");
+  for (const button of [BTN.START, BTN.ZL, BTN.ZR]) {
+    frames(rig, 1, { buttons: button }); // the frame of the press: nothing was sent, nothing was read
+    expect(screenText(rig.world, "primary")).toContain("Could not read the music library");
+    frames(rig, 2);
+  }
 }, 120_000);

@@ -173,14 +173,18 @@ export function createSession(media: LocalMedia | null = connect()): Session {
     dispatch: (action) => {
       pollNext = true;
       if (!controller) return;
+      const before = controller.state().status;
       try {
         controller.dispatch(action);
       } catch {
         setStatusFailed(true);
         return;
       }
-      // The controller re-read the status for any command it ran: show it on this frame, not the next.
-      publish(controller.state().status);
+      // The controller re-reads the status only for a command it sent to the host: show that
+      // snapshot on this frame, not the next. A command that sent nothing read nothing, so there is
+      // nothing to publish and no failed read to clear.
+      const now = controller.state().status;
+      if (now !== before) publish(now);
     },
     rescan: () => {
       pollNext = true;

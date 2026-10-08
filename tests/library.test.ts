@@ -93,4 +93,6 @@ test("each track and album carries one folded search key, so a search is one inc
   expect(ids(rows(library, { kind: "songs" }, "Sigur"))).toEqual([3]);
   expect(ids(rows(library, { kind: "songs" }, "takk"))).toEqual([3]);
   expect(ids(rows(library, { kind: "albums" }, "TAKK"))).toEqual(["takk...\u0000sigur ros"]);
+  // The NUL between the fields keeps a query from matching across them.
+  expect(ids(rows(library, { kind: "songs" }, "ros takk"))).toEqual([]);
 });
