@@ -65,7 +65,7 @@ A PCM16 ring in regular heap decouples decoding from output:
   - `lm_ring_silence(ring, frames)` appends silence. A frame whose bit reservoir was lost (the first frames after a seek) appends silence instead of only advancing a counter, so a ring index always equals a decoded-frame count.
   - `lm_ring_oldest(ring)` is `max(0, write_frames − LM_RING_FRAMES)`.
   - `lm_ring_copy(ring, head, out, n)` copies n frames forward.
-  - `lm_ring_resample(ring, head_fp, rate_from_fp, rate_to_fp, out, n)` writes n output frames, reading at a signed 32.32 fixed-point head whose step ramps linearly from `rate_from` to `rate_to` across the n frames, with linear interpolation between neighbours. The head clamps to `[oldest, write_frames − 1]`; at either edge it holds, and the output holds the edge sample (silence when nothing moves). Returns the new head.
+  - `lm_ring_resample(ring, head_fp, rate_from_fp, rate_to_fp, out, n)` writes n output frames, reading at a signed 32.32 fixed-point head whose step ramps linearly from `rate_from` to `rate_to` across the n frames, with linear interpolation between neighbours. Output gain follows `|rate|` and reaches 1 at 0.25×, so a platter at rest is silent rather than a held sample (no DC offset). The head clamps to `[oldest, written − 1]`; a clamped head outputs silence. Returns the new head.
 
 ### 4.2 Normal playback
 
@@ -100,7 +100,7 @@ Behind the playhead the ring holds about 11.9 s minus the 1.67 s queue: the **10
 
 ## 5. Contract, SDK and sim fake (fork)
 
-`contracts/spec/localmedia.ts`: `LOCALMEDIA.version = 3`. `LocalStatus.scratching: boolean`, and `positionMs` "may decrease while scratching". `validLocalStatus` checks the new field. New ops:
+`contracts/spec/localmedia.ts`: `LOCALMEDIA.version = 3` and `LOCALMEDIA.maxScratchRate = 4`. `LocalStatus.scratching: boolean`, and `positionMs` "may decrease while scratching". `validLocalStatus` checks the new field. New ops:
 
 ```ts
 /** Stops the motor and hands the platter to the guest: queued audio is dropped, the head
@@ -148,7 +148,7 @@ scratchEnd(): void;
 - `angleAt(cx, cy, x, y)`: the finger's angle in degrees, clockwise from 12 o'clock (screen y grows downward).
 - `wrapDelta(deg)`: to (−180, 180].
 - `fingerRate(deltaDeg)`: `deltaDeg × 60 / 200`. At 33⅓ RPM the platter turns 200°/s, so a finger moving with the motor gives rate 1, and one revolution covers 1.8 s of audio.
-- `smoothRate(prev, next)`: an exponential moving average with α = 0.5, then clamped to ±4.
+- `smoothRate(prev, next)`: an exponential moving average with α = 0.5, clamped to ±4, and snapped to 0 below 1/64 so a still finger settles on exactly 0. The app sends a rate only when it changes.
 - `inDeadZone(cx, cy, x, y)`: within 16 px of the centre.
 - `SPIN_PER_FRAME = 200 / 60` degrees, and `wrap360`.
 
@@ -173,9 +173,9 @@ scratchEnd(): void;
 - **Spindle:** a static 6 px dot over the centre.
 - `scripts/vinyl-png.ts` generates both PNGs, which are checked in. The baker's SVG support is flat shapes only.
 - **Draw cost:** about two textured quads for the platter, plus the panel's gels and text.
-- **Deck:** `TransportKind` and `IconName` gain `"dj"`. `TransportRow` takes `onDj` and a sixth 42 px gel with `dj-ink.svg` (a small record glyph). Five 42 px gels and the 64 px play gel are 274 px, so the row's gap shrinks from 10 to 5 px to fit its 300 px.
+- **Deck:** `TransportKind` and `IconName` gain `"dj"`. `TransportRow` takes `onDj` and a sixth gel: a 34 px mode gel like shuffle and repeat, grey off and blue on, with `dj-ink.svg`/`dj-white.svg` (a small record glyph). Two 34 px mode gels, two 42 px skip gels and the 64 px play gel are 216 px; with the DJ gel the six are 250 px plus five 10 px gaps, exactly the row's 300 px. The gap stays 10 px.
 - **Theme slots** for the platter and panel go in `app/theme/theme.ts` and `app/theme/aqua.ts`; the parts in `app/theme/parts/platter.tsx`.
-- **Gallery:** a `dj` state in `app/gallery/states.tsx` and `names.ts`; `tests/gallery.test.ts` updated. A mockup page `docs/design/aqua/dj.html` alongside `main.html`.
+- **Gallery:** a `dj` state in `app/gallery/states.tsx` and `names.ts`, before `search`; `tests/gallery.test.ts` updated. Its rendered PNGs (`bun run gallery`) are the DJ Mode mockup; no separate HTML page.
 
 ## 7. Testing
 
@@ -189,7 +189,7 @@ scratchEnd(): void;
 - `tests/platter.test.ts`: angles, wrap, rate, smoothing and clamp, dead zone.
 - Headless `tests/dj.test.ts`:
   - SELECT and the deck gel enter DJ Mode; the panel's gel and SELECT leave it; L+SELECT does not toggle.
-  - The platter's `rotate` advances while playing and holds while paused.
+  - The platter turns while playing and holds while paused: its pixels change between frames while playing and do not while paused (the sim tree does not expose `rotate`).
   - A clockwise circular drag logs `scratchBegin()`, positive `scratchRate(…)`, then `scratchEnd()` on release. Counter-clockwise logs negative rates. A held finger decays to `scratchRate(0)`.
   - An open landing mid-drag ends the scratch.
   - The keyboard returns to DJ Mode when it closes.
