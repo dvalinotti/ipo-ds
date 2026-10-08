@@ -145,6 +145,35 @@ test("while a song plays the status is read every fourth frame, and at once afte
   expect(reads).toBeGreaterThan(afterCommand); // and the next frame polls regardless of the cadence
 }, 120_000);
 
+test("a skip shows the next song's title on the same frame as its new place in the queue", async () => {
+  const rig = await boot();
+  press(rig, A); // Aerodynamic, 1 of 20
+  frames(rig, 3);
+  frames(rig, 1, { buttons: BTN.ZR }); // the frame of the skip, nothing after it
+  const bottom = screenText(rig.world, "auxiliary");
+  expect(bottom).toContain("2 of 20");
+  expect(bottom).toContain("Around the World");
+  expect(bottom).not.toContain("Aerodynamic");
+}, 120_000);
+
+test("while nothing plays, or a song is paused, the status is read every fourth frame too", async () => {
+  const host = createSimLocalMedia(LIBRARY);
+  let reads = 0;
+  const rig = { host, world: await bootApp({ localmedia: { ...host.ns, status: () => (reads++, host.ns.status()) } }) };
+  frames(rig, 4);
+  reads = 0;
+  frames(rig, 60); // idle on the list
+  expect(reads).toBeGreaterThanOrEqual(15);
+  expect(reads).toBeLessThanOrEqual(16);
+  press(rig, A);
+  press(rig, BTN.START); // pause
+  frames(rig, 4);
+  reads = 0;
+  frames(rig, 60);
+  expect(reads).toBeGreaterThanOrEqual(15);
+  expect(reads).toBeLessThanOrEqual(16);
+}, 120_000);
+
 test("tabs do not wrap; drilling into an artist and backing out restores the focused row", async () => {
   const rig = await boot();
   press(rig, BTN.LTRIGGER);
@@ -420,7 +449,7 @@ test("over the read-error panel an X tap does nothing; holding X still scans aga
   const rig = { host, world: await bootApp({ localmedia: ns }) };
   frames(rig, 4);
   garbled = true;
-  frames(rig, 3);
+  frames(rig, 4);
   expect(screenText(rig.world, "primary")).toContain("Could not read the music library");
   const scans = () => host.log.filter((entry) => entry === "scan()").length;
   const before = scans();
@@ -546,4 +575,138 @@ test("holding L+R shows underruns, decode load and live covers without stepping 
   frames(rig, 3, { buttons: BTN.RTRIGGER | BTN.LTRIGGER });
   frames(rig, 3);
   expect(header(rig.world, "Song Name")).toBeUndefined(); // still Artists: the second shoulder did not step back
+}, 120_000);
+
+test("a seek drag that outlives its song does not seek the next one", async () => {
+  const rig = await boot([
+    { file: "a.mp3", title: "Alpha", artist: "Ab", album: "Ab", durationMs: 2000 },
+    { file: "b.mp3", title: "Beta", artist: "Ab", album: "Ab", durationMs: 60_000 },
+  ]);
+  press(rig, A); // Alpha, 2 s
+  frames(rig, 6);
+  const y = 135;
+  // A finger resting on the track through the end of Alpha: the queue moves on to Beta underneath it.
+  for (let i = 0; i < 130; i++) frames(rig, 1, { touches: [{ x: 80, y }], surface: "auxiliary" });
+  expect(opens(rig.host)).toEqual(["open(0)", "open(1)"]);
+  frames(rig, 3); // release
+  expect(rig.host.log.filter((entry) => entry.startsWith("seek("))).toEqual([]);
+}, 120_000);
+
+test("a seek drag released after the last song ended still seeks that song", async () => {
+  const rig = await boot([{ file: "a.mp3", title: "Alpha", artist: "Ab", album: "Ab", durationMs: 2000 }]);
+  press(rig, A);
+  frames(rig, 6);
+  const y = 135;
+  for (let i = 0; i < 130; i++) frames(rig, 1, { touches: [{ x: 80, y }], surface: "auxiliary" }); // Alpha ends; nothing else opens
+  expect(opens(rig.host)).toEqual(["open(0)"]);
+  frames(rig, 3); // release
+  // The host's own end-of-queue seek to 0 comes first; the drag's seek lands on the same song.
+  expect(rig.host.log.filter((entry) => entry.startsWith("seek("))).toEqual(["seek(0)", "seek(192)"]);
+}, 120_000);
+
+test("a song without a known duration ignores touches on the seek track", async () => {
+  const host = createSimLocalMedia(LIBRARY);
+  // A VBR file without a header: the host reports no duration while the song plays.
+  const ns = { ...host.ns, status: () => JSON.stringify({ ...JSON.parse(host.ns.status()), durationMs: 0 }) };
+  const rig = { host, world: await bootApp({ localmedia: ns }) };
+  frames(rig, 4);
+  press(rig, A);
+  frames(rig, 10);
+  touch(rig, 160, 135);
+  expect(rig.host.log.filter((entry) => entry.startsWith("seek("))).toEqual([]);
+}, 120_000);
+
+test("closing the keyboard with the D-pad or X still held does not move, search or rescan", async () => {
+  const rig = await boot();
+  press(rig, X);
+  expect(screenText(rig.world, "auxiliary")).toContain("START confirm");
+  frames(rig, 3, { buttons: BTN.DOWN });
+  frames(rig, 1, { buttons: BTN.DOWN | BTN.START }); // commit with DOWN still held
+  frames(rig, 5, { buttons: BTN.DOWN });
+  frames(rig, 2);
+  expect(screenText(rig.world, "auxiliary")).not.toContain("START confirm");
+  expect(selectedRow(rig.world)).toContain("Aerodynamic");
+  press(rig, BTN.DOWN); // released and pressed again: the latch has cleared
+  expect(selectedRow(rig.world)).toContain("Around the World");
+  press(rig, X);
+  expect(screenText(rig.world, "auxiliary")).toContain("START confirm");
+  const scans = rig.host.log.filter((entry) => entry === "scan()").length;
+  frames(rig, 3, { buttons: X }); // X types a space on the keyboard
+  frames(rig, 1, { buttons: X | BTN.START }); // commit with X still held
+  frames(rig, 70, { buttons: X }); // past the hold time
+  frames(rig, 2);
+  expect(screenText(rig.world, "auxiliary")).not.toContain("START confirm");
+  expect(rig.host.log.filter((entry) => entry === "scan()")).toHaveLength(scans);
+}, 120_000);
+
+test("A on the frame a held D-pad steps plays the row the step lands on", async () => {
+  const rig = await boot();
+  frames(rig, 1, { buttons: BTN.DOWN | A }); // the step and the press land on one frame
+  frames(rig, 2);
+  expect(selectedRow(rig.world)).toContain("Around the World");
+  expect(opens(rig.host)).toEqual(["open(7)"]);
+}, 120_000);
+
+test("over the read-error panel the list's buttons sleep: nothing plays, the drill-down and focus survive", async () => {
+  const host = createSimLocalMedia(LIBRARY);
+  let garbled = false;
+  const ns = { ...host.ns, status: () => (garbled ? "{" : host.ns.status()) };
+  const rig = { host, world: await bootApp({ localmedia: ns }) };
+  frames(rig, 4);
+  press(rig, BTN.RTRIGGER); // Artists
+  press(rig, A); // Daft Punk: 8 songs, One More Time first
+  expect(screenText(rig.world, "primary")).toContain("8 songs");
+  garbled = true;
+  frames(rig, 3);
+  let top = screenText(rig.world, "primary");
+  expect(top).toContain("Could not read the music library");
+  expect(top).toContain("Hold to scan again");
+  press(rig, A);
+  press(rig, B);
+  press(rig, BTN.DOWN);
+  expect(opens(rig.host)).toEqual([]);
+  garbled = false;
+  frames(rig, 3);
+  top = screenText(rig.world, "primary");
+  expect(top).toContain("8 songs");
+  expect(selectedRow(rig.world)).toContain("One More Time");
+}, 120_000);
+
+test("while the first scan runs the legend offers Now Playing only, and an X tap starts no second scan", async () => {
+  const host = createSimLocalMedia(LIBRARY, { scanMs: 5000 });
+  const rig = { host, world: await bootApp({ localmedia: host.ns }) };
+  frames(rig, 2);
+  const top = screenText(rig.world, "primary");
+  expect(top).toContain("Scanning your music");
+  expect(top).toContain("Now Playing");
+  expect(top).not.toContain("Scan again");
+  press(rig, X);
+  expect(rig.host.log.filter((entry) => entry === "scan()")).toEqual(["scan()"]);
+  frames(rig, 310); // the scan completes
+  expect(selectedRow(rig.world)).toContain("Aerodynamic");
+}, 120_000);
+
+test("over the empty-library panel an X tap scans again", async () => {
+  const rig = await boot([]);
+  const top = screenText(rig.world, "primary");
+  expect(top).toContain("No music found");
+  expect(top).toContain("Scan again");
+  press(rig, X);
+  expect(rig.host.log.filter((entry) => entry === "scan()")).toEqual(["scan()", "scan()"]);
+}, 120_000);
+
+test("over the read-error panel a transport press with nothing queued leaves the panel in place", async () => {
+  const host = createSimLocalMedia(LIBRARY);
+  let garbled = false;
+  const ns = { ...host.ns, status: () => (garbled ? "{" : host.ns.status()) };
+  const rig = { host, world: await bootApp({ localmedia: ns }) };
+  frames(rig, 4);
+  garbled = true;
+  frames(rig, 4);
+  expect(screenText(rig.world, "primary")).toContain("Could not read the music library");
+  for (const button of [BTN.START, BTN.ZL, BTN.ZR]) {
+    frames(rig, 1, { buttons: button }); // the frame of the press: nothing was sent, nothing was read
+    expect(screenText(rig.world, "primary")).toContain("Could not read the music library");
+    frames(rig, 2);
+  }
 }, 120_000);

@@ -4,9 +4,7 @@
 import { formatTime } from "../format.ts";
 import { rows, type Library, type Row, type View } from "../library/library.ts";
 import type { LegendItem } from "../theme/parts/strips.tsx";
-import type { Tab } from "../theme/theme.ts";
-
-export const TAB_ORDER: readonly Tab[] = ["Songs", "Artists", "Albums"];
+import { TAB_ORDER, type Tab } from "../theme/theme.ts";
 
 export interface ExplorerState {
   tab: Tab;
@@ -111,9 +109,9 @@ export function visibleRows(library: Library, state: ExplorerState): Row[] {
   return rows(library, currentView(state), state.query);
 }
 
-/** Song ids of the visible rows, in order: the queue a song played from this view gets. */
-export function visibleSongIds(library: Library, state: ExplorerState): number[] {
-  return visibleRows(library, state).flatMap((row) => (row.kind === "song" ? [row.id] : []));
+/** The song ids among `rows`, in order: the queue a song played from a view gets. */
+export function songIds(rows: readonly Row[]): number[] {
+  return rows.flatMap((row) => (row.kind === "song" ? [row.id] : []));
 }
 
 export interface HeaderSpec {
@@ -123,10 +121,6 @@ export interface HeaderSpec {
   lead?: string;
   /** Right label aligns over right-aligned counts. */
   count: boolean;
-}
-
-export function headerOf(state: ExplorerState): HeaderSpec {
-  return headerOfView(currentView(state));
 }
 
 export function headerOfView(view: View): HeaderSpec {
@@ -153,10 +147,6 @@ export interface RowCells {
   count: boolean;
 }
 
-export function rowCells(library: Library, state: ExplorerState, row: Row): RowCells {
-  return rowCellsIn(library, currentView(state), row);
-}
-
 /** A row's cells in a view: the view (not the focus) is all a row's text depends on. */
 export function rowCellsIn(library: Library, view: View, row: Row): RowCells {
   if (row.kind === "artist") {
@@ -181,10 +171,6 @@ export interface CrumbSpec {
 
 const songsLabel = (n: number) => `${n} ${n === 1 ? "song" : "songs"}`;
 
-export function crumbOf(library: Library, state: ExplorerState): CrumbSpec | null {
-  return crumbOfView(library, currentView(state));
-}
-
 export function crumbOfView(library: Library, view: View): CrumbSpec | null {
   if (view.kind === "artist") {
     const artist = library.artistByKey.get(view.key);
@@ -197,8 +183,23 @@ export function crumbOfView(library: Library, view: View): CrumbSpec | null {
   return null;
 }
 
-export function legendOf(state: ExplorerState, hasSongs: boolean): LegendItem[] {
-  if (!hasSongs) return [{ key: "X", label: "Scan again", primary: true }];
+/** What replaces the list: no media module, a host read that failed, the first scan, or no songs. */
+export type ListPanel = "unavailable" | "readError" | "scanning" | "empty";
+
+export function panelOf(available: boolean, readFailed: boolean, library: Library | null): ListPanel | null {
+  if (!available) return "unavailable";
+  if (readFailed) return "readError";
+  if (!library) return "scanning";
+  if (library.tracks.size === 0) return "empty";
+  return null;
+}
+
+/** The footer legend: the list's buttons in this view, or what the panel over the list asks for. */
+export function legendOf(state: ExplorerState, panel: ListPanel | null): LegendItem[] {
+  if (panel === "unavailable") return [];
+  if (panel === "scanning") return [{ key: "Y", label: "Now Playing" }];
+  if (panel === "readError") return [{ key: "X", label: "Hold to scan again", primary: true }];
+  if (panel === "empty") return [{ key: "X", label: "Scan again", primary: true }];
   const view = currentView(state);
   const opens = view.kind === "artists" || view.kind === "albums";
   const back = state.drill[state.tab] ? (state.tab === "Artists" ? "Artists" : "Albums") : state.query ? "Clear" : "Back";

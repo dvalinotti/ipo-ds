@@ -133,3 +133,20 @@ What the 240-frame traces (`stats.json`) show for `scroll` on Old:
 - **Before the gels:** Plan 5's final trace peaked at 29.8 ms.
 - **What the budget sees:** it reads the host's 60-frame window, and that window passes in both runs after fallback 2 (24.8 and 25.8 ms). One of those runs still has a 30.6 ms frame elsewhere in its 240-frame trace.
 - **Remaining work:** the 11 ms draw spike, not the gels, is what to chase for headroom.
+
+## Review fixes (Plan 6)
+
+The review-fix branch (`fix/fable-review`, `docs/superpowers/plans/2026-10-07-walkman-06-review-fixes.md`): the session polls at 15 Hz in every phase but `loading` (it read the host every frame while idle or paused before), a command publishes its status on its own frame, the search keys are folded at build time, and `prune` returns the same state when a scan dropped nothing. `bun run perf idle scroll now-playing --model both --check`, one scenario per invocation (see the note below):
+
+| Scenario | Model | JS mean/max | Tick mean/max | Draw mean/max | CPU mean/max (ms) | Scan (ms) | Within budget |
+|---|---|---|---|---|---|---|---|
+| idle | new | 0.4/0.5 | 0.0/0.0 | 1.3/1.4 | 1.8/1.9 | cached -1, walk 5740 (324/324 read) | yes |
+| scroll | new | 1.6/5.7 | 0.2/1.1 | 1.7/2.0 | 3.5/8.7 | cached -1, walk 5691 (324/324 read) | yes |
+| now-playing | new | 1.1/4.6 | 0.0/0.1 | 1.7/2.0 | 2.9/6.3 | cached -1, walk 5740 (324/324 read) | yes |
+| idle | old | 1.3/1.6 | 0.0/0.0 | 4.1/4.1 | 5.4/5.6 | cached -1, walk 5958 (324/324 read) | yes |
+| scroll | old | 5.2/17.2 | 0.7/3.3 | 5.6/11.2 | 11.5/25.6 | cached -1, walk 5957 (324/324 read) | yes |
+| now-playing | old | 3.4/14.0 | 0.0/0.3 | 5.5/11.1 | 8.8/19.1 | cached -1, walk 5957 (324/324 read) | yes |
+
+Every row is within budget and within a few tenths of the gels run; `scroll` on Old stays at 25.6 ms against 30 ms. The idle rows do not move: the status read the branch removed from idle frames was already far below the draw cost.
+
+Harness note: in three of seven Azahar launches the capture never wrote `done` or `error.txt` (the ROM booted and the scan finished at about 9 s, then nothing), and `perf` timed out after 240 s. Every stalled scenario passed on re-run from the same `.3dsx`. Multi-scenario invocations stalled on their first launch each time; single-scenario invocations completed, so the rows above come from one scenario per invocation. The host writes `error.txt` for a guest throw, so the stalls are not JS errors.

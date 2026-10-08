@@ -2,13 +2,16 @@
 // read the raw held-button mask once per frame; `active` gates them (the
 // search keyboard owns input while it is open).
 import { analogY, onFrame } from "@pocketjs/framework/lifecycle";
-import { HOLD_UP, repeatFires, stepAnalog, stepHold } from "./input-timing.ts";
+import { HOLD_UP, repeatFires, stepAnalog, stepHold, stepLatch } from "./input-timing.ts";
 
-/** Fire on press, then repeat while held (300 ms delay, 80 ms rate). */
+/** Fire on press, then repeat while held (300 ms delay, 80 ms rate). Latched: see stepLatch. */
 export function onRepeat(button: number, fire: () => void, active: () => boolean): void {
   let held = -1;
+  let ignoring = false;
   onFrame((buttons) => {
-    if (!active() || (buttons & button) === 0) {
+    const latch = stepLatch(ignoring, (buttons & button) !== 0, active());
+    ignoring = latch.ignoring;
+    if (!latch.down) {
       held = -1;
       return;
     }
@@ -17,11 +20,19 @@ export function onRepeat(button: number, fire: () => void, active: () => boolean
   });
 }
 
-/** A release before the hold time is a tap; holding fires `hold` once instead. */
+/** A release before the hold time is a tap; holding fires `hold` once instead. Latched: see stepLatch. */
 export function onTapOrHold(button: number, tap: () => void, hold: () => void, active: () => boolean): void {
   let state = HOLD_UP;
+  let ignoring = false;
   onFrame((buttons) => {
-    const step = stepHold(state, active() && (buttons & button) !== 0);
+    const latch = stepLatch(ignoring, (buttons & button) !== 0, active());
+    ignoring = latch.ignoring;
+    if (!active()) {
+      // A hold the keyboard interrupted ends without a tap.
+      state = HOLD_UP;
+      return;
+    }
+    const step = stepHold(state, latch.down);
     state = step.state;
     if (step.event === "tap") tap();
     else if (step.event === "hold") hold();

@@ -148,3 +148,12 @@ test("prune drops ids a rescan no longer lists, keeping the current song and its
   expect(idle.state.index).toBe(-1);
   expect(idle.commands).toEqual([]);
 });
+
+test("prune leaves the state untouched when every queued song survives the scan", () => {
+  const state = playing([0, 1, 2, 3], 2);
+  expect(run(state, { type: "prune", ids: [3, 2, 1, 0, 9] }).state).toBe(state);
+  // The playing song is kept even when the scan dropped it, so that is no change either.
+  expect(run(state, { type: "prune", ids: [0, 1, 3] }).state).toBe(state);
+  const idle = initialPlayer();
+  expect(run(idle, { type: "prune", ids: [] }).state).toBe(idle);
+});

@@ -1,8 +1,8 @@
 import { expect, test } from "bun:test";
 import { buildLibrary } from "../app/library/library.ts";
 import {
-  crumbOf, currentView, focusOf, headerOf, initialExplorer, lcdLine, legendOf, reduceExplorer, rowCells, rowsKey, visibleRows, visibleSongIds,
-  type ExplorerAction, type ExplorerState,
+  crumbOfView, currentView, focusOf, headerOfView, initialExplorer, lcdLine, legendOf, panelOf, reduceExplorer, rowCellsIn, rowsKey, visibleRows, songIds,
+  type ExplorerAction, type ExplorerState, type ListPanel,
 } from "../app/explorer/model.ts";
 import { TRACKS } from "./fixtures/tracks.ts";
 
@@ -42,7 +42,7 @@ test("focus is clamped to the visible rows; paging moves by a screenful", () => 
 
 test("one query filters whichever tab shows, resets focus, and B clears it once no drill-down is open", () => {
   let state = run(initialExplorer(), { type: "move", delta: 4, count: 7 }, { type: "setQuery", query: "daft" });
-  expect(visibleSongIds(library, state)).toEqual([1, 2, 0]);
+  expect(songIds(visibleRows(library, state))).toEqual([1, 2, 0]);
   expect(focusOf(state)).toBe(0);
   state = run(state, { type: "tab", delta: 1 });
   expect(visibleRows(library, state)).toEqual([{ kind: "artist", key: "daft punk" }]);
@@ -84,6 +84,10 @@ test("reveal jumps to the playing song in Songs, clearing a query that hides it"
   expect(run(initialExplorer(), { type: "reveal", id: 99, library })).toEqual(initialExplorer());
 });
 
+const headerOf = (state: ExplorerState) => headerOfView(currentView(state));
+const rowCells = (lib: typeof library, state: ExplorerState, row: Parameters<typeof rowCellsIn>[2]) => rowCellsIn(lib, currentView(state), row);
+const crumbOf = (lib: typeof library, state: ExplorerState) => crumbOfView(lib, currentView(state));
+
 test("headers, row cells and breadcrumbs follow the view", () => {
   let state = initialExplorer();
   expect(headerOf(state)).toEqual({ left: "Song Name", right: "Artist", count: false });
@@ -105,13 +109,24 @@ test("headers, row cells and breadcrumbs follow the view", () => {
   expect(count(state)).toBe(3);
 });
 
-test("legends name what each button does in this view", () => {
-  const labels = (state: ExplorerState, songs = true) => legendOf(state, songs).map((item) => `${item.key} ${item.label}`);
+test("legends name what each button does in this view, or what a panel asks for", () => {
+  const labels = (state: ExplorerState, panel: ListPanel | null = null) => legendOf(state, panel).map((item) => `${item.key} ${item.label}`);
   expect(labels(initialExplorer())).toEqual(["A Play", "X Search", "B Back", "Y Now Playing"]);
   expect(labels(run(initialExplorer(), { type: "setQuery", query: "x" }))).toEqual(["A Play", "X Edit search", "B Clear", "Y Now Playing"]);
   expect(labels(run(initialExplorer(), { type: "tab", delta: 1 }))).toEqual(["A Open", "X Search", "B Back", "Y Now Playing"]);
   expect(labels(run(initialExplorer(), { type: "tab", delta: 1 }, { type: "open", row: { kind: "artist", key: "queen" } }))[2]).toBe("B Artists");
-  expect(labels(initialExplorer(), false)).toEqual(["X Scan again"]);
+  expect(labels(initialExplorer(), "empty")).toEqual(["X Scan again"]);
+  expect(labels(initialExplorer(), "scanning")).toEqual(["Y Now Playing"]);
+  expect(labels(initialExplorer(), "readError")).toEqual(["X Hold to scan again"]);
+  expect(labels(initialExplorer(), "unavailable")).toEqual([]);
+});
+
+test("the panel follows availability, a failed read, the first scan and an empty library, in that order", () => {
+  expect(panelOf(false, true, null)).toBe("unavailable");
+  expect(panelOf(true, true, library)).toBe("readError");
+  expect(panelOf(true, false, null)).toBe("scanning");
+  expect(panelOf(true, false, buildLibrary([]))).toBe("empty");
+  expect(panelOf(true, false, library)).toBeNull();
 });
 
 test("the LCD line reports availability, scanning, and the library's size and length", () => {

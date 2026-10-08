@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { HOLD_UP, repeatFires, SHOULDERS_UP, stepAnalog, stepHold, stepShoulders, type HoldState, type ShoulderEvent } from "../app/input-timing.ts";
+import { HOLD_UP, repeatFires, SHOULDERS_UP, stepAnalog, stepHold, stepLatch, stepShoulders, type HoldState, type ShoulderEvent } from "../app/input-timing.ts";
 
 test("a held button fires on the down frame, after 300 ms, then every 80 ms", () => {
   const fired = Array.from({ length: 30 }, (_, frame) => frame).filter((frame) => repeatFires(frame));
@@ -74,4 +74,21 @@ test("a shoulder pressed while the other is held (the L+R diagnostics chord) doe
   expect(run([2, 2 | 4, 2 | 4, 0])).toEqual(["tabPrev"]);
   expect(run([4, 4 | 2, 0])).toEqual(["tabNext"]);
   expect(run([2 | 4, 2 | 4, 0])).toEqual([]);
+});
+
+test("a button held across the keyboard's close stays ignored until it is released", () => {
+  const run = (frames: [down: boolean, active: boolean][]) => {
+    let ignoring = false;
+    return frames.map(([down, active]) => {
+      const step = stepLatch(ignoring, down, active);
+      ignoring = step.ignoring;
+      return step.down;
+    });
+  };
+  // Held inside the modal, through its close, released, pressed again: only the second press counts.
+  expect(run([[true, false], [true, false], [true, true], [true, true], [false, true], [true, true]])).toEqual([false, false, false, false, false, true]);
+  // Pressed on the frame the modal closes: a press.
+  expect(run([[false, false], [true, true]])).toEqual([false, true]);
+  // Released while inactive: nothing is pending when the modal closes.
+  expect(run([[true, false], [false, false], [false, true], [true, true]])).toEqual([false, false, false, true]);
 });

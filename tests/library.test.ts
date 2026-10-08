@@ -84,3 +84,15 @@ test("artists and albums are found by key", () => {
   expect(library.artistByKey.size).toBe(library.artists.length);
   expect(library.albumByKey.size).toBe(library.albums.length);
 });
+
+test("each track and album carries one folded search key, so a search is one includes() each", () => {
+  const library = buildLibrary(TRACKS);
+  expect(library.searchKeys.get(3)).toBe("hoppipolla\u0000sigur ros\u0000takk...");
+  expect(library.searchKeys.get(6)).toBe("untitled-demo\u0000unknown artist\u0000unknown album");
+  expect(library.albumByKey.get("takk...\u0000sigur ros")!.nameKey).toBe("takk...");
+  expect(ids(rows(library, { kind: "songs" }, "Sigur"))).toEqual([3]);
+  expect(ids(rows(library, { kind: "songs" }, "takk"))).toEqual([3]);
+  expect(ids(rows(library, { kind: "albums" }, "TAKK"))).toEqual(["takk...\u0000sigur ros"]);
+  // The NUL between the fields keeps a query from matching across them.
+  expect(ids(rows(library, { kind: "songs" }, "ros takk"))).toEqual([]);
+});

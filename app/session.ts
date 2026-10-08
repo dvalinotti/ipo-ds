@@ -11,12 +11,16 @@ import { buildLibrary, type Library } from "./library/library.ts";
 import { createPlayerController, type PlayerController } from "./player/controller.ts";
 import { IDLE_STATUS, initialPlayer, type PlayerAction, type PlayerState } from "./player/reducer.ts";
 
+/** The player as the screens see it: the queue, its order and position, the modes. The status moves
+ * every frame of playback and is read from `status`; it is not part of this view. */
+export type PlayerView = Omit<PlayerState, "status">;
+
 export interface Session {
   /** False on a build without media.local. */
   available: boolean;
   /** Null until the first scan completes. */
   library: Accessor<Library | null>;
-  player: Accessor<PlayerState>;
+  player: Accessor<PlayerView>;
   status: Accessor<LocalStatus>;
   scanning: Accessor<boolean>;
   /** A host reply failed validation; the screens report it instead of crashing the frame. */
@@ -46,7 +50,7 @@ function composed(track: LocalTrack): LocalTrack {
   return { ...track, title: composeMarks(track.title), artist: composeMarks(track.artist), album: composeMarks(track.album) };
 }
 
-/** Frames between status reads while a song plays (15 Hz at 60 fps). */
+/** Frames between status reads (15 Hz at 60 fps); "loading" and a failed read poll every frame. */
 export const POLL_EVERY = 4;
 
 function samePlayer(a: PlayerState, b: PlayerState): boolean {
@@ -83,10 +87,11 @@ export function createSession(media: LocalMedia | null = connect()): Session {
     // reply that does not validate becomes an on-screen error instead.
     let frame = 0;
     onFrame(() => {
-      // While a song plays only its position moves from frame to frame: every POLL_EVERY frames
-      // is enough for the time labels and the seek bar (commands re-read the status at once).
+      // Nothing in a snapshot moves faster than the seek bar needs, so every POLL_EVERY frames is
+      // enough in every phase (15 Hz at 60 fps). "loading" is read each frame so a refused or
+      // corrupt open is skipped at once; a command re-reads at once (pollNext); a failed read retries.
       frame++;
-      if (status().phase === "playing" && !pollNext && !statusFailed() && frame % POLL_EVERY !== 0) return;
+      if (!pollNext && !statusFailed() && status().phase !== "loading" && frame % POLL_EVERY !== 0) return;
       pollNext = false;
       let now: LocalStatus;
       try {
@@ -96,10 +101,7 @@ export function createSession(media: LocalMedia | null = connect()): Session {
         setStatusFailed(true);
         return;
       }
-      setStatusFailed(false);
-      setStatus(now);
-      setScanning(now.scanning);
-      updateCover(now.trackId);
+      publish(now);
       if (now.scanGeneration === generation) return;
       generation = now.scanGeneration;
       try {
@@ -111,6 +113,14 @@ export function createSession(media: LocalMedia | null = connect()): Session {
         setListFailed(true);
       }
     });
+  }
+
+  /** What the screens read from a snapshot: the status, the scan flag and the open track's cover. */
+  function publish(now: LocalStatus): void {
+    setStatusFailed(false);
+    setStatus(now);
+    setScanning(now.scanning);
+    updateCover(now.trackId);
   }
 
   /** Asks for the open track's art each frame until it resolves; tracks without art never ask. */
@@ -159,16 +169,25 @@ export function createSession(media: LocalMedia | null = connect()): Session {
     track,
     cover,
     coverLoading,
-    // A command re-reads status; a reply that fails validation must not throw out of the frame.
+    // A command re-reads the status; a reply that fails validation must not throw out of the frame.
     dispatch: (action) => {
       pollNext = true;
+      if (!controller) return;
+      const before = controller.state().status;
       try {
-        controller?.dispatch(action);
+        controller.dispatch(action);
       } catch {
         setStatusFailed(true);
+        return;
       }
+      // The controller re-reads the status only for a command it sent to the host: show that
+      // snapshot on this frame, not the next. A command that sent nothing read nothing, so there is
+      // nothing to publish and no failed read to clear.
+      const now = controller.state().status;
+      if (now !== before) publish(now);
     },
     rescan: () => {
+      pollNext = true;
       media?.scan();
     },
   };

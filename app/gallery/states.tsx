@@ -1,5 +1,5 @@
-// The six approved Aqua mockup states (docs/design/aqua), rebuilt from the
-// theme parts with fixture data. Gallery-only: Plan 3 composes the real screens.
+// The approved Aqua mockup states (docs/design/aqua), rebuilt from the theme
+// parts with fixture data. Gallery-only: the real screens are app/explorer and app/now-playing.
 import { createSignal, For, onMount } from "solid-js";
 import { Text, View } from "@pocketjs/framework/components";
 import { createOsk } from "@pocketjs/framework/osk";

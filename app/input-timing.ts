@@ -31,6 +31,17 @@ export function stepHold(state: HoldState, down: boolean, holdFrames = HOLD_FRAM
   return { state: { held, fired: state.fired }, event: null };
 }
 
+/**
+ * One frame of the gate between a modal (the keyboard) and a held button: a button already
+ * down when `active` turns on stays ignored until it is released, so closing the keyboard with
+ * a finger still on a button is not a press of that button. `down` is what the stepper may act on.
+ */
+export function stepLatch(ignoring: boolean, down: boolean, active: boolean): { ignoring: boolean; down: boolean } {
+  if (!down) return { ignoring: false, down: false };
+  if (!active) return { ignoring: true, down: false };
+  return { ignoring, down: !ignoring };
+}
+
 /** Rows per frame at full circle-pad deflection: one row every 80 ms. */
 export const ANALOG_ROWS_PER_FRAME = 1 / REPEAT_RATE_FRAMES;
 
