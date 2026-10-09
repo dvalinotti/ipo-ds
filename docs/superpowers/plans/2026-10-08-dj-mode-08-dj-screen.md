@@ -1478,6 +1478,8 @@ Expected: `dist/ipo-ds-main.3dsx`. The orchestrator copies it to `~/git/ds-man/d
 8. Old 3DS, forward at the 4× limit: scratch forward fast, return to the deck and hold L+R within a second. Note `D:` (decode load) and `U:` (underruns).
 9. Normal playback is unchanged by the ring: compare the L+R `D:` and `U:` readings on a plain song with the Plan 6 build, if available.
 10. A lift sometimes resumes noticeably ahead of where the finger stopped (the slot-handover skew, up to about 93 ms at 4×). Note how often and how far.
+11. Old 3DS: scratch a song that has embedded cover art (the label shows the cover turning) and watch frame smoothness while the finger moves (the status is read every frame while held).
+12. Press ZL while scratching a song more than 3 s in: the song restarts from 0 and the record stops following the finger until the next touch.
 
 ---
 

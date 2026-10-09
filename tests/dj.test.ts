@@ -183,6 +183,30 @@ test("a track change mid-scratch lets go, and the finger sends nothing more", as
   frames(rig, 2);
 }, 120_000);
 
+test("the host ending the scratch (ZL restarting the song) drops the grab: the finger sends nothing more", async () => {
+  const rig = await boot();
+  play(rig);
+  press(rig, BTN.SELECT);
+  frames(rig, 300); // 5 s in, so ZL restarts the song rather than going back a track
+  const at = turn(rig, 0, 10, 6);
+  expect(rates(rig.host).length).toBeGreaterThan(0);
+  frames(rig, 1, onRecord(at + 10, { buttons: BTN.ZL })); // the finger stays down
+  const sought = rig.host.log.findLastIndex((entry) => entry === "seek(0)");
+  expect(sought).toBeGreaterThan(rig.host.log.indexOf("scratchBegin()"));
+  turn(rig, at + 20, 10, 8);
+  expect(rig.host.log.slice(sought).some((entry) => entry.startsWith("scratchRate("))).toBe(false);
+  frames(rig, 2); // lift
+}, 120_000);
+
+test("a touch in the square's corner, outside the disc, does not grab the record", async () => {
+  const rig = await boot();
+  play(rig);
+  press(rig, BTN.SELECT);
+  frames(rig, 4, { touches: [{ x: PLATTER.x + 2, y: PLATTER.y + 2 }], surface: "auxiliary" });
+  frames(rig, 2);
+  expect(scratchLog(rig.host)).toEqual([]);
+}, 120_000);
+
 test("leaving DJ Mode mid-scratch lets go: SELECT, and the keyboard, which returns to DJ Mode when it closes", async () => {
   const rig = await boot();
   play(rig);

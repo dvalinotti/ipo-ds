@@ -195,7 +195,7 @@ export function createSession(media: LocalMedia | null = connect()): Session {
         try {
           controller?.scratchRate(rate);
         } catch {
-          setStatusFailed(true);
+          // Send-only: nothing is read, and the next poll reports the host's state.
         }
       },
       end: () => scratchCommand(false),

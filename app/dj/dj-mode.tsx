@@ -12,7 +12,7 @@ import { formatRemaining, formatTime, needsHours } from "../format.ts";
 import type { Session } from "../session.ts";
 import { AQUA } from "../theme/aqua.ts";
 import { DjPanel, Platter } from "../theme/parts/platter.tsx";
-import { angleAt, fingerRate, inDeadZone, PLATTER, smoothRate, SPIN_PER_FRAME, wrap360, wrapDelta } from "./platter.ts";
+import { angleAt, fingerRate, inDeadZone, inDisc, PLATTER, smoothRate, SPIN_PER_FRAME, wrap360, wrapDelta } from "./platter.ts";
 
 export function DjMode(props: { session: Session; onDeck: () => void }) {
   const session = props.session;
@@ -47,13 +47,15 @@ export function DjMode(props: { session: Session; onDeck: () => void }) {
     axis: "any",
     region: { node: () => platter as never },
     onDown: (c) => {
-      if (idle()) return;
+      if (idle() || !inDisc(PLATTER.cx, PLATTER.cy, c.x, c.y)) return;
       held = true;
       last = null;
       turned = 0;
       rate = sent = 0;
       follow(c.x, c.y);
       session.scratch.begin();
+      // The host answers at once; if it did not take the grab, the record does not turn under the finger.
+      if (!session.scratching()) held = false;
     },
     onMove: (c) => {
       if (held) follow(c.x, c.y);
@@ -61,14 +63,25 @@ export function DjMode(props: { session: Session; onDeck: () => void }) {
     onUp: release,
     onCancel: release,
   });
-  // A grab belongs to the song it started on, as a seek drag does: another open lets go.
+  // A grab belongs to the song it started on, as a seek drag does: another open lets go. The host can
+  // also end a scratch itself (a seek, such as ZL restarting the song): the grab goes with it, with
+  // nothing to send. One effect, so a track change (which ends the host's scratch too) still sends its end.
   const opened = createMemo(() => status().openSerial);
-  createEffect(on(opened, () => release(), { defer: true }));
+  let serial = opened();
+  createEffect(
+    on([opened, session.scratching], ([now, scratching]) => {
+      if (now !== serial) {
+        serial = now;
+        release();
+      } else if (!scratching) held = false;
+    }, { defer: true }),
+  );
   // Leaving DJ Mode (SELECT, the keyboard) with the finger down lets go too.
   onCleanup(release);
 
   onFrame(() => {
-    if (held) {
+    // The effect lets go after the frame; a scratch the host has already ended is not followed meanwhile.
+    if (held && session.scratching()) {
       rate = smoothRate(rate, fingerRate(turned));
       if (rate !== sent) {
         session.scratch.rate(rate);

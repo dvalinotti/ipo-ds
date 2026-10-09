@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { angleAt, DEAD_ZONE_PX, fingerRate, inDeadZone, MAX_RATE, PLATTER, smoothRate, SPIN_PER_FRAME, wrap360, wrapDelta } from "../app/dj/platter.ts";
+import { angleAt, DEAD_ZONE_PX, fingerRate, inDeadZone, inDisc, MAX_RATE, PLATTER, smoothRate, SPIN_PER_FRAME, wrap360, wrapDelta } from "../app/dj/platter.ts";
 
 const { cx, cy } = PLATTER;
 
@@ -50,4 +50,11 @@ test("the spindle is a dead zone", () => {
   expect(inDeadZone(cx, cy, cx + DEAD_ZONE_PX - 1, cy)).toBe(true);
   expect(inDeadZone(cx, cy, cx + DEAD_ZONE_PX, cy)).toBe(false);
   expect(inDeadZone(cx, cy, cx + 12, cy + 12)).toBe(false);
+});
+
+test("the disc is the circle inside the platter's square", () => {
+  expect(inDisc(cx, cy, cx, cy)).toBe(true);
+  expect(inDisc(cx, cy, cx + 99, cy)).toBe(true);
+  expect(inDisc(cx, cy, cx + 100, cy + 1)).toBe(false);
+  expect(inDisc(cx, cy, PLATTER.x + 2, PLATTER.y + 2)).toBe(false);
 });

@@ -163,3 +163,5 @@ The DJ Mode branch (`feature/dj-mode`, `docs/superpowers/plans/2026-10-08-dj-mod
 | now-playing | old | 3.3/8.3 | 0.0/0.3 | 6.2/11.6 | 9.4/15.2 | cached -1, walk 6007 (324/324 read) | yes |
 
 `now-playing` stays within a few tenths of the Plan 6 rows on New (CPU mean/max 3.0/6.5 ms against 2.9/6.3 ms) and moves on Old from 8.8/19.1 ms to 9.4/15.2 ms, where the mean rises 0.6 ms and the max falls 3.9 ms. `dj` fits both budgets, with a CPU max of 3.8 ms on New against 14 ms and 16.0 ms on Old against 30 ms.
+
+The Old `now-playing` moves (mean +0.6 ms, max −3.9 ms) are run-to-run variance in the same direction-free range as earlier runs, not a ring cost: the max fell while the mean rose.

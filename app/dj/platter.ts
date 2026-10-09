@@ -36,6 +36,12 @@ export function inDeadZone(cx: number, cy: number, x: number, y: number): boolea
   return dx * dx + dy * dy < DEAD_ZONE_PX * DEAD_ZONE_PX;
 }
 
+/** Whether (x, y) is on the record itself, not in the corners of its square. */
+export function inDisc(cx: number, cy: number, x: number, y: number): boolean {
+  const dx = x - cx, dy = y - cy, r = PLATTER.size / 2;
+  return dx * dx + dy * dy <= r * r;
+}
+
 /** Degrees the finger turned the platter this frame, as a multiple of normal speed. */
 export function fingerRate(deltaDeg: number): number {
   return (deltaDeg * 60) / MOTOR_DEG_PER_S;
