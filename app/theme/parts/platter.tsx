@@ -1,6 +1,6 @@
 // DJ Mode's parts: the platter (a vinyl record turning over the cover, or over
 // the generated label, with a still spindle) and the side panel (the song, its
-// time, prev / next and the gel back to the deck). app/dj/dj-mode.tsx turns the
+// time, prev / next and the gel back to the deck). app/dj/scratch.ts turns the
 // platter and wires the touch.
 import { Show } from "solid-js";
 import { Image, Sprite, Text, View } from "@pocketjs/framework/components";

@@ -1,6 +1,6 @@
 // DJ Mode's platter as numbers: where it sits on the bottom screen, how a
 // finger's angle becomes a playback rate, and how far the motor turns it each
-// frame. Pure (tests/platter.test.ts); app/dj/dj-mode.tsx wires it up.
+// frame. Pure (tests/platter.test.ts); app/dj/grab.ts and app/dj/scratch.ts wire it up.
 
 /** The platter's 200×200 box on the bottom screen (logical px) and its centre. */
 export const PLATTER = { x: 10, y: 20, size: 200, cx: 110, cy: 120 } as const;
