@@ -35,6 +35,8 @@ function gelCases(): Case[] {
   }
   out.push({ name: "badge primary", gel: AQUA.badge(true), tone: "blue", outline: true, shadow: false });
   out.push({ name: "badge", gel: AQUA.badge(false), tone: "grey", outline: true, shadow: false });
+  out.push({ name: "transport compact", gel: AQUA.transportCompact(true), tone: "grey", outline: true, shadow: false });
+  out.push({ name: "transport compact disabled", gel: AQUA.transportCompact(false), tone: "grey", outline: true, shadow: false, disabled: true });
   out.push({ name: "seek knob", gel: AQUA.seekKnob, tone: "blue", outline: true, shadow: false });
   out.push({ name: "scroll thumb", gel: AQUA.scrollThumb, tone: "blue", outline: true, shadow: false, sizes: [[11, 16], [11, 40], [11, 166]] });
   out.push({ name: "progress fill", gel: AQUA.progressFill, tone: "blue", outline: false, shadow: false, sizes: [[0, 10], [10, 10], [22, 10], [PROGRESS_TRACK_PX, 10]] });

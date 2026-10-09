@@ -140,7 +140,8 @@ export function SeekCapsule(props: {
   );
 }
 
-export function TransportButton(props: { kind: TransportKind; on?: boolean; enabled?: boolean; onPress?: () => void; theme?: Theme }) {
+/** `compact` draws prev / next as a 34 px grey gel (the DJ Mode side panel); other kinds ignore it. */
+export function TransportButton(props: { kind: TransportKind; on?: boolean; enabled?: boolean; compact?: boolean; onPress?: () => void; theme?: Theme }) {
   const t = () => props.theme ?? AQUA;
   const enabled = () => props.enabled ?? true;
   const big = () => props.kind === "play" || props.kind === "pause";
@@ -157,7 +158,10 @@ export function TransportButton(props: { kind: TransportKind; on?: boolean; enab
     },
   });
   return (
-    <Gel classes={t().transport(props.kind, props.on ?? false, enabled())} ref={(n: unknown) => (node = n)}>
+    <Gel
+      classes={props.compact && (props.kind === "prev" || props.kind === "next") ? t().transportCompact(enabled()) : t().transport(props.kind, props.on ?? false, enabled())}
+      ref={(n: unknown) => (node = n)}
+    >
       <Show
         when={big()}
         fallback={<Image class="w-[16] h-[16]" src={t().icon(props.kind as "shuffle" | "repeat" | "prev" | "next" | "dj", ink())} />}

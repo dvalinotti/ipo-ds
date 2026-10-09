@@ -146,6 +146,8 @@ export interface Theme {
 
   transportRow: string;
   transport(kind: TransportKind, on: boolean, enabled: boolean): GelClasses;
+  /** A 34 px grey skip gel (prev / next) for narrow places: the DJ Mode side panel. */
+  transportCompact(enabled: boolean): GelClasses;
 
   idlePanel: string;
   /** DJ Mode (app/dj): the platter's 200×200 box, its turning disc, the label well inside it, the

@@ -283,6 +283,10 @@ test("dj: the platter's box and spindle; the side panel with the song, its time 
   expect(boxes).toContain("107,117,6,6");    // the spindle at its centre
   expect(boxes).toContain("220,10,90,220");  // the side panel
   expect(boxes).toContain("248,186,34,34");  // its gel back to the deck
+  // Prev / next are 34 px gels 8 px apart, centred in the panel's 88 px interior: 6 px from each side.
+  const skips = findAll(world.tree("auxiliary"), (node) => node.rect !== null && node.rect[1] < 186 && node.rect[2] === 34 && node.rect[3] === 34)
+    .map((node) => node.rect![0]);
+  expect(skips).toEqual([227, 269]);
 });
 
 test("search: query strip with results; the classic keyboard on the bottom screen", () => {

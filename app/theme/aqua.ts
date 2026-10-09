@@ -204,6 +204,7 @@ export const AQUA: Theme = {
 
   transportRow: "absolute left-[10] top-[160] w-[300] h-[72] flex-row items-center justify-center gap-[10]",
   transport: (kind, on, enabled) => transportClass(kind, on, enabled),
+  transportCompact: (enabled) => (enabled ? MODE_GREY : MODE_OFF),
 
   idlePanel: "absolute left-[10] top-[10] w-[300] h-[100] flex-col items-center justify-center gap-[4] rounded-[10] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
   platter: "absolute left-[10] top-[20] w-[200] h-[200]",
@@ -216,7 +217,7 @@ export const AQUA: Theme = {
   djPanel: "absolute left-[220] top-[10] w-[90] h-[220] flex-col items-center pt-[8] gap-[4] overflow-hidden rounded-[10] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
   djTime: "text-base font-bold text-[#1f2018] mt-[4]",
   djRemaining: "text-xs text-[#3c3e31]",
-  djSkipRow: "flex-row items-center gap-[2] mt-[6]",
+  djSkipRow: "flex-row items-center gap-[8] mt-[6]",
   djDeckGel: "absolute left-[28] top-[176] w-[34] h-[34]",
 
   placeholderHues: HUES,

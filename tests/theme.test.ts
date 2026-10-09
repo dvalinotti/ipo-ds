@@ -31,6 +31,7 @@ function aquaLiterals(): string[] {
   for (const kind of ["shuffle", "prev", "play", "pause", "next", "repeat", "dj"] as TransportKind[]) {
     for (const on of [true, false]) for (const enabled of [true, false]) gel(AQUA.transport(kind, on, enabled));
   }
+  for (const enabled of [true, false]) gel(AQUA.transportCompact(enabled));
   for (const hue of AQUA.placeholderHues) out.push(hue.cover, hue.hubText);
   return out;
 }

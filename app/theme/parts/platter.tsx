@@ -57,8 +57,8 @@ export function DjPanel(props: {
       <Text class={t().djTime}>{props.elapsed}</Text>
       <Text class={t().djRemaining}>{props.remaining}</Text>
       <View class={t().djSkipRow}>
-        <TransportButton kind="prev" enabled={props.enabled} onPress={props.onPrev} theme={props.theme} />
-        <TransportButton kind="next" enabled={props.enabled} onPress={props.onNext} theme={props.theme} />
+        <TransportButton kind="prev" compact enabled={props.enabled} onPress={props.onPrev} theme={props.theme} />
+        <TransportButton kind="next" compact enabled={props.enabled} onPress={props.onNext} theme={props.theme} />
       </View>
       <View class={t().djDeckGel}>
         <TransportButton kind="dj" on onPress={props.onDeck} theme={props.theme} />
