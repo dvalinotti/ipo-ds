@@ -13,6 +13,7 @@ import { Gel, GelLabel } from "../theme/parts/gel.tsx";
 import { trackOffset } from "../theme/geometry.ts";
 import { REFERENCE_LABEL, REFERENCE_LABEL_SHADOW, REFERENCE_PILL } from "./reference-pill.ts";
 import { IdlePanel, PROGRESS_TRACK_PX, StatePanel } from "../theme/parts/panels.tsx";
+import { DjPanel, Platter } from "../theme/parts/platter.tsx";
 import { Toolbar } from "../theme/parts/toolbar.tsx";
 import type { RowKind, Tab } from "../theme/theme.ts";
 import type { GalleryStateName } from "./names.ts";
@@ -285,6 +286,16 @@ export const STATES: readonly GalleryState[] = [
     name: "gels",
     top: () => <Top tab="Songs" body={<GelSheetTop />} legend={SONGS_LEGEND} />,
     bottom: () => <GelSheetBottom />,
+  },
+  {
+    name: "dj",
+    top: () => <Top tab="Songs" header={["Song Name", "Artist"]} rows={SONG_ROWS} selected={3} playing={6} scroll={[18, 44]} legend={SONGS_LEGEND} />,
+    bottom: () => (
+      <View class={AQUA.bottomScreen}>
+        <Platter angle={24} cover={0} />
+        <DjPanel title="One More Time" artist="Daft Punk" elapsed="1:42" remaining="-3:58" enabled />
+      </View>
+    ),
   },
   {
     // Last: the open keyboard is modal and takes L/R while it is up.

@@ -13,7 +13,7 @@ function aquaLiterals(): string[] {
   const out: string[] = [];
   const gel = (classes: GelClasses) => out.push(classes.body, classes.gloss);
   for (const [key, value] of Object.entries(AQUA)) {
-    if (typeof value === "string" && key !== "name" && key !== "osk" && !value.endsWith(".svg")) out.push(value);
+    if (typeof value === "string" && key !== "name" && key !== "osk" && !value.endsWith(".svg") && !value.endsWith(".png")) out.push(value);
   }
   for (const flag of [true, false]) {
     gel(AQUA.tab(flag));
@@ -40,6 +40,12 @@ test("every class literal the Aqua theme can produce compiles", () => {
     .map((literal) => [literal, unknownUtilities(literal)] as const)
     .filter(([, bad]) => bad.length > 0);
   expect(unknown).toEqual([]);
+});
+
+test("the platter's art keys name the generated PNGs", () => {
+  expect(AQUA.vinylArt).toBe("theme/vinyl.png");
+  expect(AQUA.labelArt).toBe("theme/label.png");
+  for (const key of [AQUA.vinylArt, AQUA.labelArt]) expect(existsSync(join(ROOT, "app", key)), key).toBe(true);
 });
 
 test("every icon the theme names exists and bakes to an opaque image of its size", () => {

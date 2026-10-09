@@ -206,6 +206,18 @@ export const AQUA: Theme = {
   transport: (kind, on, enabled) => transportClass(kind, on, enabled),
 
   idlePanel: "absolute left-[10] top-[10] w-[300] h-[100] flex-col items-center justify-center gap-[4] rounded-[10] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
+  platter: "absolute left-[10] top-[20] w-[200] h-[200]",
+  platterDisc: "absolute left-[0] top-[0] w-[200] h-[200]",
+  platterLabel: "absolute left-[56] top-[56] w-[88] h-[88]",
+  platterLoading: "absolute left-[84] top-[84] w-[32] h-[32]",
+  spindle: "absolute left-[97] top-[97] w-[6] h-[6] rounded-[3] border border-[#5a5a5a] bg-gradient-to-b from-[#f4f4f4] via-[#d6d6d6] to-[#a8a8a8]",
+  vinylArt: "theme/vinyl.png",
+  labelArt: "theme/label.png",
+  djPanel: "absolute left-[220] top-[10] w-[90] h-[220] flex-col items-center pt-[8] gap-[4] overflow-hidden rounded-[10] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
+  djTime: "text-base font-bold text-[#1f2018] mt-[4]",
+  djRemaining: "text-xs text-[#3c3e31]",
+  djSkipRow: "flex-row items-center gap-[2] mt-[6]",
+  djDeckGel: "absolute left-[28] top-[176] w-[34] h-[34]",
 
   placeholderHues: HUES,
   icon: (name, ink) => ICONS[name][ink],

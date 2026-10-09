@@ -275,6 +275,16 @@ test("gels: the reference pill, every transport state, and a fill too narrow for
   expect(rows[2]!.children.every((button) => button.children[0]!.hidden)).toBe(true);
 });
 
+test("dj: the platter's box and spindle; the side panel with the song, its time and the deck gel", () => {
+  show("dj");
+  expectAll(screenText(world, "auxiliary"), ["One More Time", "Daft Punk", "1:42", "-3:58"]);
+  const boxes = findAll(world.tree("auxiliary"), (node) => node.rect !== null).map((node) => node.rect!.join(","));
+  expect(boxes).toContain("10,20,200,200");  // the platter
+  expect(boxes).toContain("107,117,6,6");    // the spindle at its centre
+  expect(boxes).toContain("220,10,90,220");  // the side panel
+  expect(boxes).toContain("248,186,34,34");  // its gel back to the deck
+});
+
 test("search: query strip with results; the classic keyboard on the bottom screen", () => {
   show("search");
   expectAll(screenText(world, "primary"), ["Search:", "daft", "4 found", "Edit search", "Clear"]);
