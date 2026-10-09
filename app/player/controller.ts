@@ -9,6 +9,10 @@ export interface PlayerController {
   state(): PlayerState;
   dispatch(action: PlayerAction): void;
   poll(): void;
+  /** Grabs (true) or lets go of (false) the platter, then reads the status back. */
+  scratch(active: boolean): void;
+  /** The platter's rate while held. Sends only: it runs every frame of a drag. */
+  scratchRate(rate: number): void;
 }
 
 export interface CommandResult {
@@ -63,5 +67,11 @@ export function createPlayerController(
       const status = media.status();
       if (status !== state.status) step({ type: "hostStatus", status });
     },
+    scratch: (active) => {
+      if (active) media.scratchBegin();
+      else media.scratchEnd();
+      step({ type: "hostStatus", status: media.status() });
+    },
+    scratchRate: (rate) => media.scratchRate(rate),
   };
 }
