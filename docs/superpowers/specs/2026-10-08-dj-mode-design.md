@@ -65,27 +65,28 @@ A PCM16 ring in regular heap decouples decoding from output:
   - `lm_ring_silence(ring, frames)` appends silence. A frame whose bit reservoir was lost (the first frames after a seek) appends silence instead of only advancing a counter, so a ring index always equals a decoded-frame count.
   - `lm_ring_oldest(ring)` is `max(0, write_frames − LM_RING_FRAMES)`.
   - `lm_ring_copy(ring, head, out, n)` copies n frames forward.
-  - `lm_ring_resample(ring, head_fp, rate_from_fp, rate_to_fp, out, n)` writes n output frames, reading at a signed 32.32 fixed-point head whose step ramps linearly from `rate_from` to `rate_to` across the n frames, with linear interpolation between neighbours. Output gain follows `|rate|` and reaches 1 at 0.25×, so a platter at rest is silent rather than a held sample (no DC offset). The head clamps to `[oldest, written − 1]`; a clamped head outputs silence. Returns the new head.
+  - `lm_ring_resample(ring, head_fp, rate_from_fp, rate_to_fp, out, n)` writes n output frames, reading at a signed 32.32 fixed-point head whose step ramps linearly from `rate_from` to `rate_to` across the n frames, with linear interpolation between neighbours. Output gain follows `|rate|` and reaches 1 at 0.25×, so a platter at rest is silent rather than a held sample (no DC offset). The head clamps to `[oldest, written − 1]`; a clamped head outputs silence from the first frame of a slot, and the scratch head is not written back clamped, so a platter held outside the held frames stays silent. Returns the new head.
 
 ### 4.2 Normal playback
 
-`fill_slot` decodes into the ring until `write_frames − head ≥ LM_SLOT_FRAMES` or the stream ends, then copies `LM_SLOT_FRAMES` (or what is left at the end) from `head` into the slot, records `slot_start[slot] = head` and `slot_rate[slot] = 1`, and advances `head`. Slot sizes, queue depth, prefill and wake cadence are unchanged; the only added cost is one 18 KB copy per slot.
+`fill_slot` decodes into the ring until `write_frames − head ≥ LM_SLOT_FRAMES` or the stream ends, then copies `LM_SLOT_FRAMES` (or what is left at the end) from `head` into the slot, records `slot_start[slot] = head`, `slot_rate_from[slot] = slot_rate_to[slot] = 1` and `slot_frames[slot]`, and advances `head`. Slot sizes, queue depth, prefill and wake cadence are unchanged; the only added cost is one 18 KB copy per slot.
 
 Behind the playhead the ring holds about 11.9 s minus the 1.67 s queue: the **10 s scratch history**.
 
 ### 4.3 Scratch playback
 
 - **Slots:** `LM_SCRATCH_FRAMES = 1024` frames (about 23 ms), kept `LM_SCRATCH_QUEUE = 3` deep, for about 50–70 ms of latency. They reuse the existing 16 linear-memory slot buffers.
-- **Each slot** reads the latest target rate, ramps from the previous slot's rate to it across the slot (no zipper noise), resamples from the ring, and records `slot_start[slot]` and `slot_rate[slot]` (the slot's mean rate).
+- **Each slot** reads the latest target rate, ramps from the previous slot's rate to it across the slot (no zipper noise), resamples from the ring, and records `slot_start`, `slot_rate_from`, `slot_rate_to` and `slot_frames`, which give the ring frame of any output frame in the slot exactly.
 - **Lookahead:** while the rate is positive, the fill first decodes until `write_frames − head ≥ 2 × LM_SCRATCH_FRAMES × rate`, or the stream ends.
 - **Begin:** clear the sink (dropping the queued normal audio), set `head` to the playhead at that moment, unpause the channel whatever `paused_flag` says, and queue three slots at rate 0. The playhead is `slot_start + played` of the playing slot; when none is playing, the first queued slot's start; when nothing is queued, `head`.
-- **End:** compute the playhead the same way from the scratch slots (`slot_start + played × slot_rate`), clear the sink, set `head` to it, re-apply `paused_flag`, and prefill normal slots from `head`. No file seek is needed: the ring holds the audio after `head`, and the decoder continues from `write_frames`.
+- **End:** compute the playhead the same way from the scratch slots (the slot's ring frame at `played`, below), clear the sink, set `head` to it, re-apply `paused_flag`, and prefill normal slots from `head`. No file seek is needed: the ring holds the audio after `head`, and the decoder continues from `write_frames`.
 - **Open and seek** reset the ring (`write_frames = 0`, `head = 0`, `base_ms` = the target) and end scratch mode.
 - **Begin is ignored** unless the phase is `playing` or `paused` and the ring was allocated.
 
 ### 4.4 Position and end of track
 
-- `lm_player_position` reports `frames_ms(slot_start[slot] + played × slot_rate[slot])`. The never-decreases clamp is removed; position may decrease while scratching. In normal mode it still only moves forward, because `slot_rate` is 1.
+- The ring frame at output frame `p` of a slot with `n` frames is `slot_start + (from·p + (to − from)·p·(p − 1) / (2n)) / 65536`, the exact sum of the ramp's steps, with `from` and `to` the 16.16 rates. While scratching it is clamped to the frames held.
+- `lm_player_position` reports `frames_ms` of that ring frame. The never-decreases clamp is removed; position may decrease while scratching. In normal mode it still only moves forward, because the rate is 1.
 - **Ended** is reported only when not scratching, the stream is at its end, `head == write_frames` and nothing is queued.
 - `lm_player_duration` is unchanged (`decoded_ms` uses `write_frames`).
 
@@ -200,7 +201,7 @@ scratchEnd(): void;
 - A `dj` scenario in `scripts/perf.ts` (enter DJ Mode, spin while playing) within budget on both models: CPU max ≤ 14 ms on New, ≤ 30 ms on Old. Rows recorded in `docs/perf.md`.
 - Normal-playback underruns and decode load unchanged after the ring.
 
-**Device (Azahar, then hardware):** scratch latency and feel, audible reverse, no clicks at begin/end, Old 3DS memory with the 2 MiB ring, decode load while scratching forward at 4×.
+**Device (Azahar, then hardware; Plan 8 Task 8 hands over the checklist):** scratch latency and feel, audible reverse, no clicks at begin/end, Old 3DS memory with the 2 MiB ring, decode load and underruns while scratching forward at 4×, and the slot-handover skew on a lift.
 
 ## 8. Execution
 
@@ -211,8 +212,8 @@ scratchEnd(): void;
 
 ## 9. Risks
 
-- **Old 3DS decode headroom** while scratching forward fast. Mitigated by the ±4× clamp; measured in Plan 7's device step.
+- **Old 3DS decode headroom** while scratching forward fast. Mitigated by the ±4× clamp; measured in Plan 8 Task 8's device check.
 - **Memory:** 2 MiB of heap on Old 3DS. The small-ring fallback keeps normal playback if the allocation fails.
 - **Clicks at mode switches:** clearing the sink cuts mid-sample. A short fade on the first and last scratch slot can be added if they are audible.
 - **Azahar audio timing** may differ from hardware; hardware is the final arbiter of latency and feel.
-- **Position under ramps** is approximate within a slot (mean rate). It only drives the time readout, which polls at frame rate.
+- **Slot handover skew:** NDSP can briefly pair the next slot's start with the previous slot's sample count. Normal playback guards against it. A scratch lift in that window may resume one 1024-frame slot ahead, about 23 ms at 1× and 93 ms at 4×. Plan 8 Task 8 checks it on hardware.

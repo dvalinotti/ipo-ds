@@ -1474,6 +1474,10 @@ Expected: `dist/ipo-ds-main.3dsx`. The orchestrator copies it to `~/git/ds-man/d
 4. Finger-to-sound latency feels immediate (under about 80 ms).
 5. Old 3DS: DJ Mode stays smooth; a fast forward scratch at the 4× limit does not stutter; L+R diagnostics show no new underruns after normal playback resumes.
 6. A long counter-clockwise drag stops at about 10 s back and goes silent.
+7. Old 3DS: a grab scratches. The 2 MiB ring was allocated; if it fell back to 32 KiB, scratching stays silent and `scratching` stays false.
+8. Old 3DS, forward at the 4× limit: scratch forward fast, return to the deck and hold L+R within a second. Note `D:` (decode load) and `U:` (underruns).
+9. Normal playback is unchanged by the ring: compare the L+R `D:` and `U:` readings on a plain song with the Plan 6 build, if available.
+10. A lift sometimes resumes noticeably ahead of where the finger stopped (the slot-handover skew, up to about 93 ms at 4×). Note how often and how far.
 
 ---
 
