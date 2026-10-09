@@ -1,6 +1,7 @@
 // The bottom screen while not searching: the playing song's art, info LCD,
 // a drag-to-seek capsule (one seek on release) and the transport row. The
 // LCD's status row shows a playback error, or diagnostics while L+R are held.
+// The transport row's last gel opens DJ Mode.
 import { createEffect, createMemo, createSignal, on, Show } from "solid-js";
 import { getOps } from "@pocketjs/framework";
 import { View } from "@pocketjs/framework/components";
@@ -15,7 +16,7 @@ import { AQUA } from "../theme/aqua.ts";
 import { ArtFrame, CoverImage, CoverLoading, InfoLcd, SEEK_TRACK_PX, SEEK_TRACK_WIDE_PX, SeekCapsule, seekTrackLeft, TransportRow } from "../theme/parts/deck.tsx";
 import { IdlePanel } from "../theme/parts/panels.tsx";
 
-export function NowPlaying(props: { session: Session }) {
+export function NowPlaying(props: { session: Session; onDj?: () => void }) {
   const status = props.session.status;
   const player = props.session.player;
   const dispatch = props.session.dispatch;
@@ -120,6 +121,7 @@ export function NowPlaying(props: { session: Session }) {
         onToggle={() => dispatch({ type: "toggle" })}
         onNext={() => dispatch({ type: "next" })}
         onRepeat={() => dispatch({ type: "cycleRepeat" })}
+        onDj={props.onDj}
       />
     </View>
   );
