@@ -19,7 +19,7 @@ interface Case {
   sizes?: [number, number][];
 }
 
-const KINDS: TransportKind[] = ["shuffle", "prev", "play", "pause", "next", "repeat"];
+const KINDS: TransportKind[] = ["shuffle", "prev", "play", "pause", "next", "repeat", "dj"];
 /** PROGRESS_TRACK_PX (app/theme/parts/panels.tsx): the fill's widest. */
 const PROGRESS_TRACK_PX = 218;
 
@@ -27,7 +27,7 @@ function gelCases(): Case[] {
   const out: Case[] = [];
   for (const kind of KINDS) {
     const big = kind === "play" || kind === "pause";
-    const small = kind === "shuffle" || kind === "repeat";
+    const small = kind === "shuffle" || kind === "repeat" || kind === "dj";
     for (const on of [true, false]) {
       out.push({ name: `transport ${kind} on=${on}`, gel: AQUA.transport(kind, on, true), tone: big || (small && on) ? "blue" : "grey", outline: true, shadow: big });
       out.push({ name: `transport ${kind} on=${on} disabled`, gel: AQUA.transport(kind, on, false), tone: "grey", outline: true, shadow: false, disabled: true });

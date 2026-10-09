@@ -7,8 +7,8 @@ export type Tab = "Songs" | "Artists" | "Albums";
 /** The tabs in toolbar order; L / R step through it. */
 export const TAB_ORDER: readonly Tab[] = ["Songs", "Artists", "Albums"];
 export type RepeatMode = "off" | "all" | "one";
-export type TransportKind = "shuffle" | "prev" | "play" | "pause" | "next" | "repeat";
-export type IconName = "shuffle" | "repeat" | "prev" | "next" | "play" | "pause";
+export type TransportKind = "shuffle" | "prev" | "play" | "pause" | "next" | "repeat" | "dj";
+export type IconName = "shuffle" | "repeat" | "prev" | "next" | "play" | "pause" | "dj";
 export type IconInk = "white" | "ink" | "blue";
 
 export interface PlaceholderHue {

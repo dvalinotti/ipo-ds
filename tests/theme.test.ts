@@ -28,7 +28,7 @@ function aquaLiterals(): string[] {
   }
   for (const color of ["red", "amber", "green"] as const) out.push(AQUA.light(color));
   out.push(AQUA.ring("outer"), AQUA.ring("inner"));
-  for (const kind of ["shuffle", "prev", "play", "pause", "next", "repeat"] as TransportKind[]) {
+  for (const kind of ["shuffle", "prev", "play", "pause", "next", "repeat", "dj"] as TransportKind[]) {
     for (const on of [true, false]) for (const enabled of [true, false]) gel(AQUA.transport(kind, on, enabled));
   }
   for (const hue of AQUA.placeholderHues) out.push(hue.cover, hue.hubText);
@@ -44,7 +44,7 @@ test("every class literal the Aqua theme can produce compiles", () => {
 
 test("every icon the theme names exists and bakes to an opaque image of its size", () => {
   const keys = new Set<string>([AQUA.sortIcon]);
-  for (const name of ["shuffle", "repeat", "prev", "next", "play", "pause"] as IconName[]) {
+  for (const name of ["shuffle", "repeat", "prev", "next", "play", "pause", "dj"] as IconName[]) {
     for (const ink of ["white", "ink", "blue"] as IconInk[]) keys.add(AQUA.icon(name, ink));
   }
   for (const name of ["play", "pause"] as const) for (const ink of ["white", "ink"] as const) keys.add(AQUA.iconLarge(name, ink));

@@ -19,6 +19,7 @@ const ICONS: Record<IconName, Record<IconInk, string>> = {
   next: { white: "theme/icons/next-white.svg", ink: "theme/icons/next-ink.svg", blue: "theme/icons/next-ink.svg" },
   play: { white: "theme/icons/play-white.svg", ink: "theme/icons/play-ink.svg", blue: "theme/icons/play-ink.svg" },
   pause: { white: "theme/icons/pause-white.svg", ink: "theme/icons/pause-ink.svg", blue: "theme/icons/pause-ink.svg" },
+  dj: { white: "theme/icons/dj-white.svg", ink: "theme/icons/dj-ink.svg", blue: "theme/icons/dj-ink.svg" },
 };
 
 const LARGE_ICONS: Record<"play" | "pause", Record<"white" | "ink", string>> = {
@@ -213,7 +214,7 @@ export const AQUA: Theme = {
 
 function transportClass(kind: TransportKind, on: boolean, enabled: boolean): GelClasses {
   const big = kind === "play" || kind === "pause";
-  const mode = kind === "shuffle" || kind === "repeat";
+  const mode = kind === "shuffle" || kind === "repeat" || kind === "dj";
   if (!enabled) return big ? PLAY_OFF : mode ? MODE_OFF : SKIP_OFF;
   if (big) return PLAY_BLUE;
   if (mode) return on ? MODE_BLUE : MODE_GREY;

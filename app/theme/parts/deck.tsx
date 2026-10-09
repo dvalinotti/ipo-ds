@@ -1,5 +1,6 @@
 // The bottom screen's Now Playing deck: art frame, info LCD, seek capsule and
-// transport buttons. Each transport button owns its touch recognizer and calls
+// transport buttons (shuffle, previous, play/pause, next, repeat, and the DJ
+// Mode gel). Each transport button owns its touch recognizer and calls
 // `onPress`; the screen (app/now-playing) wires the seek drag and the actions.
 import { children, Show } from "solid-js";
 import { Image, Sprite, Text, View } from "@pocketjs/framework/components";
@@ -144,7 +145,7 @@ export function TransportButton(props: { kind: TransportKind; on?: boolean; enab
   const enabled = () => props.enabled ?? true;
   const big = () => props.kind === "play" || props.kind === "pause";
   // Aqua gels carry white ink: play/pause, and shuffle/repeat while on. Graphite carries dark ink.
-  const ink = () => (enabled() && (big() || ((props.kind === "shuffle" || props.kind === "repeat") && props.on)) ? "white" : "ink");
+  const ink = () => (enabled() && (big() || ((props.kind === "shuffle" || props.kind === "repeat" || props.kind === "dj") && props.on)) ? "white" : "ink");
   // A View's onPress answers the focused node's A press; a touch on the bottom
   // screen needs its own recognizer over this button.
   let node: unknown = null;
@@ -159,7 +160,7 @@ export function TransportButton(props: { kind: TransportKind; on?: boolean; enab
     <Gel classes={t().transport(props.kind, props.on ?? false, enabled())} ref={(n: unknown) => (node = n)}>
       <Show
         when={big()}
-        fallback={<Image class="w-[16] h-[16]" src={t().icon(props.kind as "shuffle" | "repeat" | "prev" | "next", ink())} />}
+        fallback={<Image class="w-[16] h-[16]" src={t().icon(props.kind as "shuffle" | "repeat" | "prev" | "next" | "dj", ink())} />}
       >
         <Image class="w-[32] h-[32]" src={t().iconLarge(props.kind as "play" | "pause", ink() === "white" ? "white" : "ink")} />
       </Show>
@@ -177,6 +178,8 @@ export function TransportRow(props: {
   onToggle?: () => void;
   onNext?: () => void;
   onRepeat?: () => void;
+  dj?: boolean;
+  onDj?: () => void;
   theme?: Theme;
 }) {
   const t = () => props.theme ?? AQUA;
@@ -187,6 +190,7 @@ export function TransportRow(props: {
       <TransportButton kind={props.playing ? "pause" : "play"} enabled={props.enabled} onPress={props.onToggle} theme={props.theme} />
       <TransportButton kind="next" enabled={props.enabled} onPress={props.onNext} theme={props.theme} />
       <TransportButton kind="repeat" on={props.repeat !== "off"} enabled={props.enabled} onPress={props.onRepeat} theme={props.theme} />
+      <TransportButton kind="dj" on={props.dj ?? false} onPress={props.onDj} theme={props.theme} />
     </View>
   );
 }

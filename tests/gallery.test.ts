@@ -141,9 +141,9 @@ test("gels: each body's first child is its gloss; a blue label carries one shado
   const segment = songs[0]!.at(-4)!;
   expect(glossOffset(segment)).toEqual([0, 0, rect(segment)[2], 6]);
   expect(tabLabel("Artists")).toHaveLength(1);
-  // Transport (Now Playing): shuffle, prev, pause, next, repeat.
+  // Transport (Now Playing): shuffle, prev, pause, next, repeat, dj.
   const [row] = findAll(world.tree("auxiliary"), (node) => JSON.stringify(node.rect) === JSON.stringify([10, 160, 300, 72]));
-  expect(row!.children.map(glossOffset)).toEqual([[5, 3, 24, 16], [6, 3, 30, 20], [10, 3, 44, 30], [6, 3, 30, 20], [5, 3, 24, 16]]);
+  expect(row!.children.map(glossOffset)).toEqual([[5, 3, 24, 16], [6, 3, 30, 20], [10, 3, 44, 30], [6, 3, 30, 20], [5, 3, 24, 16], [5, 3, 24, 16]]);
   // Seek knob: the track's second child.
   const capsule = pathTo(world, "auxiliary", "1:42").at(-3)!;
   expect(glossOffset(capsule.children[1]!.children[1]!)).toEqual([2, 3, 14, 8]);
@@ -269,9 +269,9 @@ test("gels: the reference pill, every transport state, and a fill too narrow for
     expect(gloss[0] + gloss[2]).toBeLessThanOrEqual(rect(fill)[0] + rect(fill)[2]);
   }
   // Transport: an enabled blue/grey row, an enabled grey row, a disabled row (no gloss: it would show through at 45 %).
-  const rows = findAll(world.tree("auxiliary"), (node) => node.children.length === 5 && node.children.every((child) => child.rect !== null && child.rect[2] === child.rect[3] && child.rect[2] >= 34));
+  const rows = findAll(world.tree("auxiliary"), (node) => node.children.length === 6 && node.children.every((child) => child.rect !== null && child.rect[2] === child.rect[3] && child.rect[2] >= 34));
   expect(rows).toHaveLength(3);
-  expect(rows[0]!.children.map(glossOffset)).toEqual([[5, 3, 24, 16], [6, 3, 30, 20], [10, 3, 44, 30], [6, 3, 30, 20], [5, 3, 24, 16]]);
+  expect(rows[0]!.children.map(glossOffset)).toEqual([[5, 3, 24, 16], [6, 3, 30, 20], [10, 3, 44, 30], [6, 3, 30, 20], [5, 3, 24, 16], [5, 3, 24, 16]]);
   expect(rows[2]!.children.every((button) => button.children[0]!.hidden)).toBe(true);
 });
 

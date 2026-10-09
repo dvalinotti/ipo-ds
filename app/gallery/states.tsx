@@ -152,7 +152,7 @@ function GelSheetTop() {
   );
 }
 
-/** Transport in every state (blue and grey enabled, grey enabled, disabled), both badges and the knob. */
+/** Transport (the DJ gel included) in every state (blue and grey enabled, grey enabled, disabled), both badges and the knob. */
 function GelSheetBottom() {
   return (
     <View class={AQUA.bottomScreen}>
@@ -163,6 +163,7 @@ function GelSheetBottom() {
           <TransportButton kind="pause" />
           <TransportButton kind="next" />
           <TransportButton kind="repeat" on />
+          <TransportButton kind="dj" on />
         </View>
         <View class="flex-row items-center gap-[10]">
           <TransportButton kind="shuffle" />
@@ -170,6 +171,7 @@ function GelSheetBottom() {
           <TransportButton kind="play" />
           <TransportButton kind="next" />
           <TransportButton kind="repeat" />
+          <TransportButton kind="dj" />
         </View>
         <View class="flex-row items-center gap-[10]">
           <TransportButton kind="shuffle" enabled={false} />
@@ -177,6 +179,7 @@ function GelSheetBottom() {
           <TransportButton kind="play" enabled={false} />
           <TransportButton kind="next" enabled={false} />
           <TransportButton kind="repeat" enabled={false} />
+          <TransportButton kind="dj" enabled={false} />
         </View>
         <View class="flex-row items-center gap-[8] mt-[8]">
           <KeyBadge letter="A" primary />
