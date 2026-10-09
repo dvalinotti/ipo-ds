@@ -3,7 +3,8 @@
 A walkman-style MP3 player for the Nintendo 3DS, dressed in the Aqua / iTunes 4
 look. The top screen browses your library (Songs, Artists, Albums, with search);
 the bottom screen is Now Playing, with cover art, a seek capsule and a touch
-transport row. It plays the `.mp3` files in `sdmc:/music/`.
+transport row, or DJ Mode, a record you can scratch. It plays the `.mp3` files
+in `sdmc:/music/`.
 
 iPoDS is built on [PocketJS](https://github.com/dvalinotti/pocketjs) (SolidJS
 apps on a Rust core). Native playback (`media.local`: scanning, ID3 tags,
@@ -26,10 +27,14 @@ Apple or Nintendo.
 | Y + L / R | Previous / next song |
 | ZL / ZR | Previous / next song |
 | START | Play / pause |
+| SELECT | DJ Mode on / off |
 | L + R (hold) | Diagnostics in the Now Playing LCD |
 
-The bottom screen is touch: shuffle, previous, play/pause, next, repeat, and a
-drag-to-seek capsule.
+The bottom screen is touch: shuffle, previous, play/pause, next, repeat, DJ
+Mode, and a drag-to-seek capsule. In DJ Mode the record spins while the song
+plays; drag it clockwise to play forward at your finger's speed, counter-
+clockwise to play backwards, and hold it still for silence. Lifting your
+finger lets the song play on from there.
 
 ## Music
 

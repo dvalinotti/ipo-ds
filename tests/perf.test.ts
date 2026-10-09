@@ -8,7 +8,7 @@ const stats = (work: [number, number], localmedia?: Stats["localmedia"]): Stats 
 });
 
 test("the scenarios are the spec's, and the budgets its targets", () => {
-  expect(SCENARIOS.map((s) => s.name)).toEqual(["idle", "scroll", "now-playing", "scan-first", "scan-cached"]);
+  expect(SCENARIOS.map((s) => s.name)).toEqual(["idle", "scroll", "now-playing", "dj", "scan-first", "scan-cached"]);
   expect(BUDGET_US).toEqual({ new: 14_000, old: 30_000 });
   expect(SCAN_BUDGET_MS).toEqual({ first: 10_000, cached: 1_000, confirm: 3_000 });
   expect(scenario("scan-cached").keepCard).toBe(true); // it reads the cache scan-first wrote
