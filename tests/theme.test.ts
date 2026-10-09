@@ -13,7 +13,7 @@ function aquaLiterals(): string[] {
   const out: string[] = [];
   const gel = (classes: GelClasses) => out.push(classes.body, classes.gloss);
   for (const [key, value] of Object.entries(AQUA)) {
-    if (typeof value === "string" && key !== "name" && key !== "osk" && !value.endsWith(".svg")) out.push(value);
+    if (typeof value === "string" && key !== "name" && key !== "osk" && !value.endsWith(".svg") && !value.endsWith(".png")) out.push(value);
   }
   for (const flag of [true, false]) {
     gel(AQUA.tab(flag));
@@ -28,9 +28,10 @@ function aquaLiterals(): string[] {
   }
   for (const color of ["red", "amber", "green"] as const) out.push(AQUA.light(color));
   out.push(AQUA.ring("outer"), AQUA.ring("inner"));
-  for (const kind of ["shuffle", "prev", "play", "pause", "next", "repeat"] as TransportKind[]) {
+  for (const kind of ["shuffle", "prev", "play", "pause", "next", "repeat", "dj"] as TransportKind[]) {
     for (const on of [true, false]) for (const enabled of [true, false]) gel(AQUA.transport(kind, on, enabled));
   }
+  for (const enabled of [true, false]) gel(AQUA.transportCompact(enabled));
   for (const hue of AQUA.placeholderHues) out.push(hue.cover, hue.hubText);
   return out;
 }
@@ -42,9 +43,15 @@ test("every class literal the Aqua theme can produce compiles", () => {
   expect(unknown).toEqual([]);
 });
 
+test("the platter's art keys name the generated PNGs", () => {
+  expect(AQUA.vinylArt).toBe("theme/vinyl.png");
+  expect(AQUA.labelArt).toBe("theme/label.png");
+  for (const key of [AQUA.vinylArt, AQUA.labelArt]) expect(existsSync(join(ROOT, "app", key)), key).toBe(true);
+});
+
 test("every icon the theme names exists and bakes to an opaque image of its size", () => {
   const keys = new Set<string>([AQUA.sortIcon]);
-  for (const name of ["shuffle", "repeat", "prev", "next", "play", "pause"] as IconName[]) {
+  for (const name of ["shuffle", "repeat", "prev", "next", "play", "pause", "dj"] as IconName[]) {
     for (const ink of ["white", "ink", "blue"] as IconInk[]) keys.add(AQUA.icon(name, ink));
   }
   for (const name of ["play", "pause"] as const) for (const ink of ["white", "ink"] as const) keys.add(AQUA.iconLarge(name, ink));

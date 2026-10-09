@@ -141,9 +141,9 @@ test("gels: each body's first child is its gloss; a blue label carries one shado
   const segment = songs[0]!.at(-4)!;
   expect(glossOffset(segment)).toEqual([0, 0, rect(segment)[2], 6]);
   expect(tabLabel("Artists")).toHaveLength(1);
-  // Transport (Now Playing): shuffle, prev, pause, next, repeat.
+  // Transport (Now Playing): shuffle, prev, pause, next, repeat, dj.
   const [row] = findAll(world.tree("auxiliary"), (node) => JSON.stringify(node.rect) === JSON.stringify([10, 160, 300, 72]));
-  expect(row!.children.map(glossOffset)).toEqual([[5, 3, 24, 16], [6, 3, 30, 20], [10, 3, 44, 30], [6, 3, 30, 20], [5, 3, 24, 16]]);
+  expect(row!.children.map(glossOffset)).toEqual([[5, 3, 24, 16], [6, 3, 30, 20], [10, 3, 44, 30], [6, 3, 30, 20], [5, 3, 24, 16], [5, 3, 24, 16]]);
   // Seek knob: the track's second child.
   const capsule = pathTo(world, "auxiliary", "1:42").at(-3)!;
   expect(glossOffset(capsule.children[1]!.children[1]!)).toEqual([2, 3, 14, 8]);
@@ -269,10 +269,24 @@ test("gels: the reference pill, every transport state, and a fill too narrow for
     expect(gloss[0] + gloss[2]).toBeLessThanOrEqual(rect(fill)[0] + rect(fill)[2]);
   }
   // Transport: an enabled blue/grey row, an enabled grey row, a disabled row (no gloss: it would show through at 45 %).
-  const rows = findAll(world.tree("auxiliary"), (node) => node.children.length === 5 && node.children.every((child) => child.rect !== null && child.rect[2] === child.rect[3] && child.rect[2] >= 34));
+  const rows = findAll(world.tree("auxiliary"), (node) => node.children.length === 6 && node.children.every((child) => child.rect !== null && child.rect[2] === child.rect[3] && child.rect[2] >= 34));
   expect(rows).toHaveLength(3);
-  expect(rows[0]!.children.map(glossOffset)).toEqual([[5, 3, 24, 16], [6, 3, 30, 20], [10, 3, 44, 30], [6, 3, 30, 20], [5, 3, 24, 16]]);
+  expect(rows[0]!.children.map(glossOffset)).toEqual([[5, 3, 24, 16], [6, 3, 30, 20], [10, 3, 44, 30], [6, 3, 30, 20], [5, 3, 24, 16], [5, 3, 24, 16]]);
   expect(rows[2]!.children.every((button) => button.children[0]!.hidden)).toBe(true);
+});
+
+test("dj: the platter's box and spindle; the side panel with the song, its time and the deck gel", () => {
+  show("dj");
+  expectAll(screenText(world, "auxiliary"), ["One More Time", "Daft Punk", "1:42", "-3:58"]);
+  const boxes = findAll(world.tree("auxiliary"), (node) => node.rect !== null).map((node) => node.rect!.join(","));
+  expect(boxes).toContain("10,20,200,200");  // the platter
+  expect(boxes).toContain("107,117,6,6");    // the spindle at its centre
+  expect(boxes).toContain("220,10,90,220");  // the side panel
+  expect(boxes).toContain("248,186,34,34");  // its gel back to the deck
+  // Prev / next are 34 px gels 8 px apart, centred in the panel's 88 px interior: 6 px from each side.
+  const skips = findAll(world.tree("auxiliary"), (node) => node.rect !== null && node.rect[1] < 186 && node.rect[2] === 34 && node.rect[3] === 34)
+    .map((node) => node.rect![0]);
+  expect(skips).toEqual([227, 269]);
 });
 
 test("search: query strip with results; the classic keyboard on the bottom screen", () => {

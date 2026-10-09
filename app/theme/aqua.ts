@@ -19,6 +19,7 @@ const ICONS: Record<IconName, Record<IconInk, string>> = {
   next: { white: "theme/icons/next-white.svg", ink: "theme/icons/next-ink.svg", blue: "theme/icons/next-ink.svg" },
   play: { white: "theme/icons/play-white.svg", ink: "theme/icons/play-ink.svg", blue: "theme/icons/play-ink.svg" },
   pause: { white: "theme/icons/pause-white.svg", ink: "theme/icons/pause-ink.svg", blue: "theme/icons/pause-ink.svg" },
+  dj: { white: "theme/icons/dj-white.svg", ink: "theme/icons/dj-ink.svg", blue: "theme/icons/dj-ink.svg" },
 };
 
 const LARGE_ICONS: Record<"play" | "pause", Record<"white" | "ink", string>> = {
@@ -203,8 +204,21 @@ export const AQUA: Theme = {
 
   transportRow: "absolute left-[10] top-[160] w-[300] h-[72] flex-row items-center justify-center gap-[10]",
   transport: (kind, on, enabled) => transportClass(kind, on, enabled),
+  transportCompact: (enabled) => (enabled ? MODE_GREY : MODE_OFF),
 
   idlePanel: "absolute left-[10] top-[10] w-[300] h-[100] flex-col items-center justify-center gap-[4] rounded-[10] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
+  platter: "absolute left-[10] top-[20] w-[200] h-[200]",
+  platterDisc: "absolute left-[0] top-[0] w-[200] h-[200]",
+  platterLabel: "absolute left-[56] top-[56] w-[88] h-[88]",
+  platterLoading: "absolute left-[84] top-[84] w-[32] h-[32]",
+  spindle: "absolute left-[97] top-[97] w-[6] h-[6] rounded-[3] border border-[#5a5a5a] bg-gradient-to-b from-[#f4f4f4] via-[#d6d6d6] to-[#a8a8a8]",
+  vinylArt: "theme/vinyl.png",
+  labelArt: "theme/label.png",
+  djPanel: "absolute left-[220] top-[10] w-[90] h-[220] flex-col items-center pt-[8] gap-[4] overflow-hidden rounded-[10] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
+  djTime: "text-base font-bold text-[#1f2018] mt-[4]",
+  djRemaining: "text-xs text-[#3c3e31]",
+  djSkipRow: "flex-row items-center gap-[8] mt-[6]",
+  djDeckGel: "absolute left-[28] top-[176] w-[34] h-[34]",
 
   placeholderHues: HUES,
   icon: (name, ink) => ICONS[name][ink],
@@ -213,7 +227,7 @@ export const AQUA: Theme = {
 
 function transportClass(kind: TransportKind, on: boolean, enabled: boolean): GelClasses {
   const big = kind === "play" || kind === "pause";
-  const mode = kind === "shuffle" || kind === "repeat";
+  const mode = kind === "shuffle" || kind === "repeat" || kind === "dj";
   if (!enabled) return big ? PLAY_OFF : mode ? MODE_OFF : SKIP_OFF;
   if (big) return PLAY_BLUE;
   if (mode) return on ? MODE_BLUE : MODE_GREY;

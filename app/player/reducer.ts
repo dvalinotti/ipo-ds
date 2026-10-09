@@ -36,7 +36,7 @@ export interface Reduced { state: PlayerState; commands: PlayerCommand[] }
 export const RESTART_THRESHOLD_MS = 3000;
 export const IDLE_STATUS: LocalStatus = Object.freeze({
   phase: "idle", trackId: -1, openSerial: 0, positionMs: 0, durationMs: 0, scanning: false, scanGeneration: 0, underruns: 0, error: "",
-  decodeLoad: 0, artHandles: 0, scanMs: 0,
+  decodeLoad: 0, artHandles: 0, scanMs: 0, scratching: false,
 });
 
 export function initialPlayer(): PlayerState {

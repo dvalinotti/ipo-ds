@@ -3,7 +3,7 @@
 // device test library, and reads the frame timings and scan timings the host
 // writes to stats.json when the capture window ends.
 //
-//   bun run perf [idle|scroll|now-playing|scan-first|scan-cached …] [--model old|new|both] [--check] [--out dir]
+//   bun run perf [idle|scroll|now-playing|dj|scan-first|scan-cached …] [--model old|new|both] [--check] [--out dir]
 //
 // Needs Azahar (/Applications/Azahar.app, launched once so its config exists),
 // Docker for the 3DS build, and dist/test-music (bun run test-library).
@@ -23,13 +23,14 @@ export interface Scenario {
   keepCard?: boolean;
 }
 
-const A = 0x2000, DOWN = 0x40;
+const A = 0x2000, DOWN = 0x40, SELECT = 0x1;
 // Presses wait until 40 s, well after the first scan (about 6 s in Azahar), so frame scenarios
 // measure the settled app.
 export const SCENARIOS: readonly Scenario[] = [
   { name: "idle", tape: "0:0x0", capture: 3000, kind: "frame" },
   { name: "scroll", tape: `0:0x0,2400:0x${A.toString(16)},2406:0x0,2700:0x${DOWN.toString(16)}`, capture: 3000, kind: "frame" },
   { name: "now-playing", tape: `0:0x0,2400:0x${A.toString(16)},2406:0x0`, capture: 3000, kind: "frame" },
+  { name: "dj", tape: `0:0x0,2400:0x${A.toString(16)},2406:0x0,2460:0x${SELECT.toString(16)},2466:0x0`, capture: 3000, kind: "frame" },
   { name: "scan-first", tape: "0:0x0", capture: 3600, kind: "scan" },
   { name: "scan-cached", tape: "0:0x0", capture: 3600, kind: "scan", keepCard: true },
 ];

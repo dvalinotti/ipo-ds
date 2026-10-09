@@ -33,6 +33,10 @@ export interface Session {
   cover: Accessor<number>;
   /** The open track has art that is still decoding. */
   coverLoading: Accessor<boolean>;
+  /** The guest holds the platter (DJ Mode). */
+  scratching: Accessor<boolean>;
+  /** The platter: grab, rate while held (a signed multiple of normal speed), let go. Inert without media.local. */
+  scratch: { begin(): void; rate(rate: number): void; end(): void };
   dispatch(action: PlayerAction): void;
   rescan(): void;
 }
@@ -90,8 +94,9 @@ export function createSession(media: LocalMedia | null = connect()): Session {
       // Nothing in a snapshot moves faster than the seek bar needs, so every POLL_EVERY frames is
       // enough in every phase (15 Hz at 60 fps). "loading" is read each frame so a refused or
       // corrupt open is skipped at once; a command re-reads at once (pollNext); a failed read retries.
+      // While the platter is held the status is read every frame, so the time follows the finger.
       frame++;
-      if (!pollNext && !statusFailed() && status().phase !== "loading" && frame % POLL_EVERY !== 0) return;
+      if (!pollNext && !statusFailed() && status().phase !== "loading" && !status().scratching && frame % POLL_EVERY !== 0) return;
       pollNext = false;
       let now: LocalStatus;
       try {
@@ -159,6 +164,20 @@ export function createSession(media: LocalMedia | null = connect()): Session {
     return known ?? (last?.id === id ? last : null);
   });
 
+  const scratching = createMemo(() => status().scratching);
+  /** Grab or let go: like a command, the reply is published on this frame. */
+  function scratchCommand(active: boolean): void {
+    pollNext = true;
+    if (!controller) return;
+    try {
+      controller.scratch(active);
+    } catch {
+      setStatusFailed(true);
+      return;
+    }
+    publish(controller.state().status);
+  }
+
   return {
     available: media !== null,
     library,
@@ -169,6 +188,18 @@ export function createSession(media: LocalMedia | null = connect()): Session {
     track,
     cover,
     coverLoading,
+    scratching,
+    scratch: {
+      begin: () => scratchCommand(true),
+      rate: (rate) => {
+        try {
+          controller?.scratchRate(rate);
+        } catch {
+          // Send-only: nothing is read, and the next poll reports the host's state.
+        }
+      },
+      end: () => scratchCommand(false),
+    },
     // A command re-reads the status; a reply that fails validation must not throw out of the frame.
     dispatch: (action) => {
       pollNext = true;

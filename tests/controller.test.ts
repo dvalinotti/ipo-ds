@@ -130,3 +130,18 @@ test("a poll that reads the same status object changes nothing; a new status rea
   player.poll();
   expect(changes.length).toBe(settled + 2); // the dispatch, then the poll that saw playback move
 });
+
+test("scratch grabs and lets go with the status read back; the rate only sends", () => {
+  const { host, player, frames } = setup([song("a.mp3", { durationMs: 10_000 })]);
+  player.dispatch({ type: "playFrom", ids: [0], startId: 0 });
+  frames(6); // loading, then 500 ms of playback
+  expect(player.state().status).toMatchObject({ phase: "playing", positionMs: 500, scratching: false });
+  player.scratch(true);
+  expect(player.state().status.scratching).toBe(true);
+  player.scratchRate(-1);
+  frames(2);
+  expect(player.state().status.positionMs).toBe(300);
+  player.scratch(false);
+  expect(player.state().status.scratching).toBe(false);
+  expect(host.log.filter((entry) => entry.startsWith("scratch"))).toEqual(["scratchBegin()", "scratchRate(-1)", "scratchEnd()"]);
+});

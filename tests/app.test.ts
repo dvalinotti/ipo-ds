@@ -239,16 +239,16 @@ test("transport taps pause, skip, shuffle and cycle repeat", async () => {
   press(rig, BTN.DOWN);
   press(rig, A); // Around the World, 2 of 20
   frames(rig, 3);
-  touch(rig, 160, 196); // play / pause
+  touch(rig, 138, 196); // play / pause
   expect(rig.host.log).toContain("paused(true)");
-  touch(rig, 223, 196); // next
+  touch(rig, 201, 196); // next
   expect(opens(rig.host).at(-1)).toBe("open(16)");
   frames(rig, 3);
   expect(screenText(rig.world, "auxiliary")).toContain("3 of 20");
-  touch(rig, 49, 196); // shuffle: the current song moves to the head of the order
+  touch(rig, 27, 196); // shuffle: the current song moves to the head of the order
   expect(screenText(rig.world, "auxiliary")).toContain("1 of 20");
-  touch(rig, 271, 196); // repeat all
-  touch(rig, 271, 196); // repeat one: the LCD shows its "1"
+  touch(rig, 249, 196); // repeat all
+  touch(rig, 249, 196); // repeat one: the LCD shows its "1"
   expect(pathTo(rig.world, "auxiliary", "1").length).toBeGreaterThan(0);
 }, 120_000);
 
@@ -404,14 +404,22 @@ test("Now Playing keeps a song a rescan removed, even after the keyboard has rep
   press(rig, BTN.START);
   frames(rig, 3);
   expect(screenText(rig.world, "auxiliary")).toContain("Aerodynamic");
-  touch(rig, 160, 196);
+  touch(rig, 138, 196);
   expect(rig.host.log).toContain("paused(true)");
 }, 120_000);
 
 test("transport taps do nothing while nothing has played", async () => {
   const rig = await boot();
-  for (const x of [49, 97, 160, 223, 271]) touch(rig, x, 196);
+  for (const x of [27, 75, 138, 201, 249]) touch(rig, x, 196);
   expect(rig.host.log).toEqual(["scan()"]);
+}, 120_000);
+
+test("the deck's transport row ends with the DJ gel, centred at 293", async () => {
+  const rig = await boot();
+  const row = flat(rig.world.tree("auxiliary")).find((node) => node.rect !== null && node.rect[1] === 160 && node.rect[3] === 72)!;
+  expect(row.children).toHaveLength(6);
+  const dj = row.children[5]!.rect!;
+  expect([dj[0] + dj[2] / 2, dj[1] + dj[3] / 2, dj[2]]).toEqual([293, 196, 34]);
 }, 120_000);
 
 test("an hour-long track shows h:mm:ss on both sides of the seek bar", async () => {
@@ -433,7 +441,7 @@ test("a host whose status reads start failing is reported, survives taps, and re
   garbled = true;
   frames(rig, 3);
   expect(screenText(rig.world, "primary")).toContain("Could not read the music library");
-  touch(rig, 160, 196);
+  touch(rig, 138, 196);
   press(rig, BTN.START);
   expect(rig.world.failure).toBeNull();
   garbled = false;

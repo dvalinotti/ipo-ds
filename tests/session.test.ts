@@ -12,6 +12,10 @@ test("without media.local the session is unavailable and every call is inert", (
     expect(session.readFailed()).toBe(false);
     session.dispatch({ type: "toggle" });
     session.rescan();
+    session.scratch.begin();
+    session.scratch.rate(2);
+    session.scratch.end();
+    expect(session.scratching()).toBe(false);
     expect(session.player().index).toBe(-1);
     expect(session.track()).toBeNull();
     // The player view carries no status: screens read status(), which moves every frame of playback.

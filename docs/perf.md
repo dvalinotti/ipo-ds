@@ -150,3 +150,18 @@ The review-fix branch (`fix/fable-review`, `docs/superpowers/plans/2026-10-07-wa
 Every row is within budget and within a few tenths of the gels run; `scroll` on Old stays at 25.6 ms against 30 ms. The idle rows do not move: the status read the branch removed from idle frames was already far below the draw cost.
 
 Harness note: in three of seven Azahar launches the capture never wrote `done` or `error.txt` (the ROM booted and the scan finished at about 9 s, then nothing), and `perf` timed out after 240 s. Every stalled scenario passed on re-run from the same `.3dsx`. Multi-scenario invocations stalled on their first launch each time; single-scenario invocations completed, so the rows above come from one scenario per invocation. The host writes `error.txt` for a guest throw, so the stalls are not JS errors.
+
+## DJ Mode (Plan 8)
+
+The DJ Mode branch (`feature/dj-mode`, `docs/superpowers/plans/2026-10-08-dj-mode-08-dj-screen.md`): the platter turns one View holding the label and a 256 px vinyl texture (two textured quads under rotation), and the native player decodes through a 2 MiB PCM ring. `dj` opens DJ Mode on the playing song; it measures the motor spin, not a scratch (the tape has no touches). `bun run perf dj --model both --check` and `bun run perf now-playing --model both --check`:
+
+| Scenario | Model | JS mean/max | Tick mean/max | Draw mean/max | CPU mean/max (ms) | Scan (ms) | Within budget |
+|---|---|---|---|---|---|---|---|
+| dj | new | 0.9/1.8 | 0.0/0.1 | 1.2/3.2 | 2.1/3.8 | cached -1, walk 5718 (324/324 read) | yes |
+| dj | old | 2.9/11.3 | 0.0/0.3 | 3.8/9.5 | 6.7/16.0 | cached -1, walk 6007 (324/324 read) | yes |
+| now-playing | new | 1.1/4.7 | 0.0/0.1 | 1.8/2.2 | 3.0/6.5 | cached -1, walk 5700 (324/324 read) | yes |
+| now-playing | old | 3.3/8.3 | 0.0/0.3 | 6.2/11.6 | 9.4/15.2 | cached -1, walk 6007 (324/324 read) | yes |
+
+`now-playing` stays within a few tenths of the Plan 6 rows on New (CPU mean/max 3.0/6.5 ms against 2.9/6.3 ms) and moves on Old from 8.8/19.1 ms to 9.4/15.2 ms, where the mean rises 0.6 ms and the max falls 3.9 ms. `dj` fits both budgets, with a CPU max of 3.8 ms on New against 14 ms and 16.0 ms on Old against 30 ms.
+
+The Old `now-playing` moves (mean +0.6 ms, max −3.9 ms) are run-to-run variance in the same direction-free range as earlier runs, not a ring cost: the max fell while the mean rose.
