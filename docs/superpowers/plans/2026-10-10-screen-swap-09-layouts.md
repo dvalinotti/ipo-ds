@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Hold SELECT swaps the screens: Now Playing moves to the 400 px top screen in a wide layout and the Explorer to the 320 px bottom screen in a narrow layout, with the buttons driving playback while swapped. No touch handling on the Explorer yet (that is Plan 10).
+**Goal:** Hold SELECT swaps the screens: Now Playing moves to the 400 px top screen in a wide layout and the Explorer to the 320 px bottom screen in a narrow layout, with the buttons driving playback while swapped. No touch handling on the Explorer yet (that is Plan 10), so after this plan alone a swapped user cannot search or start a song from the bottom screen: the footer gels are drawn but inert and the idle panel's "Tap a song below" is written for Plan 10. The branch is not releasable between the two plans.
 
-**Architecture:** A pure `placement()` function maps three flags (swapped, DJ on, keyboard open) to what each screen shows, and `app/app.tsx` renders both screens from it. `Explorer` and `NowPlaying` take a `layout` prop that is constant for a mount (they remount when they change sides), so each registers only the handlers its layout owns. Theme slots whose width depends on the screen become variant functions over the layout. A pure `BINDINGS` table is the one statement of the mapping, and a test keeps the README's controls table equal to it.
+**Architecture:** A pure `placement()` function maps three flags (swapped, DJ on, keyboard open) to what each screen shows, and `app/app.tsx` renders both screens from it. `Explorer` and `NowPlaying` take a `layout` prop that is constant for a mount (they remount when they change sides), so each registers only the handlers its layout owns. Theme slots whose width depends on the screen become variant functions over the layout. A pure `BINDINGS` table is the README's source for the controls table, and a test keeps the two equal (the handlers themselves are registered by the screens, so `BINDINGS` documents the mapping rather than driving it).
 
 **Tech Stack:** TypeScript, Solid (`solid-js`), PocketJS framework APIs (`@pocketjs/framework/*`), Bun tests on the PocketJS sim (`bootApp` / `bootGallery` from `tests/support/app-world.ts`).
 
@@ -22,15 +22,16 @@
 - Do not discover tests or sources through `runtime/`: run `bun run test` (it targets `./tests`) or a single file with `bun test --conditions=browser tests/<file>`.
 - Every task ends with `bun run check` and `bun run test` green. The baseline is 189 tests passing.
 - Layout names mean screen width everywhere: `"wide"` is the 400 px top screen, `"narrow"` the 320 px bottom screen. The Explorer's layout today is wide; the deck's is narrow.
-- Narrow Explorer numbers: LCD 92 px (text 80), tabs without the L / R hints and with 6 px tab padding, header left cell 162, row title cell 134 (margin 6), wide title 238. Rows stay 21 px, the footer 20 px, the list body 168 px minus 21 per strip.
+- Narrow Explorer numbers: LCD 92 px (text 80), tabs without the L / R hints and with 6 px tab padding, header left cell 162, row title cell 134 (margin 6), wide title 238, footer gels 18 px tall. Rows stay 21 px, the footer 20 px, the list body 168 px minus 21 per strip.
 - Wide deck numbers: info LCD at left 118, 272 wide (text 256); idle panel 380 wide; seek capsule 380 wide with a 280 px track (256 with hours), inner widths 278 / 254; transport row 380 wide, gap 20. `seekTrackLeft` is unchanged.
-- Seek: 5 s per tap, 2 s per repeat (every 80 ms after 300 ms), clamped to `[0, duration]`, nothing while idle or with a 0 duration.
+- Seek: 5 s per tap, 2 s per repeat (every 80 ms after 300 ms), clamped to `[0, duration]`, nothing while idle or with a 0 duration. A held button previews through the deck's scrubber and sends **one** host seek on release, as the capsule drag does: a seek is a host command that forces a status re-read and can flush the decoder, so it never runs at the repeat rate.
+- The wide Explorer is the measured `scroll` path (Old 3DS peak 25.6–28.6 ms against 30). Task 10 runs `bun run perf scroll --model both --check` and `bun run perf now-playing --model both --check` (one scenario per invocation) and blocks on a regression.
 - Hold SELECT = 60 frames (`HOLD_FRAMES`). Any press of SELECT during which L or R was held does nothing, tap or hold.
 - 3DS face buttons by position: A = `BTN.CIRCLE`, B = `BTN.CROSS`, X = `BTN.TRIANGLE`, Y = `BTN.SQUARE`.
 
 ## Review Focus
 
-1. **A button still held when a screen mounts** (X opening the keyboard in swapped mode remounts the Explorer on top; A held through a swap) must not fire in the fresh screen. Pinned in Task 8 (`a swap while A is held does not touch playback`); the helpers in `app/input.ts` start latched and the press handlers use `latched: true`.
+1. **A button still held when a screen mounts** (A or Y held through a swap; in Plan 10, the keyboard opening from the footer gel remounts the Explorer on top) must not fire in the fresh screen. Pinned in Task 8 (`a swap while A is held does not touch playback`); the helpers in `app/input.ts` start latched, the press handlers use `latched: true`, and the shoulder stepper is seeded as "everything held".
 2. **SELECT with L or R at any point during the press** must neither toggle DJ Mode nor swap, including L pressed after SELECT went down. Pinned in Task 8 (`L with SELECT neither toggles nor swaps`).
 3. **X over the empty-library panel while swapped** must rescan, not toggle shuffle. Pinned in Task 8 (`X over the empty panel rescans in swapped mode`).
 4. **Seek at the ends** must clamp to 0 and to the duration, and do nothing with a 0 duration or nothing playing. Pinned in Task 2 (`seekTarget`) and Task 8 (`A and left do nothing with nothing playing`).
@@ -261,11 +262,13 @@ previous, play/pause, next, repeat, DJ Mode, and a drag-to-seek capsule. In DJ
 Mode the record spins while the song plays; drag it clockwise to play forward
 at your finger's speed, counter-clockwise to play backwards, and hold it still
 for silence. Lifting your finger lets the song play on from there. Swapped, the
-bottom screen is the library.
+bottom screen is the library. DJ Mode takes the bottom screen in either mode, so
+while it is open in swapped mode the library and its buttons (B, X, Y, L, R)
+wait until you leave it.
 
 ```
 
-The blank line after the table must stay: the test reads rows up to it.
+The blank line after the table must stay: the test reads rows up to it. In the README's opening paragraph (line 3), change `The top screen browses your library` to `By default the top screen browses your library`.
 
 - [ ] **Step 5: Run the tests to see them pass**
 
@@ -287,11 +290,10 @@ git commit -m "feat(swap): the bindings table, seek steps and the two-column con
 - Modify: `app/theme/theme.ts` (the `Theme` interface, `Layout`)
 - Modify: `app/theme/aqua.ts` (the variant literals, the footer gel)
 - Modify: `tests/theme.test.ts:11-35`, `tests/gels.test.ts:43-44`
-- Modify: `docs/superpowers/specs/2026-10-10-screen-swap-design.md` (§5.1 numbers)
 
 **Interfaces:**
 - Consumes: nothing.
-- Produces: `export type Layout = "wide" | "narrow"` in `theme.ts`; `Theme.lcdStatus(layout)`, `Theme.tab(active, layout)`, `Theme.headerLeft(sorted, layout)`, `Theme.rowTitleCell(layout)`, `Theme.footerGel: GelClasses`, `Theme.footerGelText: string`, `Theme.infoLcd(layout)`, `Theme.idlePanel(layout)`, `Theme.seekCapsule(layout)`, `Theme.seekTrack(layout)`, `Theme.seekTrackWide(layout)`, `Theme.transportRow(layout)`.
+- Produces: `export type Layout = "wide" | "narrow"` in `theme.ts`; `Theme.lcdStatus(layout)`, `Theme.tab(active, layout)`, `Theme.headerLeft(sorted, layout)`, `Theme.rowTitleCell(layout)`, `Theme.footerGel: GelClasses`, `Theme.infoLcd(layout)`, `Theme.idlePanel(layout)`, `Theme.seekCapsule(layout)`, `Theme.seekTrack(layout)`, `Theme.seekTrackWide(layout)`, `Theme.transportRow(layout)`.
 
 - [ ] **Step 1: Extend the theme test and the gel sheet test**
 
@@ -313,7 +315,6 @@ In `tests/theme.test.ts`, add `Layout` to the type import from `../app/theme/the
     );
   }
   gel(AQUA.footerGel);
-  out.push(AQUA.footerGelText);
   gel(AQUA.scrollThumb);
   gel(AQUA.progressFill);
   gel(AQUA.seekKnob);
@@ -340,7 +341,13 @@ test("the narrow and wide variants carry their widths", () => {
 });
 ```
 
-In `tests/gels.test.ts:43-44`, change `AQUA.tab(true)` to `AQUA.tab(true, "wide")` and `AQUA.tab(false)` to `AQUA.tab(false, "wide")`.
+In `tests/gels.test.ts:43-44`, change `AQUA.tab(true)` to `AQUA.tab(true, "wide")` and `AQUA.tab(false)` to `AQUA.tab(false, "wide")`, and add after them the new gels so their gloss geometry is checked too:
+
+```ts
+  out.push({ name: "tab active narrow", gel: AQUA.tab(true, "narrow"), tone: "blue", outline: false, shadow: false, sizes: [[36, 18], [56, 18]] });
+  out.push({ name: "tab narrow", gel: AQUA.tab(false, "narrow"), tone: "grey", outline: false, shadow: false, sizes: [[36, 18], [56, 18]] });
+  out.push({ name: "footer gel", gel: AQUA.footerGel, tone: "grey", outline: true, shadow: false, sizes: [[40, 18], [80, 18]] });
+```
 
 - [ ] **Step 2: Run the tests to see them fail**
 
@@ -367,9 +374,8 @@ Change these members of `Theme` (keep their doc comments, add the layout):
   headerLeft(sorted: boolean, layout: Layout): string;
   /** 214 wide beside the detail column on the top screen, 134 on the bottom. */
   rowTitleCell(layout: Layout): string;
-  /** The narrow footer's touch buttons (one per action) and their label. */
+  /** The narrow footer's touch buttons (one per action); their label uses `footerText`. */
   footerGel: GelClasses;
-  footerGelText: string;
   /** 192 wide on the bottom screen, 272 on the top. */
   infoLcd(layout: Layout): string;
   /** 300 wide on the bottom screen, 380 on the top. */
@@ -394,9 +400,10 @@ const TAB_GREY_NARROW: GelClasses = {
   body: "relative h-[18] px-[6] items-center justify-center bg-gradient-to-b from-[#c4c4c4] via-[#c4c4c4] to-[#f4f4f4]",
   gloss: TAB_GREY.gloss,
 };
-// The narrow footer's touch buttons: a short grey gel with a 5 px gloss band under the label.
+// The narrow footer's touch buttons: a grey gel 18 px tall inside the 20 px footer (the gel is the touch
+// target, so it is as tall as the footer allows) with a 5 px gloss band under the label.
 const FOOTER_GEL: GelClasses = {
-  body: "relative h-[16] px-[8] rounded-[8] items-center justify-center bg-gradient-to-b from-[#c4c4c4] via-[#c4c4c4] to-[#f4f4f4] border border-[#6e6e6e]",
+  body: "relative h-[18] px-[8] rounded-[9] items-center justify-center bg-gradient-to-b from-[#c4c4c4] via-[#c4c4c4] to-[#f4f4f4] border border-[#6e6e6e]",
   gloss: "absolute left-[3] right-[3] top-[1] h-[5] rounded-[2] bg-gradient-to-b from-[#fdfdfd] via-[#ececec] to-[#d6d6d6]",
 };
 ```
@@ -419,7 +426,6 @@ Replace the slots:
     ? "w-[214] h-[21] mr-[6] flex-col justify-center overflow-hidden"
     : "w-[134] h-[21] mr-[6] flex-col justify-center overflow-hidden",
   footerGel: FOOTER_GEL,
-  footerGelText: "text-xs text-[#2b2b2b]",
   infoLcd: (layout) => layout === "narrow"
     ? "absolute left-[118] top-[10] w-[192] h-[100] flex-col items-center px-[8] pt-[6] overflow-hidden rounded-[10] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]"
     : "absolute left-[118] top-[10] w-[272] h-[100] flex-col items-center px-[8] pt-[6] overflow-hidden rounded-[10] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
@@ -440,8 +446,6 @@ Replace the slots:
     : "absolute left-[10] top-[10] w-[380] h-[100] flex-col items-center justify-center gap-[4] rounded-[10] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
 ```
 
-The parts still call the old shapes, so `bun run check` fails until Tasks 4 and 6; this task's gate is the two test files plus the next step's call-site fix.
-
 - [ ] **Step 5: Fix the call sites to the wide / narrow defaults so the build type-checks**
 
 The parts get real `layout` props in Tasks 4 and 6; here each call site passes today's layout so nothing moves:
@@ -452,21 +456,15 @@ The parts get real `layout` props in Tasks 4 and 6; here each call site passes t
 - `app/theme/parts/deck.tsx:77` → `t().infoLcd("narrow")`; `:130` → `t().seekCapsule("narrow")`; `:132` → `props.hours ? t().seekTrackWide("narrow") : t().seekTrack("narrow")`; `:191` → `t().transportRow("narrow")`.
 - `app/gallery/states.tsx:188` → `AQUA.seekTrack("narrow")`.
 
-- [ ] **Step 6: Fix the spec's narrow toolbar numbers**
-
-In `docs/superpowers/specs/2026-10-10-screen-swap-design.md` §5.1, the Toolbar row currently says `LCD 96 (text 84)` and `tab padding drops from 8 to 6 px if it does not`. The measured tab group is 165 px wide at 8 px padding, so at 320 px it needs both the 92 px LCD and 6 px padding. Change the row to:
-
-`| Toolbar | lights, LCD 144, tabs with L / R hints | lights, LCD 92 (text 80), tabs without hints at 6 px padding; the group's right edge is at or left of 314 |`
-
-- [ ] **Step 7: Run the checks**
+- [ ] **Step 6: Run the checks**
 
 Run: `bun run check && bun run test`
 Expected: check clean; 193 pass (189 + 1 placement + 2 controls + 1 theme).
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add app/theme/theme.ts app/theme/aqua.ts app/theme/parts app/gallery/states.tsx tests/theme.test.ts tests/gels.test.ts docs/superpowers/specs/2026-10-10-screen-swap-design.md
+git add app/theme/theme.ts app/theme/aqua.ts app/theme/parts app/gallery/states.tsx tests/theme.test.ts tests/gels.test.ts
 git commit -m "feat(swap): theme width variants for the narrow Explorer and the wide deck"
 ```
 
@@ -577,7 +575,7 @@ export function FooterGels(props: { items: readonly TouchLegendItem[]; theme?: T
         <For each={props.items}>
           {(item) => (
             <Gel classes={t().footerGel}>
-              <GelLabel text={item.label} class={t().footerGelText} />
+              <GelLabel text={item.label} class={t().footerText} />
             </Gel>
           )}
         </For>
@@ -684,7 +682,7 @@ git commit -m "feat(swap): narrow toolbar, header and rows; setTab and the touch
 
 **Interfaces:**
 - Consumes: `Layout`, `touchLegendOf`, `FooterGels`, the parts' `layout` props (Tasks 3, 4).
-- Produces: `Explorer(props: { layout: Layout; session; store; searching; openSearch })`; `ExplorerStore.scrollRow: Map<string, number>` (first visible row per `viewKey`, written on cleanup).
+- Produces: `Explorer(props: { layout: Layout; session; store; searching; openSearch })`; `ExplorerStore.scrollRow: Map<string, number>` (first visible row per `viewKey`, written as `top` changes).
 
 No new test file: the wide layout is pinned by the existing sim tests, the narrow layout by Task 8's `tests/swap.test.ts`, which cannot mount it before Task 7's shell exists.
 
@@ -696,7 +694,7 @@ In `app/explorer/explorer.tsx`:
 export interface ExplorerStore {
   state: Accessor<ExplorerState>;
   dispatch(action: ExplorerAction): void;
-  /** The list's first visible row per view (viewKey), written when an Explorer unmounts and read when one mounts, so
+  /** The list's first visible row per view (viewKey), written as an Explorer scrolls and read when one mounts, so
    * a swap or a keyboard round trip lands where the list was. Not reactive: nothing renders from it. */
   scrollRow: Map<string, number>;
 }
@@ -719,7 +717,7 @@ export function Explorer(props: { layout: Layout; session: Session; store: Explo
   const wide = props.layout === "wide";
 ```
 
-Imports: add `onCleanup` to the `solid-js` import, `Layout` from `../theme/theme.ts`, `touchLegendOf` and `viewKey` (already) from `./model.ts`, `FooterGels` and `TouchLegendItem` from `../theme/parts/strips.tsx`.
+Imports: add `createComputed` to the `solid-js` import, `Layout` from `../theme/theme.ts`, `touchLegendOf` and `viewKey` (already) from `./model.ts`, `FooterGels` and `TouchLegendItem` from `../theme/parts/strips.tsx`.
 
 Replace the input block from `const move = …` through the `onButtonPress(BTN.CROSS…)` line with:
 
@@ -734,6 +732,13 @@ Replace the input block from `const move = …` through the `onButtonPress(BTN.C
   }
   // latched: a button already down when this Explorer mounts (a swap, the keyboard closing) is not a press.
   onButtonPress(BTN.CROSS, () => dispatch({ type: "back" }), { active: listActive, latched: true });
+```
+
+Seed the shoulder stepper as "everything held, chorded" so a Y or L held through a mount is not a press or a reveal on its release: replace `let shoulders = SHOULDERS_UP;` with
+
+```ts
+  // Everything held and chorded at mount: a button already down (Y through a swap) is ignored until released.
+  let shoulders = { mask: ~0, chorded: true };
 ```
 
 In the shoulder `onFrame`, the `else` branch (the reveal) becomes:
@@ -768,22 +773,32 @@ Replace `let previousTop = 0;` with:
 
 ```ts
   let previousTop = props.store.scrollRow.get(viewKey(currentView(untrack(state)))) ?? 0;
-  onCleanup(() => props.store.scrollRow.set(viewKey(currentView(untrack(state))), previousTop));
 ```
+
+and after the `top` settled value add a computation that records it for the current view whenever either changes. It is written as it changes, not on cleanup: when the screens swap, the new Explorer on one surface can mount before the old one on the other surface is disposed, so a cleanup-time write would come too late for the seed. (A `Map.set` per row change is nothing; an empty list is skipped so a rescan's empty frame does not overwrite a real row.)
+
+```ts
+  createComputed(() => {
+    if (rows().length > 0) props.store.scrollRow.set(viewKey(view()), top());
+  });
+```
+
+Add `createComputed` to the `solid-js` import; `onCleanup` is not needed.
 
 - [ ] **Step 4: Thread the layout into the parts and pick the footer**
 
 - `<Toolbar … layout={props.layout} />`
 - `<ColumnHeader … layout={props.layout} />`
 - both `<ListRow … layout={props.layout} />` (the slot rows and the selection overlay)
-- Add after `legend`: `const gels = settled<TouchLegendItem[]>(() => touchLegendOf(state(), kind()), (a, b) => a.length === b.length && a.every((item, i) => item.action === b[i]!.action && item.label === b[i]!.label));`
-- Replace `<FooterLegend items={legend()} />` with:
+- Only the footer model the layout renders is created (each `settled` re-runs on every state write, so an unused one would cost a press). Replace the `legend` settled with:
 
-```tsx
-      <Show when={wide} fallback={<FooterGels items={gels()} />}>
-        <FooterLegend items={legend()} />
-      </Show>
+```ts
+  const sameItems = <T extends { label: string }>(key: (item: T) => string) => (a: T[], b: T[]) => a.length === b.length && a.every((item, i) => key(item) === key(b[i]!) && item.label === b[i]!.label);
+  const legend = wide ? settled<LegendItem[]>(() => legendOf(state(), kind()), sameItems((item) => item.key)) : null;
+  const gels = wide ? null : settled<TouchLegendItem[]>(() => touchLegendOf(state(), kind()), sameItems((item) => item.action));
 ```
+
+- Replace `<FooterLegend items={legend()} />` with `{wide ? <FooterLegend items={legend!()} /> : <FooterGels items={gels!()} />}` (a plain conditional: `wide` is a constant for the mount).
 
 - [ ] **Step 5: Pass the layout from the shell**
 
@@ -814,7 +829,7 @@ git commit -m "feat(swap): the Explorer takes a layout; narrow binds X to shuffl
 
 **Interfaces:**
 - Consumes: `Layout`, theme variants (Task 3); `seekTarget` (Task 2).
-- Produces: `NowPlaying(props: { layout: Layout; session: Session; onDj?: () => void })`; `seekTrackPx(hours: boolean, layout: Layout): number`; `onRepeat(button, fire: (repeat: boolean) => void, active)`; `TransportButton` / `TransportRow` take `touch?: boolean` (default true); `InfoLcd`, `SeekCapsule`, `TransportRow`, `IdlePanel` take `layout?: Layout` (default `"narrow"`).
+- Produces: `NowPlaying(props: { layout: Layout; session: Session; onDj?: () => void })`; `seekTrackPx(hours: boolean, layout: Layout): number`; `onRepeat(button, fire: (repeat: boolean) => void, active, release?: () => void)`; `TransportButton` / `TransportRow` take `touch?: boolean` (default true); `InfoLcd`, `SeekCapsule`, `TransportRow`, `IdlePanel` take `layout?: Layout` (default `"narrow"`).
 
 - [ ] **Step 1: The input helpers**
 
@@ -822,17 +837,18 @@ In `app/input.ts`:
 
 ```ts
 /**
- * Fire on press, then repeat while held (300 ms delay, 80 ms rate); `repeat` is false on the press.
- * Latched: see stepLatch. Starts latched, so a button already down when the screen mounts (a swap, the
- * keyboard closing) is ignored until it is released.
+ * Fire on press, then repeat while held (300 ms delay, 80 ms rate); `repeat` is false on the press, and
+ * `release` runs once when a press that fired ends. Latched: see stepLatch. Starts latched, so a button
+ * already down when the screen mounts (a swap, the keyboard closing) is ignored until it is released.
  */
-export function onRepeat(button: number, fire: (repeat: boolean) => void, active: () => boolean): void {
+export function onRepeat(button: number, fire: (repeat: boolean) => void, active: () => boolean, release?: () => void): void {
   let held = -1;
   let ignoring = true;
   onFrame((buttons) => {
     const latch = stepLatch(ignoring, (buttons & button) !== 0, active());
     ignoring = latch.ignoring;
     if (!latch.down) {
+      if (held >= 0) release?.();
       held = -1;
       return;
     }
@@ -914,13 +930,25 @@ In `app/now-playing/now-playing.tsx`:
   // already down at mount (A through a swap) from firing.
   if (wide) {
     onButtonPress(BTN.CIRCLE, () => { if (!idle()) dispatch({ type: "toggle" }); }, { latched: true });
+    // Left / right seek through the same scrubber as the capsule drag: the press previews ±5 s, each repeat
+    // ±2 s more from the preview, and the release sends the one seek. A seek is a host command that forces
+    // a status re-read and can flush the decoder, so a held button must not send one at the repeat rate.
     const seekBy = (direction: -1 | 1, repeat: boolean) => {
-      if (idle()) return;
-      const target = seekTarget(status().positionMs, duration(), direction, repeat);
-      if (target !== null) dispatch({ type: "seek", ms: target });
+      if (idle() || duration() <= 0) return;
+      const from = repeat && scrubber.active() ? scrubber.preview() * 1000 : status().positionMs;
+      const target = seekTarget(from, duration(), direction, repeat);
+      if (target === null) return;
+      if (scrubber.active()) scrubber.move(target / duration(), duration() / 1000);
+      else scrubber.begin(target / duration(), duration() / 1000);
+      setPreview(scrubber.preview() * 1000);
     };
-    onRepeat(BTN.LEFT, (repeat) => seekBy(-1, repeat), () => true);
-    onRepeat(BTN.RIGHT, (repeat) => seekBy(1, repeat), () => true);
+    const commitSeek = () => {
+      if (!scrubber.active()) return;
+      scrubber.commit();
+      setPreview(null);
+    };
+    onRepeat(BTN.LEFT, (repeat) => seekBy(-1, repeat), () => true, commitSeek);
+    onRepeat(BTN.RIGHT, (repeat) => seekBy(1, repeat), () => true, commitSeek);
   }
 ```
 
@@ -966,7 +994,7 @@ import { BTN } from "@pocketjs/framework/input";
 import type { BundleWorld, SimNode, StepInput } from "../runtime/hosts/sim/sim.ts";
 import { createSimLocalMedia, type SimLocalMediaHost, type SimLocalTrack } from "../runtime/hosts/sim/localmedia.ts";
 import { LIBRARY } from "./fixtures/library.ts";
-import { bootApp, disposeGuest, pathTo, screenText } from "./support/app-world.ts";
+import { bootApp, disposeGuest, pathsTo, pathTo, screenText } from "./support/app-world.ts";
 
 afterAll(disposeGuest);
 
@@ -1039,8 +1067,9 @@ test("holding SELECT swaps the screens: the wide deck on top, the narrow list be
   // The narrow toolbar fits: the Albums tab's gel ends at or before x 314.
   const albums = pathTo(rig.world, "auxiliary", "Albums").at(-3)!.rect!;
   expect(albums[0] + albums[2]).toBeLessThanOrEqual(314);
-  // Eight 21 px rows: the list body is still 168 px tall.
-  expect(pathTo(rig.world, "auxiliary", "Aerodynamic").at(-5)!.rect![3]).toBe(168);
+  // Eight 21 px rows: the list body is still 168 px tall (the app's rows sit under the recycled list's
+  // slots, so the body is found by its rect rather than by walking up from a title).
+  expect(flat(rig.world.tree("auxiliary")).some((node) => node.rect?.join(",") === "0,51,320,168")).toBe(true);
   expect(selectedRow(rig.world, "auxiliary")).toContain("Aerodynamic");
   holdSelect(rig);
   expect(screenText(rig.world, "primary")).toContain("Song Name");
@@ -1066,15 +1095,22 @@ test("a SELECT tap still toggles DJ Mode; L with SELECT neither toggles nor swap
 
 test("the list keeps its place and its focus across a swap", async () => {
   const rig = await boot();
+  // Down 12 scrolls the window to row 5; up 4 leaves the focus on row 8, still inside it. A fresh Explorer
+  // that forgot the window would show row 1 at the top (the least scrolling for focus 8), so the rows on
+  // screen tell whether scrollRow carried the window across.
   for (let i = 0; i < 12; i++) press(rig, BTN.DOWN);
+  for (let i = 0; i < 4; i++) press(rig, BTN.UP);
   const focused = selectedRow(rig.world, "primary");
-  expect(screenText(rig.world, "primary")).not.toContain("Aerodynamic"); // scrolled off the top
+  const shown = screenText(rig.world, "primary");
+  expect(shown).not.toContain("Around the World"); // row 1 is above the window
+  expect(shown).toContain("DARE"); // row 5 is its first row
   holdSelect(rig);
   expect(selectedRow(rig.world, "auxiliary")).toBe(focused);
-  expect(screenText(rig.world, "auxiliary")).not.toContain("Aerodynamic");
+  expect(screenText(rig.world, "auxiliary")).not.toContain("Around the World");
+  expect(screenText(rig.world, "auxiliary")).toContain("DARE");
   holdSelect(rig);
   expect(selectedRow(rig.world, "primary")).toBe(focused);
-  expect(screenText(rig.world, "primary")).not.toContain("Aerodynamic");
+  expect(screenText(rig.world, "primary")).not.toContain("Around the World");
 }, 120_000);
 ```
 
@@ -1169,12 +1205,15 @@ export default function App() {
       {/* The app moves its own focus; this empty scope keeps the framework's d-pad traversal
           from walking the whole tree on every press (the keyboard pushes its own scope). */}
       <FocusScope class="absolute left-[0] top-[0] w-[0] h-[0]" />
-      <Switch>
-        <Match when={place().top === "explorer"}>{explorer("wide")}</Match>
-        <Match when={place().top === "deck"}>
-          <NowPlaying layout="wide" session={session} />
-        </Match>
-      </Switch>
+      {/* A wrapping View here too: the primary root now holds a reactive Switch, as the auxiliary always has. */}
+      <View class="relative w-full h-full flex-col">
+        <Switch>
+          <Match when={place().top === "explorer"}>{explorer("wide")}</Match>
+          <Match when={place().top === "deck"}>
+            <NowPlaying layout="wide" session={session} />
+          </Match>
+        </Switch>
+      </View>
       <AuxiliarySurface>
         {/* A wrapping View: AuxiliarySurface does not track a lone reactive child (a bare <Switch> renders once). */}
         <View class="relative w-full h-full flex-col">
@@ -1197,7 +1236,7 @@ export default function App() {
 }
 ```
 
-`explorer(...)` is a plain function called inside each Match, so each call builds its own tree in that Match's scope. A Match whose condition stays true across a placement change does not re-render (Solid's Switch keys on the matched branch), so opening the keyboard in normal mode leaves the top Explorer mounted, as before.
+`explorer(...)` is a plain function called inside each Match, so each call builds its own tree in that Match's scope. Solid's Switch memoises the index of the matched branch, so a Match whose condition stays true across a placement change does not re-render: opening the keyboard in normal mode leaves the top Explorer mounted, as before, and only the screens that change sides remount. The two screens' remount order is not defined, which is why `scrollRow` is written as the list scrolls (Task 5) and not on cleanup.
 
 - [ ] **Step 5: Run the tests to see them pass**
 
@@ -1237,24 +1276,26 @@ test("swapped: A pauses and resumes, left and right seek by 5 s then 2 s, X shuf
   press(rig, A);
   expect(rig.host.log.at(-1)).toBe("paused(false)");
   frames(rig, 400); // about 6.7 s into the song
-  const before = rig.host.ns.status().positionMs;
+  const position = () => (JSON.parse(rig.host.ns.status()) as { positionMs: number }).positionMs; // the host replies in JSON
+  const before = position();
   expect(before).toBeGreaterThan(5000);
-  press(rig, BTN.LEFT);
+  press(rig, BTN.LEFT); // a tap: one seek of 5 s, sent on the release
   expect(seeks(rig.host)).toHaveLength(1);
   expect(Math.abs(seeks(rig.host)[0]! - (before - 5000))).toBeLessThan(300);
-  frames(rig, 24, { buttons: BTN.RIGHT }); // press, then repeats at frames 18 and 23
+  const beforeHold = position();
+  frames(rig, 24, { buttons: BTN.RIGHT }); // press (+5 s), repeats at frames 18 and 23 (+2 s each): one seek of +9 s on release
   frames(rig, 2);
-  expect(seeks(rig.host)).toHaveLength(4);
-  const [, tap, repeat1, repeat2] = seeks(rig.host);
-  expect(repeat1! - tap!).toBeGreaterThanOrEqual(1500);
-  expect(repeat1! - tap!).toBeLessThanOrEqual(2500);
-  expect(repeat2! - repeat1!).toBeGreaterThanOrEqual(1500);
-  expect(repeat2! - repeat1!).toBeLessThanOrEqual(2500);
+  expect(seeks(rig.host)).toHaveLength(2);
+  expect(Math.abs(seeks(rig.host)[1]! - (beforeHold + 9000))).toBeLessThan(300);
+  frames(rig, 60, { buttons: BTN.RIGHT }); // a long hold is still one seek
+  frames(rig, 2);
+  expect(seeks(rig.host)).toHaveLength(3);
   press(rig, X); // shuffle: the current song moves to the head of the order
   expect(screenText(rig.world, "primary")).toContain("1 of 20");
-  press(rig, Y); // repeat all
+  press(rig, Y); // repeat all: no "1" flag yet
+  expect(pathsTo(rig.world, "primary", "1")).toHaveLength(0);
   press(rig, Y); // repeat one: the LCD shows its "1"
-  expect(pathTo(rig.world, "primary", "1").length).toBeGreaterThan(0);
+  expect(pathsTo(rig.world, "primary", "1")).toHaveLength(1);
   const focused = selectedRow(rig.world, "auxiliary");
   press(rig, BTN.UP);
   press(rig, BTN.DOWN);
@@ -1315,15 +1356,36 @@ test("swapped: SELECT shows DJ Mode over the Explorer, the deck stays on top, an
 ```
 
 
+Also append an efficiency pin, with `recordOps` copied from `tests/app.test.ts` (it wraps the sim's `ui` ops and records their names):
+
+```ts
+test("swapped presses touch no nodes: A, X, Y and a held RIGHT create nothing", async () => {
+  const rig = await boot();
+  press(rig, A);
+  frames(rig, 3);
+  holdSelect(rig);
+  frames(rig, 10);
+  const ops = recordOps();
+  press(rig, A);
+  press(rig, A);
+  press(rig, X);
+  press(rig, Y);
+  frames(rig, 24, { buttons: BTN.RIGHT });
+  frames(rig, 2);
+  ops.stop();
+  expect(ops.calls.filter((name) => name === "createNode")).toEqual([]);
+}, 120_000);
+```
+
 - [ ] **Step 2: Run the tests**
 
 Run: `bun test --conditions=browser tests/swap.test.ts`
-Expected: PASS (8 tests). If `the list keeps its place` or the seek deltas fail, the defect is in Tasks 5–7, not in the test: fix there.
+Expected: PASS (9 tests). If `the list keeps its place` or the seek values fail, the defect is in Tasks 5–7, not in the test: fix there.
 
 - [ ] **Step 3: Run everything**
 
 Run: `bun run check && bun run test`
-Expected: check clean; 203 pass.
+Expected: check clean; 204 pass.
 
 - [ ] **Step 4: Commit**
 
@@ -1432,7 +1494,7 @@ Neither state uses `cover`: the gallery test counts one `cover-built` log at boo
 - [ ] **Step 4: Run the tests to see them pass**
 
 Run: `bun run check && bun test --conditions=browser tests/gallery.test.ts && bun run test`
-Expected: check clean; 205 pass.
+Expected: check clean; 206 pass.
 
 - [ ] **Step 5: Render the gallery and look**
 
@@ -1451,5 +1513,6 @@ git commit -m "feat(swap): gallery states for the swapped layouts"
 ### Task 10: Whole-branch review
 
 - [ ] **Step 1:** The orchestrator dispatches one Sonnet reviewer over `git diff main...feature/screen-switch-mode -- app tests README.md`, with the spec (§4–§7, §9) and this plan's Review Focus as the acceptance criteria. Findings that are defects are fixed in `fix(swap): …` commits with a pinning test each; style findings are judged by the orchestrator.
-- [ ] **Step 2:** `bun run check && bun run test` green (205 pass); `bun run gallery` renders.
+- [ ] **Step 2:** `bun run check && bun run test` green (206 pass); `bun run gallery` renders.
+- [ ] **Step 2b (the orchestrator, with Azahar and Docker):** `bun run perf scroll --model both --check`, then `bun run perf now-playing --model both --check`, one scenario per invocation. Both within budget and within a few tenths of the Plan 8 rows in `docs/perf.md` (Old `scroll` 25.6 ms); a regression is fixed before Plan 10 starts, and the rows are appended to `docs/perf.md` under a "Screen Swap (Plan 9)" heading.
 - [ ] **Step 3:** Hand over to Plan 10 (`docs/superpowers/plans/2026-10-10-screen-swap-10-touch.md`) on the same branch.

@@ -94,7 +94,7 @@ In words: the keyboard and DJ Mode always take the bottom screen; the keyboard p
 ### 4.4 Store additions (`app/explorer/explorer.tsx`, `app/explorer/model.ts`)
 
 - `ExplorerAction` gains `{ type: "setTab"; tab: Tab }` (a tab tap).
-- `ExplorerStore` gains a non-reactive `scrollRow: Map<string, number>` keyed by `viewKey`: the list's first row for a view. The narrow Explorer writes it when the scroller settles and on cleanup, never per frame (a store write per frame would re-run the settled memos every frame); the wide Explorer writes its `top` on cleanup. Both layouts read it at mount to seed `previousTop`, so a swap, a keyboard round trip or a drill-down and back lands where the list was.
+- `ExplorerStore` gains a non-reactive `scrollRow: Map<string, number>` keyed by `viewKey`: the list's first row for a view. Both layouts write it from a computation on the settled `top` and the view, so it changes when a row boundary is crossed and never per frame, and skip the write while the list is empty. It is written as the list moves rather than on cleanup because the two screens' remount order on a swap is not defined, and the new Explorer may mount before the old one is disposed. Both layouts read it at mount to seed the window, so a swap, a keyboard round trip or a drill-down and back lands where the list was. The wide layout keeps the focused row visible, so a narrow scroll position survives a swap while the focused row (a tapped row) is inside the window.
 
 ### 4.5 Controls (`app/controls.ts`, pure)
 
@@ -116,7 +116,7 @@ Row height, footer height and the body arithmetic (168 px minus 21 per strip) do
 
 | Part | Wide (today) | Narrow |
 |---|---|---|
-| Toolbar | lights, LCD 144, tabs with L / R hints | lights, LCD 96 (text 84), tabs without hints; must fit 320 with 6 px side padding, tab padding drops from 8 to 6 px if it does not |
+| Toolbar | lights, LCD 144, tabs with L / R hints | lights, LCD 92 (text 80), tabs without hints at 6 px padding; the group's right edge is at or left of 314 (the measured group is 165 px wide at 8 px padding, so both changes are needed) |
 | Column header left cell | 242 | 162 |
 | Row title cell | 214 (+ 6 margin) | 134 (+ 6 margin); the detail cell keeps its 144 px |
 | Wide title (Artists / Albums) | 318 | 238 |
@@ -127,23 +127,23 @@ Theme: `lcdStatus`, `headerLeft`, `rowTitleCell`, `rowWideCell`, `footerItem` an
 ### 5.2 Scrolling
 
 - The arithmetic is pure, in `app/explorer/scroll.ts`: the offset split, the snap, the velocity cap, the thumb mapping both ways and the page offsets. The Explorer binds it.
-- A `createScroller` with `max: () => Math.max(0, rows().length - page()) * ROW_PX`, `overscroll: 0`, `snap: (rest) => Math.round(rest / ROW_PX) * ROW_PX` clamped to `max`, and `onSettle` writing `scrollRow`. `step()` runs in the Explorer's `onFrame`.
+- A `createScroller` with `max` from a settled row count (`Math.max(0, count - page) * ROW_PX`) and `overscroll: 0`. No `snap` option: with `snap` set, the framework's `endDrag` replaces the fling with a 150–450 ms tween to the projected rest, whose first frames move up to 13 rows at once, so the fling state would never run and the velocity cap would mean nothing. The real fling decays from the clamped release velocity; `onSettle` then tweens to the nearest row when the rest position is not on one (`alignToRow`). `step()` runs in the Explorer's `onFrame`. A rescan that shrinks the rows below the offset clamps it to the new `max` at once.
 - Each frame the offset splits: `top = Math.floor(offset / ROW_PX)` and `shift = offset - top * ROW_PX`. `top` stays a settled signal, so frames that cross no row boundary re-run nothing downstream. `shift` is its own signal read by exactly two translates.
-- `RecycledList` gains an optional `shift` px prop: the canvas translate becomes `-(top * rowHeight + shift)`, and when `shift` can be non-zero the pool holds `rows + 2` slots (rounded up to even) so the partially visible row at the bottom has a slot. Each slot's View takes a ref so a hit can be resolved to it (§5.3).
+- `RecycledList` gains an optional `shift` px prop: the canvas translate becomes `-(top * rowHeight + shift)`. The pool does not grow: a shifted window shows rows `top` to `top + rows`, that is `rows + 1` rows, which the existing pool of `rows + 1` rounded up to even already holds (10 slots for 8 rows, 8 for 7).
 - The selection overlay translates by `(focus - top) * ROW_PX - shift`.
-- One gesture over the list body (`surface: "auxiliary"`, `axis: "y"`, `region: { node: body }`): `onDown` stops the fling and remembers the row under the finger; `onPanStart` begins the drag; `onPanMove` passes `-c.fdy`; `onPanEnd` passes `-clamp(c.vy)` (§8); `onCancel` ends a tracking drag with velocity 0.
+- One gesture over the list body (`surface: "auxiliary"`, `axis: "y"`, a geometry `region.rect` covering the body short of the scrollbar's hit region): `onDown` stops the fling and remembers the row under the finger; `onPanStart` begins the drag and feeds the travel the pan slop swallowed (`c.dy - c.fdy`), so the content follows the finger exactly; `onPanMove` passes `-c.fdy`; `onPanEnd` passes `-clamp(c.vy)` (§8); `onUp` (which the framework fires before `onPanEnd` and `onTap`) aligns a stopped, idle scroller to a row; `onCancel` ends a tracking drag with velocity 0.
 - In narrow layout `top` does not follow focus. The wide layout keeps `nearestTop` focus-follow and creates no scroller.
 
 ### 5.3 Row tap
 
-- `onTap` resolves the row: `resolveTouchHit(c.x, c.y, c.hit, "auxiliary")` gives the node under the finger; walk its parents until one is a slot View (a `Map<node, slot>` filled by the slot refs); the row is that slot's index signal. No slot means a gap or the panel: nothing happens.
+- The row is arithmetic: the rows tile the body exactly from `bodyTopPx(strips)`, so `rowAt(y, bodyTop, offset, 21, count)` names the row under the finger with no hit walk (the framework's hit resolver is not public API, and the geometry is fixed). It is read at the down edge, after the fling is stopped, and used by `onTap`. A point below the last row is a gap: nothing happens.
 - A song row dispatches `playFrom` with `songIds(rows())` and its id. An artist or album row dispatches `open`. Both dispatch `focus` to the row first, so the highlight moves to it.
 - No pressed look during the down (rows stay cheap). A finger that moves past the pan slop is a scroll; the framework never fires `onTap` for it.
 
 ### 5.4 Scrollbar
 
-- The drawn track stays 14 px. A hit region 24 px wide, absolutely placed over the track, owns a second gesture (`axis: "y"`).
-- A down on the thumb (the contact y within the thumb) starts a thumb drag: `offset = (y - grabOffset) / (view - thumbHeight) * (content - view)`, clamped, set with `scrollTo(…, { immediate: true })` each `onPanMove`; `onPanEnd` snaps.
+- The drawn track stays 14 px. A second gesture (`axis: "y"`) owns a geometry region 20 px wide over the track (x ≥ 300), and only while a thumb exists; with a short list the region is null and the list's region spans the full width.
+- A down on the thumb (the contact y within the thumb) starts a thumb drag: `offset = (y - grabOffset) / (view - thumbHeight) * (content - view)`, clamped, set with `scrollTo(…, { immediate: true })` each `onPanMove`; the release aligns to a row.
 - A tap on the track above the thumb pages up, below it pages down, through `scrollTo(offset ∓ page() * ROW_PX)` (the 200 ms tween).
 - The thumb's position comes from the offset and moves by `translateY`, not inset, so it never relayouts. Its size still comes from `rows()` and `bodyPx()`.
 
@@ -151,8 +151,9 @@ Theme: `lcdStatus`, `headerLeft`, `rowTitleCell`, `rowWideCell`, `footerItem` an
 
 - **Tabs:** `SegmentedTabs` takes `onSelect?: (tab: Tab) => void`; with it, each tab gel owns a tap recognizer and dispatches `setTab`. L / R still step tabs.
 - **Footer gels** (`touchLegendOf(state, panel)` in `model.ts`): `Search` or `Edit search`; `Back`, `Clear`, `Artists` or `Albums`, the labels `legendOf` uses today. Over the empty and read-error panels one gel reads `Scan again` and a tap rescans in both cases (a deliberate tap on a dedicated gel does not need the hold that protects X). Scanning and unavailable show no gels. Each gel owns a tap recognizer.
-- **Breadcrumb root** taps go back (`dispatch({ type: "back" })`).
-- **LCD** taps reveal the playing song (`reveal`, as Y does in wide layout) and `chaseTo` the row's offset so it slides into view.
+- **Breadcrumb** taps anywhere on the strip go back (`dispatch({ type: "back" })`); a 20 px label alone is too small a target.
+- **LCD** taps reveal the playing song (`reveal`, as Y does in wide layout) and tween the window to centre its row. Gesture handlers run inside the frame's batch, where the settled values and effects are stale until the batch ends: when the reveal changes the view or query, the view-change effect performs the centring after the batch instead of restoring that view's remembered row.
+- Every tap target is one helper, `tapTarget(onTap?)` in `parts/gel.tsx`: a ref setter that registers an auxiliary-surface tap recognizer on its node only when a handler is given. The footer gels are 18 px tall inside the 20 px footer so the target is not smaller than it must be.
 
 ## 6. Controls and the wide deck
 
@@ -175,7 +176,7 @@ Theme: `lcdStatus`, `headerLeft`, `rowTitleCell`, `rowWideCell`, `footerItem` an
 ### 6.2 Ownership
 
 - **The Explorer owns X, Y, B and the shoulders in both layouts.** Narrow: X tap dispatches `toggleShuffle` to the session (the hold still rescans); the shoulder stepper's `reveal` dispatches `cycleRepeat`. B is unchanged. D-pad, circle pad and A are registered in wide layout only.
-- **Now Playing owns A and left / right in wide layout only.** A dispatches `toggle`. Left / right dispatch `seek` to `positionMs ∓ step`, clamped to `[0, durationMs]`, and do nothing while idle or when the duration is 0 (the capsule's rule). `onRepeat` gains a `repeat: boolean` argument to its callback so the first fire steps 5 s and the repeats 2 s.
+- **Now Playing owns A and left / right in wide layout only.** A dispatches `toggle`. Left / right seek through the same scrubber as the capsule drag: the press previews `position ∓ 5 s`, each repeat moves the preview 2 s further, and the release sends the one `seek`, clamped to `[0, durationMs]`; nothing happens while idle or when the duration is 0 (the capsule's rule). A seek is a host command that forces a status re-read and can flush the decoder, so a held button never sends one at the repeat rate. `onRepeat` gains a `repeat: boolean` argument to its callback and a `release` callback.
 - Tap-or-hold and repeat steppers stay latched by the keyboard as today (`stepLatch`).
 
 ### 6.3 The wide deck (400 px)
@@ -199,7 +200,8 @@ Two new states, `swapped` (wide deck top, narrow Songs list bottom) and `swapped
 
 ## 7. Edge cases
 
-- **Swap with a finger down.** The Explorer unmounts; its gestures dispose (`onCleanup`), the scroller goes with it, and cleanup writes `scrollRow`. The remount lands where the finger left it.
+- **Swap with a finger down.** The Explorer unmounts; its gestures dispose (`onCleanup`) and the scroller goes with it. `scrollRow` already holds the last row boundary crossed, so the remount lands where the finger left it.
+- **DJ Mode or the keyboard while swapped** rebuilds screens in one frame: DJ Mode replaces the narrow Explorer; the keyboard tears down both screens' contents and builds the wide Explorer and the keyboard. Both are measured (§8); if one exceeds the budget, the second mount is delayed by a frame.
 - **Swap or keyboard while DJ is on.** Placement handles both: DJ stays on the bottom; the keyboard replaces it and restores it on close, as today.
 - **Tap during a fling.** The down stops the fling; the release is a tap only if the finger stayed within slop, so catching a moving list does not play a song.
 - **Rows shrink under a scrolled list** (rescan, search). The scroller reads `max` every step and clamps; focus clamps as today; a slot whose row vanished renders nothing (the null-safe reads stay).
@@ -214,13 +216,13 @@ Two new states, `swapped` (wide deck top, narrow Songs list bottom) and `swapped
 
 Budgets stay as Plan 5 set them: CPU max 14 ms on New, 30 ms on Old; the Old 3DS scroll peak is 28.6 ms, so touch scrolling has about 1.4 ms of headroom and must not add per-row work.
 
-- **Per-frame work while scrolling is bounded by the pool, not the finger.** `RecycledList` computes each slot's row from the final `top` once per frame, so a slot that crosses three rows in one frame rebinds once. The worst frame is a whole-page jump: every slot rebinds its three texts. That is the work of a D-pad page move today; it becomes a measured scenario.
+- **Per-frame work while scrolling is bounded by the pool, not the finger.** `RecycledList` computes each slot's row from the final `top` once per frame, so a slot that crosses three rows in one frame rebinds once. The worst frame is a whole-pool rebind: every slot rebinds its three texts. That is the work of a D-pad page move today. Expected host writes per frame: three translates on a sub-row frame (canvas, overlay, thumb), plus about four per slot that rebinds.
 - **Two values move per frame.** `shift` feeds the canvas translate and the overlay translate; the thumb translate derives from the offset. All are paint-only. `top` stays settled.
-- **Nothing in a gesture handler reads the row memo.** Pan handlers make one call into the scroller. The down handler stops the fling and walks about four parents from the hit node to a slot, once per touch.
-- **Recognizers:** one for the list body, one for the scrollbar, one per tappable chrome part (three tabs, up to two footer gels, the crumb root, the LCD). Idle recognizers cost zero. The deck already carries six.
-- **The fling is capped.** `endDrag` receives the release velocity clamped to `FLING_MAX_PX_PER_S` (5000 px/s, about 4 rows per frame). The perf run lowers the constant if Old 3DS measures over budget.
-- **Remount spikes.** A swap or a keyboard open in swapped mode rebuilds the Explorer, about 150 nodes, in one frame. Opening DJ Mode is the same kind of spike and measured 16 ms on Old. Both are user-initiated and rare; both are measured.
-- **Scenarios** in `scripts/perf.ts`, which gains a `touch` tape per scenario passed through `POCKETJS_CAPTURE_TOUCH`: `swapped-idle` (hold SELECT, then nothing), `touch-scroll` (a flick on the list), `touch-page` (a tap on the track below the thumb), `swap` (the hold's frame). Rows in `docs/perf.md` next to the existing ones.
+- **No handler subscribes to or rebuilds the row memo.** The scroller's `max` and the thumb mapping read a settled row count, not the rows. Pan handlers make one call into the scroller. The down handler stops the fling and computes the row from the contact's y; a tap then reads the visible rows once, as an A press does today.
+- **Recognizers:** one for the list body, one for the scrollbar, one per tappable chrome part (three tabs, up to two footer gels, the crumb strip, the LCD). Idle recognizers cost zero. The deck already carries six.
+- **The fling is capped.** `endDrag` receives the release velocity clamped to `FLING_MAX_PX_PER_S` (5000 px/s). In the framework's fling state the first frame moves `v / 60` px, 83 px or about 4 rows at the cap, and decays from there (0.9672 per tick), so the cap bounds the worst frame. The perf run lowers the constant if Old 3DS measures over budget.
+- **Remount spikes.** A swap rebuilds both screens in one frame; opening DJ Mode while swapped rebuilds the bottom screen; opening the keyboard while swapped rebuilds both. Opening DJ Mode today measured 16 ms on Old. All are user-initiated and rare; all are measured, and the budget is not relaxed for them: if one exceeds it, the second screen's content mounts one frame after the first.
+- **Scenarios** in `scripts/perf.ts`, which gains a `touch` tape per scenario passed through `POCKETJS_CAPTURE_TOUCH` (every touch tape starts inside the list body, y 51–218): `swapped-idle` (hold SELECT, then nothing), `touch-drag` (a slow finger-follow drag still down through the window), `touch-fling` (a flick at the cap lifted just before the window), `swap` (the hold's frame inside the window), `swap-dj` (a SELECT tap while swapped), `swap-search` (a tap on the Search gel while swapped). Plan 9 re-measures `scroll` and `now-playing` before any touch work lands. Rows in `docs/perf.md` next to the existing ones.
 - **Unchanged paths.** Wide layout creates no scroller and no Explorer recognizers, so normal mode measures as today; the narrow Explorer and wide deck have the same node counts as their current layouts.
 
 ## 9. Testing
@@ -228,9 +230,8 @@ Budgets stay as Plan 5 set them: CPU max 14 ms on New, 30 ms on Old; the Old 3DS
 **Pure (`tests/`):**
 - `placement.test.ts`: every row of §4.1.
 - `controls.test.ts`: `BINDINGS` matches the README's controls table.
-- `scroll.test.ts`: offset to `top` and `shift`, the snap, the velocity cap, the thumb mapping both ways, page offsets.
+- `scroll.test.ts`: offset to `top` and `shift`, the row snap, the velocity cap, the row under a point, the thumb mapping both ways, page and centred offsets, the body's top per strip.
 - `explorer-model.test.ts`: `setTab`, `touchLegendOf` for every view and panel.
-- `recycled-list.test.ts`: the `rows + 2` pool with `shift`, slot parity preserved.
 - `input-timing.test.ts`: `onRepeat`'s first-fire flag.
 
 **Sim (`tests/app.test.ts`, `tests/swap.test.ts`), with the existing auxiliary-touch helpers:**
@@ -258,8 +259,8 @@ Budgets stay as Plan 5 set them: CPU max 14 ms on New, 30 ms on Old; the Old 3DS
 
 ## 11. Risks
 
-- **Old 3DS headroom.** 1.4 ms between the measured scroll peak and the budget. Mitigations: bounded rebinds, paint-only moving values, the fling cap. If `touch-page` still exceeds 30 ms, the page tween can be lengthened so fewer rows cross per frame.
-- **Remount spikes** on swap and keyboard open. Measured; acceptable if in the range of the DJ Mode spike. If not, the Explorer can be kept mounted on both surfaces and shown by placement instead, at the cost of idle nodes.
+- **Old 3DS headroom.** 1.4 ms between the measured scroll peak and the budget. Mitigations: bounded rebinds, paint-only moving values, the fling cap. If `touch-fling` still exceeds 30 ms, the cap comes down.
+- **Remount spikes** on swap, and on DJ Mode or the keyboard while swapped. Measured against the same budget. If one exceeds it, the second screen's content mounts one frame after the first; keeping the Explorer mounted on both surfaces is the fallback, at the cost of idle nodes.
 - **Toolbar fit at 320.** The tab labels' widths are set by the baked font; the gallery snapshot confirms the fit, and tab padding is the adjustable value.
 - **Resistive panel feel.** A stylus produces clean contacts; a finger on the 3DS panel can jitter, which the framework's slops absorb. Hardware decides the fling cap and the tap slop.
 - **Hit facts for rows.** The 3DS host resolves the node under the finger by bounds. Row Views fill their slots, so a hit always names a node inside a slot or the body itself (a gap).
