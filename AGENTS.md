@@ -65,6 +65,49 @@ bun run gallery                                        # theme states as PNGs in
   - `app/theme/vinyl.png`, `label.png` ← `bun scripts/vinyl-png.ts`
 - `gallery.pocket.json` builds `app/gallery.tsx`, a storyboard of theme states from fixture data; L / R cycle them. A new state needs its name in `app/gallery/names.ts` (cycle order) and a builder in `app/gallery/states.tsx`; `tests/gallery.test.ts` visits states in that order. Compare `bun run gallery` output with the approved mockups in `docs/design/aqua/`.
 
+## Code standards
+
+### PocketJS guest code (`app/`)
+
+- `app/` runs in the 3DS guest on QuickJS: no DOM, Node or Bun APIs (those stay in `scripts/` and `tests/`) and no event loop. `setTimeout` runs on the next microtask whatever its delay, `clearTimeout` does nothing, and there is no `performance`. Time in frames: `onFrame`, or `virtualFrame()` / `after()` from `@pocketjs/framework/clock`.
+- The PocketJS Solid build rejects `createResource`, `useTransition` and `startTransition`.
+- Reach the framework only through `@pocketjs/framework/*`. An `app/` import of a `runtime/` path pulls compiler or tool code into the bundle.
+- A class literal compiles only if every token is a supported utility. Otherwise the whole literal is dropped, and the 3DS build prints `class "…" does not compile` as a warning and still succeeds; treat that warning as a failure. Choose between complete literals with a ternary: `classList` and template literals in `class` fail the build, and a concatenated string matches no compiled style.
+- `style={{ … }}` keys are PocketJS prop names (`translateX`, `insetT`, `rotate`) with numeric values, not CSS. An unknown key throws, and dropping a key does not reset the prop: write its resting value.
+- Prefer motion the core runs (`<Sprite>` atlases such as the cover spinner, `animate()`) to per-frame signal writes. A value JS must change every frame is written only when it changes (`theme/parts/marquee.tsx`, `dj/scratch.ts`). Changes on a frame path keep `docs/perf.md`'s budgets (14 ms of CPU per frame on New 3DS, 30 ms on Old) and the op-count test "a focus move touches only the selection" in `tests/app.test.ts`.
+
+### Solid
+
+- Components run once. Read props where they are used (`props.x` in JSX or an accessor) and never destructure them. Read on purpose once with `untrack()`; the session and the Explorer store live as long as the app, so `untrack(() => props.session)` is the way to hold one.
+- Render lists and conditionals with `Show`, `Switch`/`Match`, `For` (keyed by item) and `Index` (fixed slots whose values change), not `.map()` or `&&`. A lone reactive child of `<AuxiliarySurface>` needs a wrapping `View`.
+- Derive with plain accessors. Use `createMemo` when a value is shared or costly, `settled()` (`app/reactive.ts`) for a value derived from a source written every frame, and a custom `equals` to keep a signal quiet when a write changes nothing (`samePlayer` in `session.ts`). Effects do work outside the tree; react to a change with `on(…, { defer: true })`.
+- `onFrame`, `onButtonPress` and `createGesture` are disposed with their owner. Gate input hooks with an `active` accessor: the search keyboard blocks `onButtonPress` while it is open, but `onFrame` still sees every button.
+- A gesture that changes what is drawn resets it in `onCancel`.
+- Import `onMount` and `onCleanup` from `solid-js`.
+
+### TypeScript
+
+- `strict`, no `any`. Host replies and parsed JSON are `unknown` until a type guard narrows them (`now-playing/frame-time.ts`).
+- An index read can be out of range: handle `undefined`, or assert with `!` only where the index is known to be in range.
+- Type-only imports carry `type` (`import { type X }` or `import type`). Relative imports carry their `.ts` / `.tsx` extension.
+- State changes are discriminated unions (`{ type }` actions and commands, `{ kind }` rows and views) handled by `switch`es in pure reducers.
+- Inputs and shared tables are `readonly` arrays and `Readonly<Record<…>>`; module-level objects that are handed out are frozen (`IDLE_STATUS`).
+- No classes or `this`: a `createX()` factory returns an interface of closures, so callers pass methods unbound (`onUp: grab.release`).
+- Named exports only, except where an entry point expects a default (`App` for `main.tsx`, `pocket.config.ts`).
+
+### Naming and comments
+
+- Units go in names (`positionMs`, `bodyPx`, `ROW_PX`, `HOUR_MS`); module constants are `UPPER_SNAKE_CASE`.
+- An `app/` module opens with a `//` header stating what it owns and how it connects to its neighbours. Exported interface fields carry a `/** */` line when the name does not give the meaning or unit.
+- Comments state the mechanism or the reason (frame order, why a read is fresh, why a cast is safe) in the present tense. No TODOs in code; open work goes in a plan. Prose in `docs/` follows `runtime/AGENTS.md`: concrete facts, no slogans, intensifiers or filler adverbs.
+
+### Tests
+
+- Test names state the behaviour as a sentence; no `describe` blocks. Fixtures live in `tests/fixtures/`, shared rigs in `tests/support/`.
+- A bug fix lands with a test that fails without it.
+- Sim tests call `afterAll(disposeGuest)` and take a `120_000` ms timeout.
+- Type-level guarantees use `expectTypeOf` from `bun:test` or `// @ts-expect-error`.
+
 ## Docs
 
-Feature work follows a design spec in `docs/superpowers/specs/` and numbered implementation plans in `docs/superpowers/plans/` (Plans 1-6: the player; 7-8: DJ Mode). Read the relevant spec before changing a feature's behaviour.
+Feature work follows a design spec in `docs/superpowers/specs/` and numbered implementation plans in `docs/superpowers/plans/` (Plans 1-6: the player; 7-8: DJ Mode; 9: lint and format). Read the relevant spec before changing a feature's behaviour.
