@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { buildLibrary } from "../app/library/library.ts";
 import {
-  crumbOfView, currentView, focusOf, headerOfView, initialExplorer, lcdLine, legendOf, panelOf, reduceExplorer, rowCellsIn, rowsKey, visibleRows, songIds,
+  crumbOfView, currentView, focusOf, headerOfView, initialExplorer, lcdLine, legendOf, panelOf, reduceExplorer, rowCellsIn, rowsKey, touchLegendOf, visibleRows, songIds,
   type ExplorerAction, type ExplorerState, type ListPanel,
 } from "../app/explorer/model.ts";
 import { TRACKS } from "./fixtures/tracks.ts";
@@ -136,4 +136,23 @@ test("the LCD line reports availability, scanning, and the library's size and le
   expect(lcdLine(true, false, buildLibrary([]))).toBe("0 songs");
   expect(lcdLine(true, false, library)).toBe("7 songs · 21 min");
   expect(lcdLine(true, false, buildLibrary([{ ...TRACKS[0]!, durationMs: 7_920_000 }]))).toBe("1 song · 2.2 hrs");
+});
+
+test("setTab jumps straight to a tab and keeps the state object when it is already there", () => {
+  const state = initialExplorer();
+  expect(run(state, { type: "setTab", tab: "Albums" }).tab).toBe("Albums");
+  expect(run(state, { type: "setTab", tab: "Songs" })).toBe(state);
+});
+
+test("the touch footer offers Search and Back with the same labels as the badges, or Scan again over a panel", () => {
+  let state = initialExplorer();
+  expect(touchLegendOf(state, null)).toEqual([{ action: "search", label: "Search" }, { action: "back", label: "Back" }]);
+  state = run(state, { type: "setQuery", query: "da" });
+  expect(touchLegendOf(state, null)).toEqual([{ action: "search", label: "Edit search" }, { action: "back", label: "Clear" }]);
+  state = run(initialExplorer(), { type: "setTab", tab: "Artists" }, { type: "open", row: { kind: "artist", key: "daft punk" } });
+  expect(touchLegendOf(state, null).at(-1)).toEqual({ action: "back", label: "Artists" });
+  state = run(initialExplorer(), { type: "setTab", tab: "Albums" }, { type: "open", row: { kind: "album", key: "discovery\u0000daft punk" } });
+  expect(touchLegendOf(state, null).at(-1)).toEqual({ action: "back", label: "Albums" });
+  for (const panel of ["empty", "readError"] as ListPanel[]) expect(touchLegendOf(initialExplorer(), panel)).toEqual([{ action: "rescan", label: "Scan again" }]);
+  for (const panel of ["scanning", "unavailable"] as ListPanel[]) expect(touchLegendOf(initialExplorer(), panel)).toEqual([]);
 });

@@ -82,3 +82,29 @@ export function FooterLegend(props: { items: readonly LegendItem[]; theme?: Them
     </>
   );
 }
+
+export type TouchAction = "search" | "back" | "rescan";
+
+export interface TouchLegendItem {
+  action: TouchAction;
+  label: string;
+}
+
+/** The narrow (touch) footer: a gel per action. Plan 10 gives each a tap recognizer. */
+export function FooterGels(props: { items: readonly TouchLegendItem[]; theme?: Theme }) {
+  const t = () => props.theme ?? AQUA;
+  return (
+    <>
+      <View class={t().footerRule} />
+      <View class={t().footer}>
+        <For each={props.items}>
+          {(item) => (
+            <Gel classes={t().footerGel}>
+              <GelLabel text={item.label} class={t().footerText} />
+            </Gel>
+          )}
+        </For>
+      </View>
+    </>
+  );
+}
