@@ -1,7 +1,7 @@
 # iPoDS
 
 A walkman-style MP3 player for the Nintendo 3DS, dressed in the Aqua / iTunes 4
-look. The top screen browses your library (Songs, Artists, Albums, with search);
+look. By default the top screen browses your library (Songs, Artists, Albums, with search);
 the bottom screen is Now Playing, with cover art, a seek capsule and a touch
 transport row, or DJ Mode, a record you can scratch. It plays the `.mp3` files
 in `sdmc:/music/`.
@@ -16,25 +16,34 @@ Apple or Nintendo.
 
 ## Controls
 
-| Button | Top screen (library) |
-|---|---|
-| D-pad | Move; left/right page |
-| A | Play the song, or open the artist or album |
-| B | Back; clear the search |
-| X | Search; hold to scan the card again |
-| Y | Jump to the song that is playing |
-| L / R | Switch tabs |
-| Y + L / R | Previous / next song |
-| ZL / ZR | Previous / next song |
-| START | Play / pause |
-| SELECT | DJ Mode on / off |
-| L + R (hold) | Diagnostics in the Now Playing LCD |
+Hold SELECT for a second to swap the screens: Now Playing moves to the top
+screen, the library moves to the touch screen, and the buttons drive playback.
+Hold SELECT again to swap back. The setting lasts until the app closes.
 
-The bottom screen is touch: shuffle, previous, play/pause, next, repeat, DJ
-Mode, and a drag-to-seek capsule. In DJ Mode the record spins while the song
-plays; drag it clockwise to play forward at your finger's speed, counter-
-clockwise to play backwards, and hold it still for silence. Lifting your
-finger lets the song play on from there.
+| Button | Normal | Swapped |
+|---|---|---|
+| D-pad up / down | Move | — |
+| Circle pad | Move | — |
+| D-pad left / right | Page | Seek back / forward: 5 s, then 2 s while held |
+| A | Play the song, or open the artist or album | Play / pause |
+| B | Back; clear the search | Back; clear the search |
+| X | Search; hold to scan the card again | Shuffle on / off; hold to scan the card again |
+| Y | Jump to the song that is playing | Repeat off / all / one |
+| L / R | Switch tabs | Switch tabs |
+| Y + L / R | Previous / next song | Previous / next song |
+| ZL / ZR | Previous / next song | Previous / next song |
+| START | Play / pause | Play / pause |
+| SELECT | DJ Mode on / off; hold to swap the screens | DJ Mode on / off; hold to swap the screens |
+| L + R (hold) | Diagnostics in the Now Playing LCD | Diagnostics in the Now Playing LCD |
+
+The bottom screen is touch. In normal mode it is Now Playing: shuffle,
+previous, play/pause, next, repeat, DJ Mode, and a drag-to-seek capsule. In DJ
+Mode the record spins while the song plays; drag it clockwise to play forward
+at your finger's speed, counter-clockwise to play backwards, and hold it still
+for silence. Lifting your finger lets the song play on from there. Swapped, the
+bottom screen is the library. DJ Mode takes the bottom screen in either mode, so
+while it is open in swapped mode the library and its buttons (B, X, Y, L, R)
+wait until you leave it.
 
 ## Music
 
