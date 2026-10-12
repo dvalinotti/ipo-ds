@@ -4,26 +4,34 @@
 import { analogY, onFrame } from "@pocketjs/framework/lifecycle";
 import { HOLD_UP, repeatFires, stepAnalog, stepHold, stepLatch } from "./input-timing.ts";
 
-/** Fire on press, then repeat while held (300 ms delay, 80 ms rate). Latched: see stepLatch. */
-export function onRepeat(button: number, fire: () => void, active: () => boolean): void {
+/**
+ * Fire on press, then repeat while held (300 ms delay, 80 ms rate); `repeat` is false on the press, and
+ * `release` runs once when a press that fired ends. Latched: see stepLatch. Starts latched, so a button
+ * already down when the screen mounts (a swap, the keyboard closing) is ignored until it is released.
+ */
+export function onRepeat(button: number, fire: (repeat: boolean) => void, active: () => boolean, release?: () => void): void {
   let held = -1;
-  let ignoring = false;
+  let ignoring = true;
   onFrame((buttons) => {
     const latch = stepLatch(ignoring, (buttons & button) !== 0, active());
     ignoring = latch.ignoring;
     if (!latch.down) {
+      if (held >= 0) release?.();
       held = -1;
       return;
     }
     held++;
-    if (repeatFires(held)) fire();
+    if (repeatFires(held)) fire(held > 0);
   });
 }
 
-/** A release before the hold time is a tap; holding fires `hold` once instead. Latched: see stepLatch. */
+/**
+ * A release before the hold time is a tap; holding fires `hold` once instead. Latched: see stepLatch. Starts
+ * latched, so a button already down when the screen mounts (a swap, the keyboard closing) is ignored until it is released.
+ */
 export function onTapOrHold(button: number, tap: () => void, hold: () => void, active: () => boolean): void {
   let state = HOLD_UP;
-  let ignoring = false;
+  let ignoring = true;
   onFrame((buttons) => {
     const latch = stepLatch(ignoring, (buttons & button) !== 0, active());
     ignoring = latch.ignoring;

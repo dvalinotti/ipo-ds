@@ -40,7 +40,7 @@ export default function App() {
       <AuxiliarySurface>
         {/* A wrapping View: AuxiliarySurface does not track a lone reactive child (a bare <Switch> renders once). */}
         <View class="relative w-full h-full flex-col">
-          <Switch fallback={<NowPlaying session={session} onDj={() => setMode("dj")} />}>
+          <Switch fallback={<NowPlaying layout="narrow" session={session} onDj={() => setMode("dj")} />}>
             <Match when={osk.isOpen()}>
               <SearchKeyboard osk={osk} />
             </Match>
