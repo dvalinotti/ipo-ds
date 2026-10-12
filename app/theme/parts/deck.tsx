@@ -74,7 +74,7 @@ export function InfoLcd(props: {
 }) {
   const t = () => props.theme ?? AQUA;
   return (
-    <View class={t().infoLcd}>
+    <View class={t().infoLcd("narrow")}>
       <Marquee text={props.title} class={t().infoTitle} slot={FONT_16_BOLD} width={INFO_TEXT_PX} />
       <Marquee text={props.artist} class={t().infoArtist} slot={FONT_12} width={INFO_TEXT_PX} />
       <Marquee text={props.album} class={t().infoAlbum} slot={FONT_12} width={INFO_TEXT_PX} />
@@ -127,9 +127,9 @@ export function SeekCapsule(props: {
   const t = () => props.theme ?? AQUA;
   const x = () => trackOffset(props.fraction, props.hours ? SEEK_TRACK_WIDE_PX : SEEK_TRACK_PX);
   return (
-    <View class={t().seekCapsule} ref={props.ref as never}>
+    <View class={t().seekCapsule("narrow")} ref={props.ref as never}>
       <Text class={props.hours ? t().seekTimeWide : t().seekTime}>{props.elapsed}</Text>
-      <View class={props.hours ? t().seekTrackWide : t().seekTrack}>
+      <View class={props.hours ? t().seekTrackWide("narrow") : t().seekTrack("narrow")}>
         <Show when={props.enabled}>
           <View class={t().seekFill} style={{ width: x() }} />
           <Gel classes={t().seekKnob} style={{ insetL: x() - 8 }} />
@@ -188,7 +188,7 @@ export function TransportRow(props: {
 }) {
   const t = () => props.theme ?? AQUA;
   return (
-    <View class={t().transportRow}>
+    <View class={t().transportRow("narrow")}>
       <TransportButton kind="shuffle" on={props.shuffle} enabled={props.enabled} onPress={props.onShuffle} theme={props.theme} />
       <TransportButton kind="prev" enabled={props.enabled} onPress={props.onPrev} theme={props.theme} />
       <TransportButton kind={props.playing ? "pause" : "play"} enabled={props.enabled} onPress={props.onToggle} theme={props.theme} />

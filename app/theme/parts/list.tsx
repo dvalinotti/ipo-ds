@@ -17,7 +17,7 @@ export function ColumnHeader(props: { left: string; right: string; lead?: string
   return (
     <>
       <View class={t().header}>
-        <View class={t().headerLeft(props.sorted ?? true)}>
+        <View class={t().headerLeft(props.sorted ?? true, "wide")}>
           <View class={t().headerLead}>
             <Text class={t().headerText}>{props.lead ?? ""}</Text>
           </View>
@@ -62,7 +62,7 @@ export function ListRow(props: ListRowProps) {
         when={props.count}
         fallback={
           <>
-            <View class={t().rowTitleCell}>
+            <View class={t().rowTitleCell("wide")}>
               <Show when={props.marquee} fallback={<Text class={t().rowTitle(props.kind)}>{props.title}</Text>}>
                 <Marquee text={props.title} class={t().rowTitle(props.kind)} slot={FONT_12} width={TITLE_PX} />
               </Show>

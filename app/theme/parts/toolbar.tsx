@@ -25,7 +25,7 @@ export function Lights(props: { theme?: Theme }) {
 export function LcdStatus(props: { title: string; line: string; theme?: Theme }) {
   const t = () => props.theme ?? AQUA;
   return (
-    <View class={t().lcdStatus}>
+    <View class={t().lcdStatus("wide")}>
       <Text class={t().lcdTitle}>{props.title}</Text>
       <Marquee text={props.line} class={t().lcdLine} slot={FONT_12} width={LCD_TEXT_PX} />
     </View>
@@ -44,7 +44,7 @@ export function SegmentedTabs(props: { active: Tab; theme?: Theme }) {
               <Show when={i() > 0}>
                 <View class={t().tabDivider} />
               </Show>
-              <Gel classes={t().tab(tab === props.active)}>
+              <Gel classes={t().tab(tab === props.active, "wide")}>
                 <GelLabel text={tab} class={t().tabText(tab === props.active)} shadow={tab === props.active ? t().tabTextShadow : undefined} />
               </Gel>
             </>

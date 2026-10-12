@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { bakeSvg } from "../runtime/framework/compiler/bake-svg.ts";
 import { unknownUtilities } from "../runtime/framework/compiler/tailwind.ts";
 import { AQUA } from "../app/theme/aqua.ts";
-import type { GelClasses, IconInk, IconName, RowKind, TransportKind } from "../app/theme/theme.ts";
+import type { GelClasses, IconInk, Layout, IconName, RowKind, TransportKind } from "../app/theme/theme.ts";
 
 const ROOT = new URL("..", import.meta.url).pathname;
 
@@ -16,10 +16,20 @@ function aquaLiterals(): string[] {
     if (typeof value === "string" && key !== "name" && key !== "osk" && !value.endsWith(".svg") && !value.endsWith(".png")) out.push(value);
   }
   for (const flag of [true, false]) {
-    gel(AQUA.tab(flag));
     gel(AQUA.badge(flag));
-    out.push(AQUA.tabText(flag), AQUA.headerLeft(flag), AQUA.badgeText(flag));
+    out.push(AQUA.tabText(flag), AQUA.badgeText(flag));
   }
+  for (const layout of ["wide", "narrow"] as Layout[]) {
+    for (const flag of [true, false]) {
+      gel(AQUA.tab(flag, layout));
+      out.push(AQUA.headerLeft(flag, layout));
+    }
+    out.push(
+      AQUA.lcdStatus(layout), AQUA.rowTitleCell(layout), AQUA.infoLcd(layout), AQUA.idlePanel(layout),
+      AQUA.seekCapsule(layout), AQUA.seekTrack(layout), AQUA.seekTrackWide(layout), AQUA.transportRow(layout),
+    );
+  }
+  gel(AQUA.footerGel);
   gel(AQUA.scrollThumb);
   gel(AQUA.progressFill);
   gel(AQUA.seekKnob);
@@ -70,4 +80,21 @@ test("every icon the theme names exists and bakes to an opaque image of its size
 test("the theme carries the six placeholder hues and the classic keyboard", () => {
   expect(AQUA.placeholderHues.map((hue) => hue.name)).toEqual(["blue", "teal", "plum", "amber", "green", "graphite"]);
   expect(AQUA.osk).toBe("classic");
+});
+
+test("the narrow and wide variants carry their widths", () => {
+  expect(AQUA.lcdStatus("narrow")).toContain("w-[92]");
+  expect(AQUA.lcdStatus("wide")).toContain("w-[144]");
+  expect(AQUA.headerLeft(true, "narrow")).toContain("w-[162]");
+  expect(AQUA.rowTitleCell("narrow")).toContain("w-[134]");
+  expect(AQUA.tab(true, "narrow").body).toContain("px-[6]");
+  expect(AQUA.tab(true, "wide").body).toContain("px-[8]");
+  expect(AQUA.infoLcd("wide")).toContain("w-[272]");
+  expect(AQUA.idlePanel("wide")).toContain("w-[380]");
+  expect(AQUA.seekCapsule("wide")).toContain("w-[380]");
+  expect(AQUA.seekTrack("wide")).toContain("w-[280]");
+  expect(AQUA.seekTrackWide("wide")).toContain("w-[256]");
+  expect(AQUA.transportRow("wide")).toContain("w-[380]");
+  expect(AQUA.transportRow("wide")).toContain("gap-[20]");
+  expect(AQUA.transportRow("narrow")).toContain("w-[300]");
 });

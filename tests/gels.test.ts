@@ -40,8 +40,11 @@ function gelCases(): Case[] {
   out.push({ name: "seek knob", gel: AQUA.seekKnob, tone: "blue", outline: true, shadow: false });
   out.push({ name: "scroll thumb", gel: AQUA.scrollThumb, tone: "blue", outline: true, shadow: false, sizes: [[11, 16], [11, 40], [11, 166]] });
   out.push({ name: "progress fill", gel: AQUA.progressFill, tone: "blue", outline: false, shadow: false, sizes: [[0, 10], [10, 10], [22, 10], [PROGRESS_TRACK_PX, 10]] });
-  out.push({ name: "tab active", gel: AQUA.tab(true), tone: "blue", outline: false, shadow: false, sizes: [[40, 18], [60, 18]] });
-  out.push({ name: "tab", gel: AQUA.tab(false), tone: "grey", outline: false, shadow: false, sizes: [[40, 18], [60, 18]] });
+  out.push({ name: "tab active", gel: AQUA.tab(true, "wide"), tone: "blue", outline: false, shadow: false, sizes: [[40, 18], [60, 18]] });
+  out.push({ name: "tab", gel: AQUA.tab(false, "wide"), tone: "grey", outline: false, shadow: false, sizes: [[40, 18], [60, 18]] });
+  out.push({ name: "tab active narrow", gel: AQUA.tab(true, "narrow"), tone: "blue", outline: false, shadow: false, sizes: [[36, 18], [56, 18]] });
+  out.push({ name: "tab narrow", gel: AQUA.tab(false, "narrow"), tone: "grey", outline: false, shadow: false, sizes: [[36, 18], [56, 18]] });
+  out.push({ name: "footer gel", gel: AQUA.footerGel, tone: "grey", outline: true, shadow: false, sizes: [[40, 18], [80, 18]] });
   out.push({ name: "reference pill", gel: REFERENCE_PILL, tone: "blue", outline: true, shadow: true });
   return out;
 }

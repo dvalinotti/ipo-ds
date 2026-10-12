@@ -185,7 +185,7 @@ function GelSheetBottom() {
         <View class="flex-row items-center gap-[8] mt-[8]">
           <KeyBadge letter="A" primary />
           <KeyBadge letter="X" />
-          <View class={AQUA.seekTrack}>
+          <View class={AQUA.seekTrack("narrow")}>
             <View class={AQUA.seekFill} style={{ width: 100 }} />
             <Gel classes={AQUA.seekKnob} style={{ insetL: 92 }} />
           </View>

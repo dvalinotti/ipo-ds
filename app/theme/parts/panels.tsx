@@ -51,7 +51,7 @@ export function StatePanel(props: { title: string; lines: readonly PanelLine[]; 
 export function IdlePanel(props: { theme?: Theme }) {
   const t = () => props.theme ?? AQUA;
   return (
-    <View class={t().idlePanel}>
+    <View class={t().idlePanel("narrow")}>
       <Text class={t().panelTitle}>Nothing playing</Text>
       <Line line={["Pick a song above and press", "A", ""]} theme={props.theme} />
     </View>
