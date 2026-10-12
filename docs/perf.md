@@ -165,3 +165,16 @@ The DJ Mode branch (`feature/dj-mode`, `docs/superpowers/plans/2026-10-08-dj-mod
 `now-playing` stays within a few tenths of the Plan 6 rows on New (CPU mean/max 3.0/6.5 ms against 2.9/6.3 ms) and moves on Old from 8.8/19.1 ms to 9.4/15.2 ms, where the mean rises 0.6 ms and the max falls 3.9 ms. `dj` fits both budgets, with a CPU max of 3.8 ms on New against 14 ms and 16.0 ms on Old against 30 ms.
 
 The Old `now-playing` moves (mean +0.6 ms, max −3.9 ms) are run-to-run variance in the same direction-free range as earlier runs, not a ring cost: the max fell while the mean rose.
+
+## Screen Swap (Plan 9)
+
+The Screen Swap branch (`feature/screen-switch-mode`, `docs/superpowers/plans/2026-10-10-screen-swap-09-layouts.md`): hold SELECT swaps the screens; the Explorer and the deck take a `layout` prop and register only the handlers their layout owns; the shell renders both screens from `placement()` through two Switches, so the primary root gains one wrapping View; the list's first visible row is written to the store as it scrolls. Neither scenario swaps: they measure the normal-mode paths after the refactor. `bun run perf scroll --model both --check` and `bun run perf now-playing --model both --check`, one scenario per invocation; `scroll` was run twice from separate builds and both runs agree to the tenth:
+
+| Scenario | Model | JS mean/max | Tick mean/max | Draw mean/max | CPU mean/max (ms) | Scan (ms) | Within budget |
+|---|---|---|---|---|---|---|---|
+| scroll | new | 1.7/8.0 | 0.2/1.1 | 1.9/3.8 | 3.8/10.9 | cached -1, walk 5723 (324/324 read) | yes |
+| scroll | old | 5.4/18.2 | 0.8/9.3 | 5.7/11.4 | 11.9/27.1 | cached -1, walk 6008 (324/324 read) | yes |
+| now-playing | new | 1.2/4.8 | 0.0/0.1 | 1.8/2.2 | 3.0/6.7 | cached -1, walk 5739 (324/324 read) | yes |
+| now-playing | old | 3.5/8.8 | 0.0/0.3 | 6.1/11.6 | 9.5/15.6 | cached -1, walk 6008 (324/324 read) | yes |
+
+`now-playing` is within a few tenths of the Plan 8 rows on both models (New 3.0/6.7 against 3.0/6.5; Old 9.5/15.6 against 9.4/15.2). `scroll` means are within 0.4 ms of Plan 6 (New 3.8 against 3.5; Old 11.9 against 11.5); the maxes moved more (New 10.9 against 8.7; Old 27.1 against 25.6), with the Old move in a single tick spike (9.3 ms against 3.3) rather than in JS or draw. 27.1 ms sits inside the 25.6–28.6 ms range earlier Old `scroll` runs have recorded and 2.9 ms under the budget; Plan 10's touch scenarios (`touch-drag`, `touch-fling`) measure the path that matters next and carry the mitigation if a frame goes over.
