@@ -89,6 +89,25 @@ bun install --cwd runtime --frozen-lockfile
 git add runtime
 ```
 
+## Release
+
+`.github/workflows/build.yml` typechecks, tests and builds the `.3dsx` and
+`.cia` for every pull request and push to `main`, and uploads them as the
+`ipo-ds-3ds` workflow artifact. To release:
+
+1. Set the same version in `package.json` and `pocket.json` and merge it.
+2. Tag the merge commit and push the tag:
+   `git tag v0.2.0 && git push origin v0.2.0`.
+3. `.github/workflows/release.yml` runs `bun scripts/release-check.ts <tag>`,
+   which fails unless the tag matches both files, then builds the tagged commit
+   and creates a draft release holding `iPoDS-v0.2.0.3dsx`, `iPoDS-v0.2.0.cia`
+   and `SHA256SUMS.txt`, with notes generated from the merged pull requests.
+4. Install the draft's `.cia` on a console or in Azahar, then publish the draft.
+
+A tag with a prerelease suffix (`v0.2.0-beta.1`) is marked as a prerelease.
+Keep `id` in `pocket.json` fixed: the CIA's title id is derived from it, and a
+changed id installs as a second title beside the old one.
+
 ## License
 
 [MIT](LICENSE). PocketJS is MIT-licensed; the runtime vendors
