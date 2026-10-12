@@ -49,7 +49,7 @@ export default function App() {
         <Switch>
           <Match when={place().top === "explorer"}>{explorer("wide")}</Match>
           <Match when={place().top === "deck"}>
-            <NowPlaying layout="wide" session={session} />
+            <NowPlaying layout="wide" session={session} dj={mode() === "dj"} />
           </Match>
         </Switch>
       </View>

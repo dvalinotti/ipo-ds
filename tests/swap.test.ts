@@ -64,6 +64,17 @@ function selectedRow(world: BundleWorld, surface: Surface): string {
 }
 
 const platterShown = (world: BundleWorld) => flat(world.tree("auxiliary")).some((node) => node.rect?.join(",") === "10,20,200,200");
+/** The top deck's DJ gel is lit: its body pixels differ from the (off) shuffle gel's, which has the same size and class set. */
+function djGelOn(world: BundleWorld): boolean {
+  const row = flat(world.tree("primary")).find((node) => node.children.length === 6 && node.children.every((child) => child.rect));
+  const { width, rgba } = world.pixels("primary");
+  const body = (gel: SimNode) => {
+    const [x, y, w, h] = gel.rect!;
+    const at = (px: number, py: number) => Array.from(rgba.slice((py * width + px) * 4, (py * width + px) * 4 + 4)).join(",");
+    return [at(x + 4, y + h - 6), at(x + w - 5, y + h - 6)].join("|");
+  };
+  return body(row!.children[5]!) !== body(row!.children[0]!);
+}
 const seeks = (host: SimLocalMediaHost) => host.log.filter((entry) => entry.startsWith("seek(")).map((entry) => Number(entry.slice(5, -1)));
 
 test("holding SELECT swaps the screens: the wide deck on top, the narrow list below; holding again swaps back", async () => {
@@ -205,9 +216,11 @@ test("swapped: SELECT shows DJ Mode over the Explorer, the deck stays on top, an
   holdSelect(rig);
   press(rig, BTN.SELECT);
   expect(platterShown(rig.world)).toBe(true);
+  expect(djGelOn(rig.world)).toBe(true);
   expect(screenText(rig.world, "primary")).toContain("Aerodynamic");
   touch(rig, 265, 203); // the panel's gel back to the deck: here, back to the Explorer
   expect(platterShown(rig.world)).toBe(false);
+  expect(djGelOn(rig.world)).toBe(false);
   expect(screenText(rig.world, "auxiliary")).toContain("Song Name");
   // Swapping back while DJ Mode is on keeps the record below and moves the Explorer back up.
   press(rig, BTN.SELECT);

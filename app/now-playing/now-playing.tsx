@@ -20,7 +20,7 @@ import { ArtFrame, CoverImage, CoverLoading, InfoLcd, SeekCapsule, seekTrackLeft
 import { IdlePanel } from "../theme/parts/panels.tsx";
 import type { Layout } from "../theme/theme.ts";
 
-export function NowPlaying(props: { layout: Layout; session: Session; onDj?: () => void }) {
+export function NowPlaying(props: { layout: Layout; session: Session; dj?: boolean; onDj?: () => void }) {
   const wide = props.layout === "wide";
   const status = props.session.status;
   const player = props.session.player;
@@ -156,6 +156,7 @@ export function NowPlaying(props: { layout: Layout; session: Session; onDj?: () 
         onToggle={() => dispatch({ type: "toggle" })}
         onNext={() => dispatch({ type: "next" })}
         onRepeat={() => dispatch({ type: "cycleRepeat" })}
+        dj={props.dj}
         onDj={props.onDj}
         layout={props.layout}
         touch={!wide}
