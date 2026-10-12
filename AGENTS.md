@@ -1,6 +1,6 @@
 # iPoDS
 
-A walkman-style MP3 player for the Nintendo 3DS in the Aqua / iTunes 4 look: a SolidJS guest on PocketJS. `README.md` covers the controls, build prerequisites and device workflow.
+A walkman-style MP3 player for the Nintendo 3DS in the Aqua / iTunes 4 look: a SolidJS guest on PocketJS. `README.md` covers installing and using the app; `DEVELOPING.md` covers build prerequisites, the device workflow and releases.
 
 - Framework code belongs in the PocketJS repository; update the `runtime` submodule pin here.
 - Import framework APIs from `@pocketjs/framework/*` and Solid primitives and control flow from `solid-js`.
