@@ -1,0 +1,85 @@
+name: Build
+
+# Typecheck, tests and the 3DS build (.3dsx and .cia) for every pull request
+# and push to main. release.yml calls this workflow for a version tag and
+# attaches the uploaded ipo-ds-3ds artifact to the GitHub Release.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install runtime dependencies
+        run: |
+          bun install --cwd runtime --frozen-lockfile
+          bun scripts/setup.ts
+
+      # Cargo outputs are keyed by the runtime pin: a new pin starts from the
+      # previous pin's cache and cargo rebuilds what changed.
+      - name: Read the runtime pin
+        id: pin
+        run: echo "runtime=$(git rev-parse HEAD:runtime)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            runtime/engine/wasm/target
+            runtime/hosts/3ds/core/target
+          key: ${{ runner.os }}-cargo-${{ steps.pin.outputs.runtime }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      # The sim tests boot the guest on runtime/hosts/web/pocketjs.wasm.
+      - name: Build the WASM core
+        run: |
+          rustup target add wasm32-unknown-unknown
+          bun run --cwd runtime wasm
+
+      - name: Typecheck
+        run: bun run check
+
+      - name: Test
+        run: bun run test
+
+      # The 3DS core builds host-side with -Z build-std on the nightly that
+      # rust-toolchain.toml names; runtime/tools/3ds.ts checks for it and for
+      # rust-src but does not install either.
+      - name: Install the 3DS Rust toolchain
+        working-directory: runtime/hosts/3ds/core
+        run: |
+          channel=$(sed -n 's/^channel = "\(.*\)"$/\1/p' rust-toolchain.toml)
+          rustup toolchain install "$channel" --profile minimal --component rust-src
+
+      # The build refuses to pull the digest-pinned devkitARM image itself.
+      - name: Pull the devkitARM image
+        run: |
+          docker pull "$(bun -e 'import { THREE_DS_CONTAINER_IMAGE } from "./runtime/tools/3ds-toolchain.ts"; console.log(THREE_DS_CONTAINER_IMAGE)')"
+
+      - name: Build the .3dsx and .cia
+        run: bun run 3ds --cia
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ipo-ds-3ds
+          path: |
+            dist/ipo-ds-main.3dsx
+            dist/ipo-ds-main.cia
+          if-no-files-found: error
