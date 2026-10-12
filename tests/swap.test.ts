@@ -158,8 +158,9 @@ test("swapped: A pauses and resumes, left and right seek by 5 s then 2 s, X shuf
   press(rig, Y); // repeat one: the LCD shows its "1"
   expect(pathsTo(rig.world, "primary", "1")).toHaveLength(1);
   const focused = selectedRow(rig.world, "auxiliary");
+  press(rig, BTN.DOWN); // the d-pad is unbound while swapped
+  expect(selectedRow(rig.world, "auxiliary")).toBe(focused);
   press(rig, BTN.UP);
-  press(rig, BTN.DOWN);
   expect(selectedRow(rig.world, "auxiliary")).toBe(focused);
 }, 120_000);
 
