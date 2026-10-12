@@ -26,24 +26,29 @@ export function onRepeat(button: number, fire: (repeat: boolean) => void, active
 }
 
 /**
- * A release before the hold time is a tap; holding fires `hold` once instead. Latched: see stepLatch. Starts
- * latched, so a button already down when the screen mounts (a swap, the keyboard closing) is ignored until it is released.
+ * A release before the hold time is a tap; holding fires `hold` once instead. Both receive `held`, the OR
+ * of every button mask seen while the button was down (a chord anywhere in the press shows there).
+ * Latched: see stepLatch; starts latched like onRepeat.
  */
-export function onTapOrHold(button: number, tap: () => void, hold: () => void, active: () => boolean): void {
+export function onTapOrHold(button: number, tap: (held: number) => void, hold: (held: number) => void, active: () => boolean): void {
   let state = HOLD_UP;
   let ignoring = true;
+  let held = 0;
   onFrame((buttons) => {
     const latch = stepLatch(ignoring, (buttons & button) !== 0, active());
     ignoring = latch.ignoring;
     if (!active()) {
       // A hold the keyboard interrupted ends without a tap.
       state = HOLD_UP;
+      held = 0;
       return;
     }
+    if (latch.down) held |= buttons;
     const step = stepHold(state, latch.down);
     state = step.state;
-    if (step.event === "tap") tap();
-    else if (step.event === "hold") hold();
+    if (step.event === "tap") tap(held);
+    else if (step.event === "hold") hold(held);
+    if (!latch.down) held = 0;
   });
 }
 
