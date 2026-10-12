@@ -124,3 +124,129 @@ test("the list keeps its place and its focus across a swap", async () => {
   expect(selectedRow(rig.world, "primary")).toBe(focused);
   expect(screenText(rig.world, "primary")).not.toContain("Around the World");
 }, 120_000);
+
+test("swapped: A pauses and resumes, left and right seek by 5 s then 2 s, X shuffles, Y cycles repeat, up does not move focus", async () => {
+  const rig = await boot();
+  press(rig, BTN.DOWN);
+  press(rig, A); // Around the World, 2 of 20
+  frames(rig, 3);
+  holdSelect(rig);
+  expect(screenText(rig.world, "primary")).toContain("2 of 20");
+  press(rig, A);
+  expect(rig.host.log.at(-1)).toBe("paused(true)");
+  press(rig, A);
+  expect(rig.host.log.at(-1)).toBe("paused(false)");
+  frames(rig, 400); // about 6.7 s into the song
+  const position = () => (JSON.parse(rig.host.ns.status()) as { positionMs: number }).positionMs; // the host replies in JSON
+  const before = position();
+  expect(before).toBeGreaterThan(5000);
+  press(rig, BTN.LEFT); // a tap: one seek of 5 s, sent on the release
+  expect(seeks(rig.host)).toHaveLength(1);
+  expect(Math.abs(seeks(rig.host)[0]! - (before - 5000))).toBeLessThan(300);
+  const beforeHold = position();
+  frames(rig, 24, { buttons: BTN.RIGHT }); // press (+5 s), repeats at frames 18 and 23 (+2 s each): one seek of +9 s on release
+  frames(rig, 2);
+  expect(seeks(rig.host)).toHaveLength(2);
+  expect(Math.abs(seeks(rig.host)[1]! - (beforeHold + 9000))).toBeLessThan(300);
+  frames(rig, 60, { buttons: BTN.RIGHT }); // a long hold is still one seek
+  frames(rig, 2);
+  expect(seeks(rig.host)).toHaveLength(3);
+  press(rig, X); // shuffle: the current song moves to the head of the order
+  expect(screenText(rig.world, "primary")).toContain("1 of 20");
+  press(rig, Y); // repeat all: no "1" flag yet
+  expect(pathsTo(rig.world, "primary", "1")).toHaveLength(0);
+  press(rig, Y); // repeat one: the LCD shows its "1"
+  expect(pathsTo(rig.world, "primary", "1")).toHaveLength(1);
+  const focused = selectedRow(rig.world, "auxiliary");
+  press(rig, BTN.UP);
+  press(rig, BTN.DOWN);
+  expect(selectedRow(rig.world, "auxiliary")).toBe(focused);
+}, 120_000);
+
+test("swapped: A and left do nothing with nothing playing; B still backs out of a drill-down", async () => {
+  const rig = await boot();
+  holdSelect(rig);
+  press(rig, A);
+  press(rig, BTN.LEFT);
+  expect(rig.host.log).toEqual(["scan()"]);
+  holdSelect(rig); // back to normal: drill into an artist with the buttons
+  press(rig, BTN.RTRIGGER);
+  press(rig, A);
+  expect(screenText(rig.world, "primary")).toContain("Artists›"); // the breadcrumb: root and › are separate texts, joined without a space
+  holdSelect(rig);
+  expect(screenText(rig.world, "auxiliary")).toContain("Artists›");
+  press(rig, B);
+  expect(screenText(rig.world, "auxiliary")).not.toContain("Artists›");
+}, 120_000);
+
+test("a swap while A is held does not touch playback", async () => {
+  const rig = await boot();
+  frames(rig, 62, { buttons: BTN.SELECT | A }); // A plays Aerodynamic on frame 0; the swap lands at frame 60
+  frames(rig, 3);
+  expect(screenText(rig.world, "primary")).toContain("Aerodynamic");
+  expect(rig.host.log.filter((entry) => entry.startsWith("paused("))).toEqual([]);
+}, 120_000);
+
+test("X over the empty panel rescans in swapped mode", async () => {
+  const rig = await boot([]);
+  frames(rig, 4);
+  expect(screenText(rig.world, "primary")).toContain("No music found");
+  holdSelect(rig);
+  expect(screenText(rig.world, "auxiliary")).toContain("Scan again");
+  press(rig, X);
+  expect(rig.host.log.filter((entry) => entry === "scan()")).toHaveLength(2);
+}, 120_000);
+
+test("swapped: SELECT shows DJ Mode over the Explorer, the deck stays on top, and the panel's gel returns to the list", async () => {
+  const rig = await boot();
+  press(rig, A);
+  frames(rig, 3);
+  holdSelect(rig);
+  press(rig, BTN.SELECT);
+  expect(platterShown(rig.world)).toBe(true);
+  expect(screenText(rig.world, "primary")).toContain("Aerodynamic");
+  touch(rig, 265, 203); // the panel's gel back to the deck: here, back to the Explorer
+  expect(platterShown(rig.world)).toBe(false);
+  expect(screenText(rig.world, "auxiliary")).toContain("Song Name");
+  // Swapping back while DJ Mode is on keeps the record below and moves the Explorer back up.
+  press(rig, BTN.SELECT);
+  holdSelect(rig);
+  expect(platterShown(rig.world)).toBe(true);
+  expect(screenText(rig.world, "primary")).toContain("Song Name");
+}, 120_000);
+
+function recordOps(): { calls: string[]; stop(): void } {
+  const ui = (globalThis as unknown as { ui: Record<string, unknown> }).ui;
+  const calls: string[] = [];
+  const originals = new Map<string, (...args: unknown[]) => unknown>();
+  for (const [key, fn] of Object.entries(ui)) {
+    if (typeof fn !== "function" || key === "frame" || key.startsWith("debug") || key.startsWith("hitTest")) continue;
+    originals.set(key, fn as (...args: unknown[]) => unknown);
+    ui[key] = (...args: unknown[]) => {
+      calls.push(key);
+      return (fn as (...args: unknown[]) => unknown).apply(ui, args);
+    };
+  }
+  return { calls, stop: () => { for (const [key, fn] of originals) ui[key] = fn; } };
+}
+
+test("swapped presses touch no nodes: A, A and a held RIGHT create nothing; X and Y mount only their LCD icon", async () => {
+  const rig = await boot();
+  press(rig, A);
+  frames(rig, 3);
+  holdSelect(rig);
+  frames(rig, 10);
+  const ops = recordOps();
+  press(rig, A);
+  press(rig, A);
+  frames(rig, 24, { buttons: BTN.RIGHT });
+  frames(rig, 2);
+  expect(ops.calls.filter((name) => name === "createNode")).toEqual([]);
+  ops.calls.length = 0;
+  press(rig, X); // shuffle on: the LCD mounts its shuffle icon and nothing else
+  expect(ops.calls.filter((name) => name === "createNode")).toHaveLength(1);
+  ops.calls.length = 0;
+  press(rig, Y); // repeat all: the repeat icon
+  expect(ops.calls.filter((name) => name === "createNode")).toHaveLength(1);
+  ops.stop();
+}, 120_000);
