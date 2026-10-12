@@ -6,7 +6,7 @@ import { View } from "@pocketjs/framework/components";
 import { BTN } from "@pocketjs/framework/input";
 import { onButtonPress, onFrame } from "@pocketjs/framework/lifecycle";
 import { onAnalogRows, onRepeat, onTapOrHold } from "../input.ts";
-import { stepShoulders } from "../input-timing.ts";
+import { SHOULDERS_HELD, stepShoulders } from "../input-timing.ts";
 import { currentId } from "../player/reducer.ts";
 import type { Session } from "../session.ts";
 import { AQUA } from "../theme/aqua.ts";
@@ -103,8 +103,8 @@ export function Explorer(props: { layout: Layout; session: Session; store: Explo
   onButtonPress(BTN.CROSS, () => dispatch({ type: "back" }), { active: listActive, latched: true });
   // L / R step tabs; held with Y they skip songs (the path without ZL / ZR on an
   // Old 3DS); a Y tap alone reveals the playing song when it is released.
-  // Everything held and chorded at mount: a button already down (Y through a swap) is ignored until released.
-  let shoulders = { mask: ~0, chorded: true };
+  // Seeded as held: a button already down at mount (Y through a swap) is ignored until released.
+  let shoulders = SHOULDERS_HELD;
   onFrame((buttons) => {
     if (!active()) {
       shoulders = { mask: buttons, chorded: false };

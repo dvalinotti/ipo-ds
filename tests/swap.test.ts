@@ -264,3 +264,22 @@ test("swapped presses touch no nodes: A, A and a held RIGHT create nothing; X an
   expect(ops.calls.filter((name) => name === "createNode")).toHaveLength(1);
   ops.stop();
 }, 120_000);
+
+test("a Y held through a swap neither cycles repeat on the narrow list nor reveals on the wide one", async () => {
+  const rig = await boot();
+  press(rig, A); // Aerodynamic plays
+  frames(rig, 3);
+  for (let i = 0; i < 3; i++) press(rig, BTN.DOWN); // focus away from the playing row
+  const focused = selectedRow(rig.world, "primary");
+  expect(focused).not.toContain("Aerodynamic");
+  frames(rig, 62, { buttons: BTN.SELECT | Y }); // swap with Y down; the narrow Explorer mounts under it
+  frames(rig, 3); // Y released after the mount: no repeat cycle
+  expect(screenText(rig.world, "primary")).toContain("Aerodynamic");
+  press(rig, Y); // a real tap: off → all (no "1" yet)
+  expect(pathsTo(rig.world, "primary", "1")).toHaveLength(0);
+  press(rig, Y); // all → one: the LCD shows its "1"
+  expect(pathsTo(rig.world, "primary", "1")).toHaveLength(1);
+  frames(rig, 62, { buttons: BTN.SELECT | Y }); // swap back with Y down; the wide Explorer mounts under it
+  frames(rig, 3); // released: no reveal, the focus stays where it was
+  expect(selectedRow(rig.world, "primary")).toBe(focused);
+}, 120_000);
