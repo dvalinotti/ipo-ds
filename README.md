@@ -99,8 +99,10 @@ git add runtime
 2. Tag the merge commit and push the tag:
    `git tag v0.2.0 && git push origin v0.2.0`.
 3. `.github/workflows/release.yml` runs `bun scripts/release-check.ts <tag>`,
-   which fails unless the tag matches both files, then builds the tagged commit
-   and creates a draft release holding `iPoDS-v0.2.0.3dsx`, `iPoDS-v0.2.0.cia`
+   which fails unless the tag matches both files and is
+   `v<major>.<minor>.<patch>[-<prerelease>]` with no build metadata. It also
+   fails unless the pinned `runtime` commit is on the fork's `ipo-ds` branch,
+   so every tag stays buildable. It then builds the tagged commit and creates a draft release holding `iPoDS-v0.2.0.3dsx`, `iPoDS-v0.2.0.cia`
    and `SHA256SUMS.txt`, with notes generated from the merged pull requests.
 4. Install the draft's `.cia` on a console or in Azahar, then publish the draft.
 

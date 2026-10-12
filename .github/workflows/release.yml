@@ -27,6 +27,28 @@ jobs:
       - name: Check the tag against the declared version
         run: bun scripts/release-check.ts "$GITHUB_REF_NAME"
 
+      # A release has to stay buildable from its tag, so the runtime commit it
+      # pins must be on the fork branch .gitmodules names, not on a feature
+      # branch that can be deleted. compare/<branch>...<pin> reads "identical"
+      # or "behind" when the branch contains the pin.
+      - name: Check the runtime pin is on the fork's tracked branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pin=$(git rev-parse HEAD:runtime)
+          url=$(git config -f .gitmodules submodule.runtime.url)
+          branch=$(git config -f .gitmodules submodule.runtime.branch)
+          repo=${url#https://github.com/}
+          repo=${repo%.git}
+          status=$(gh api "repos/$repo/compare/$branch...$pin" --jq .status)
+          case "$status" in
+            identical|behind) echo "runtime $pin is on $repo@$branch" ;;
+            *)
+              echo "runtime $pin is not on $repo@$branch (compare: $status); push it to $branch before releasing" >&2
+              exit 1
+              ;;
+          esac
+
   build:
     needs: verify
     uses: ./.github/workflows/build.yml
@@ -62,6 +84,8 @@ jobs:
             fi
             gh release upload "$TAG" release/* --clobber
           else
+            # release-check refuses build metadata, so a "-" can only start a
+            # SemVer prerelease.
             prerelease=""
             case "$TAG" in *-*) prerelease="--prerelease" ;; esac
             gh release create "$TAG" release/* --draft --verify-tag --generate-notes \

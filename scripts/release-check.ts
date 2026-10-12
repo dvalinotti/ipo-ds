@@ -7,12 +7,18 @@ import { resolve } from "node:path";
 /** Files whose `.version` must equal the tag's version. */
 export const RELEASE_VERSION_FILES = ["package.json", "pocket.json"] as const;
 
-const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
+// MAJOR.MINOR.PATCH with an optional SemVer 2.0.0 prerelease. A numeric
+// identifier has no leading zero (`-0` but not `-01`); one holding a letter or
+// hyphen may start with digits (`-0a`). Build metadata (`+…`) is refused: it
+// does not change a version's precedence, so v1.2.3+a and v1.2.3+b would be
+// two releases of one version, and release.yml reads any `-` as a prerelease.
+const RELEASE_VERSION = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*)?$/;
 
-/** The SemVer a tag names (`v0.2.0` or `0.2.0`); throws for anything else. */
+/** The version a tag names (`v0.2.0`, `0.2.0`, `v0.2.0-beta.1`); throws for anything else. */
 export function tagVersion(tag: string): string {
   const version = tag.startsWith("v") ? tag.slice(1) : tag;
-  if (!SEMVER.test(version)) throw new Error(`release-check: ${JSON.stringify(tag)} is not a version tag such as v0.2.0`);
+  if (version.includes("+")) throw new Error(`release-check: ${JSON.stringify(tag)} carries build metadata; release tags are v<major>.<minor>.<patch>[-<prerelease>]`);
+  if (!RELEASE_VERSION.test(version)) throw new Error(`release-check: ${JSON.stringify(tag)} is not a version tag such as v0.2.0`);
   return version;
 }
 
