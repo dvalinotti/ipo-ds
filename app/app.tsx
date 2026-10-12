@@ -36,7 +36,7 @@ export default function App() {
       {/* The app moves its own focus; this empty scope keeps the framework's d-pad traversal
           from walking the whole tree on every press (the keyboard pushes its own scope). */}
       <FocusScope class="absolute left-[0] top-[0] w-[0] h-[0]" />
-      <Explorer session={session} store={store} searching={osk.isOpen} openSearch={() => osk.open()} />
+      <Explorer layout="wide" session={session} store={store} searching={osk.isOpen} openSearch={() => osk.open()} />
       <AuxiliarySurface>
         {/* A wrapping View: AuxiliarySurface does not track a lone reactive child (a bare <Switch> renders once). */}
         <View class="relative w-full h-full flex-col">
