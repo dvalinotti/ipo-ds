@@ -17,6 +17,19 @@ test("a tag that is not a SemVer is refused", () => {
   expect(() => tagVersion("v01.2.0")).toThrow("is not a version tag");
 });
 
+test("a numeric prerelease identifier with a leading zero is refused; one with a letter may start with zeros", () => {
+  expect(() => tagVersion("v1.0.0-01")).toThrow("is not a version tag");
+  expect(() => tagVersion("v1.0.0-beta.007")).toThrow("is not a version tag");
+  expect(tagVersion("v1.0.0-0")).toBe("1.0.0-0");
+  expect(tagVersion("v1.0.0-0a")).toBe("1.0.0-0a");
+  expect(tagVersion("v1.0.0-alpha.0")).toBe("1.0.0-alpha.0");
+});
+
+test("a tag carrying build metadata is refused, including a hyphen inside it", () => {
+  expect(() => tagVersion("v1.2.3+foo-bar")).toThrow("carries build metadata");
+  expect(() => tagVersion("v1.2.3-beta.1+build.5")).toThrow("carries build metadata");
+});
+
 test("every file that disagrees with the tag, or has no version, is reported", () => {
   expect(versionMismatches("0.2.0", { "package.json": { version: "0.2.0" }, "pocket.json": { version: "0.2.0" } })).toEqual([]);
   expect(versionMismatches("0.2.0", { "package.json": { version: "0.2.0" }, "pocket.json": { version: "0.1.0" } })).toEqual([
