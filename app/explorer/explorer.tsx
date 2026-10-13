@@ -4,7 +4,10 @@
 import { createComputed, createEffect, createMemo, createSignal, on, Show, untrack, type Accessor } from "solid-js";
 import { View } from "@pocketjs/framework/components";
 import { BTN } from "@pocketjs/framework/input";
+import { createGesture } from "@pocketjs/framework/gesture";
+import { createScroller, type Scroller } from "@pocketjs/framework/kinetics";
 import { onButtonPress, onFrame } from "@pocketjs/framework/lifecycle";
+import { FLING_MAX_PX_PER_S } from "../controls.ts";
 import { onAnalogRows, onRepeat, onTapOrHold } from "../input.ts";
 import { SHOULDERS_HELD, stepShoulders } from "../input-timing.ts";
 import { currentId } from "../player/reducer.ts";
@@ -14,6 +17,7 @@ import { ColumnHeader, ListRow, Scrollbar } from "../theme/parts/list.tsx";
 import { StatePanel } from "../theme/parts/panels.tsx";
 import { Breadcrumb, FooterGels, FooterLegend, SearchStrip, type TouchLegendItem } from "../theme/parts/strips.tsx";
 import { RecycledList } from "./recycled-list.tsx";
+import { bodyTopPx, centredOffset, clampVelocity, NARROW_W, rowAt, snapToRow, thumbFor, TRACK_HIT_PX } from "./scroll.ts";
 import { nearestTop } from "./window.ts";
 import { settled } from "../reactive.ts";
 import { Toolbar } from "../theme/parts/toolbar.tsx";
@@ -86,6 +90,11 @@ export function Explorer(props: { layout: Layout; session: Session; store: Explo
   const strips = () => (query() ? 1 : 0) + (crumb() ? 1 : 0);
   const bodyPx = () => BODY_PX - strips() * ROW_PX;
   const page = () => Math.floor(bodyPx() / ROW_PX);
+  const bodyTop = () => bodyTopPx(strips());
+  /** The row count as a settled value: what the scroller's range and the thumb read, so no per-frame path touches the row memo. */
+  const count = settled(() => rows().length);
+  /** The largest offset: the rows past the window, in px. */
+  const maxOffset = () => Math.max(0, count() - page()) * ROW_PX;
   // Focus can sit past the end after the rows shrink (a rescan); clamp where it is used.
   const focus = settled(() => Math.min(focusOf(state()), Math.max(0, rows().length - 1)));
   const playingId = createMemo(() => currentId(props.session.player()));
@@ -147,21 +156,103 @@ export function Explorer(props: { layout: Layout; session: Session; store: Explo
   onTapOrHold(BTN.TRIANGLE, tapX, () => props.session.rescan(), active);
 
   // --- list ----------------------------------------------------------------
-  // The first row in the window: the least scrolling that keeps the focused row visible.
-  let previousTop = props.store.scrollRow.get(viewKey(currentView(untrack(state)))) ?? 0;
-  const top = settled(() => (previousTop = nearestTop(previousTop, focus(), page(), rows().length)));
+  // Wide: the first row in the window is the least scrolling that keeps the focused row visible.
+  // Narrow: a kinetic scroller owns a px offset under the finger; `top` is its whole-row part (settled,
+  // so a frame that crosses no row boundary re-runs nothing downstream) and `shift` the remainder, read
+  // by exactly two paint-only translates. The store is written by the computation on `top` (Plan 9).
+  const key0 = viewKey(currentView(untrack(state)));
+  let previousTop = props.store.scrollRow.get(key0) ?? 0;
+  let scroller: Scroller | null = null;
+  /** A reveal that changed the view: the view-change effect centres the row after the batch (see reveal). */
+  let pendingReveal = false;
+  /** Rest on a row: a fling, or a tween a finger stopped, can leave the window mid-row. */
+  const alignToRow = () => {
+    const s = scroller!;
+    if (s.state() !== "idle") return;
+    const to = snapToRow(s.offset(), ROW_PX, maxOffset());
+    if (to !== s.offset()) s.scrollTo(to, { durMs: 120 });
+  };
+  if (!wide) {
+    // No `snap` option: with it the framework's endDrag replaces the fling with a 150–450 ms tween whose
+    // first frames move up to 13 rows, so the fling state would never run and the velocity cap would mean
+    // nothing. The real fling decays from the clamped release velocity; onSettle aligns the rest.
+    const s = createScroller({ max: maxOffset, extent: bodyPx, initial: previousTop * ROW_PX, overscroll: 0, onSettle: () => alignToRow() });
+    scroller = s;
+    onFrame(() => s.step());
+    // A view change (tab, drill, back) shows that view where it was left; a query change starts at the top;
+    // a reveal into another view centres the revealed row instead (effects run after the batch, when the
+    // settled values are fresh).
+    let shownKey = key0;
+    createEffect(on(key, () => {
+      const now = viewKey(currentView(untrack(state)));
+      if (pendingReveal) {
+        pendingReveal = false;
+        shownKey = now;
+        s.scrollTo(centredOffset(focus(), page(), ROW_PX, maxOffset()));
+        return;
+      }
+      if (now === shownKey) {
+        s.scrollTo(0, { immediate: true });
+        return;
+      }
+      shownKey = now;
+      s.scrollTo((props.store.scrollRow.get(now) ?? 0) * ROW_PX, { immediate: true });
+    }, { defer: true }));
+    // A rescan that drops rows under the window: clamp at once, or the list would show nothing.
+    createEffect(on(count, () => {
+      if (s.offset() > maxOffset()) s.scrollTo(maxOffset(), { immediate: true });
+    }, { defer: true }));
+  }
+  const top = wide
+    ? settled(() => (previousTop = nearestTop(previousTop, focus(), page(), count())))
+    : settled(() => Math.floor(scroller!.offset() / ROW_PX));
+  const shift = wide ? () => 0 : createMemo(() => scroller!.offset() - top() * ROW_PX);
+  const thumb = createMemo(() => thumbFor(wide ? top() * ROW_PX : scroller!.offset(), count() * ROW_PX, bodyPx()));
   // Written as it changes, not on cleanup: on a swap the new Explorer can mount before the old one is disposed.
   createComputed(() => {
     if (rows().length > 0) props.store.scrollRow.set(viewKey(view()), top());
   });
-  const thumb = createMemo(() => {
-    const content = rows().length * ROW_PX;
-    const view = bodyPx();
-    if (content <= view) return null;
-    const height = Math.max(16, Math.round((view * view) / content));
-    const offset = top() * ROW_PX;
-    return { top: Math.round((offset / (content - view)) * (view - height)), height };
-  });
+
+  // --- touch (narrow) --------------------------------------------------------
+  if (!wide) {
+    const s = scroller!;
+    // The list body, short of the scrollbar's hit region while a thumb exists. A geometry region, not a
+    // node: the rows tile the body exactly, so the row under a finger is arithmetic (rowAt), read at the
+    // down edge once the fling is stopped. The framework fires onUp before onPanEnd and onTap.
+    let rowDown = -1;
+    createGesture({
+      surface: "auxiliary",
+      axis: "y",
+      region: { rect: () => ({ x: 0, y: bodyTop(), w: thumb() ? NARROW_W - TRACK_HIT_PX : NARROW_W, h: bodyPx() }) },
+      onDown: (c) => {
+        rowDown = -1;
+        if (!listActive()) return;
+        s.stop();
+        rowDown = rowAt(c.y, bodyTop(), s.offset(), ROW_PX, count());
+      },
+      onPanStart: (c) => {
+        if (!listActive()) return;
+        s.beginDrag();
+        s.drag(-(c.dy - c.fdy)); // the travel inside the pan slop, which no onPanMove carries
+      },
+      onPanMove: (c) => { if (listActive()) s.drag(-c.fdy); },
+      onPanEnd: (c) => { if (listActive()) s.endDrag(-clampVelocity(c.vy, FLING_MAX_PX_PER_S)); },
+      onUp: () => { if (listActive()) alignToRow(); },
+      onCancel: () => { if (s.state() === "tracking") s.endDrag(0); },
+      onTap: () => {
+        if (!listActive() || rowDown < 0) return;
+        const lib = library();
+        if (!lib) return;
+        const list = visibleRows(lib, state());
+        if (rowDown >= list.length) return;
+        dispatch({ type: "focus", index: rowDown, count: list.length });
+        const row = list[rowDown]!;
+        if (row.kind === "song") props.session.dispatch({ type: "playFrom", ids: songIds(list), startId: row.id });
+        else dispatch({ type: "open", row });
+      },
+    });
+  }
+
   // List rows keep their stripe; the focused row is drawn by one overlay row on top of them, so a
   // focus move restyles nothing in the list (it moves the overlay and rebinds its three texts).
   const kindAt = (index: number): RowKind => (index % 2 === 0 ? "odd" : "even");
@@ -203,6 +294,7 @@ export function Explorer(props: { layout: Layout; session: Session; store: Explo
               rowHeight={ROW_PX}
               rows={page()}
               top={top()}
+              shift={shift()}
               slot={(index, slot) => {
                 // Rows can shrink under a slot (search, rescan) before the pool does; every read is null-safe.
                 const row = () => rows()[index()];
@@ -222,7 +314,7 @@ export function Explorer(props: { layout: Layout; session: Session; store: Explo
                 );
               }}
             />
-            <View class="absolute left-[0] top-[0] w-full h-[21]" style={{ translateY: (focus() - top()) * ROW_PX }}>
+            <View class="absolute left-[0] top-[0] w-full h-[21]" style={{ translateY: (focus() - top()) * ROW_PX - shift() }}>
               <ListRow
                 layout={props.layout}
                 kind="selected"
