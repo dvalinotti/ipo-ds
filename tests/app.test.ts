@@ -8,7 +8,10 @@ import { bootApp, disposeGuest, pathTo, pathsTo, screenText } from "./support/ap
 afterAll(disposeGuest);
 
 // 3DS face buttons map by position: A = CIRCLE, B = CROSS, X = TRIANGLE, Y = SQUARE.
-const A = BTN.CIRCLE, B = BTN.CROSS, X = BTN.TRIANGLE, Y = BTN.SQUARE;
+const A = BTN.CIRCLE,
+  B = BTN.CROSS,
+  X = BTN.TRIANGLE,
+  Y = BTN.SQUARE;
 const SELECTED_ROW = 0xffd77538;
 
 interface Rig {
@@ -52,7 +55,11 @@ function flat(node: SimNode | null, out: SimNode[] = []): SimNode[] {
 /** The text of the focused (selected) list row. */
 function selectedRow(world: BundleWorld): string {
   const row = flat(world.tree("primary")).find((node) => node.type === "view" && node.bgColor >>> 0 === SELECTED_ROW);
-  return row ? flat(row).map((node) => node.text).join("") : "";
+  return row
+    ? flat(row)
+        .map((node) => node.text)
+        .join("")
+    : "";
 }
 
 const opens = (host: SimLocalMediaHost) => host.log.filter((entry) => entry.startsWith("open("));
@@ -72,12 +79,24 @@ function rescan(rig: Rig): void {
 }
 
 /** The column header labelled `text` (not a tab or row with the same text). */
-const header = (world: BundleWorld, text: string) => pathsTo(world, "primary", text).find((path) => path.at(-2)!.rect![1] === 35);
+const header = (world: BundleWorld, text: string) =>
+  pathsTo(world, "primary", text).find((path) => path.at(-2)!.rect![1] === 35);
 
 test("launch: the Explorer lists the library, sorted, first row focused; Now Playing is idle", async () => {
   const rig = await boot();
   const top = screenText(rig.world, "primary");
-  for (const part of ["iPoDS", "20 songs · 1.6 hrs", "Song Name", "Artist", "Aerodynamic", "Around the World", "A", "Play", "Search"]) expect(top).toContain(part);
+  for (const part of [
+    "iPoDS",
+    "20 songs · 1.6 hrs",
+    "Song Name",
+    "Artist",
+    "Aerodynamic",
+    "Around the World",
+    "A",
+    "Play",
+    "Search",
+  ])
+    expect(top).toContain(part);
   expect(selectedRow(rig.world)).toContain("Aerodynamic");
   expect(screenText(rig.world, "auxiliary")).toContain("Nothing playing");
 }, 120_000);
@@ -108,7 +127,12 @@ function recordOps(): { calls: string[]; stop(): void } {
       return (fn as (...args: unknown[]) => unknown).apply(ui, args);
     };
   }
-  return { calls, stop: () => { for (const [key, fn] of originals) ui[key] = fn; } };
+  return {
+    calls,
+    stop: () => {
+      for (const [key, fn] of originals) ui[key] = fn;
+    },
+  };
 }
 
 test("a focus move touches only the selection: no row is rebuilt, scrolling included", async () => {
@@ -187,7 +211,8 @@ test("tabs do not wrap; drilling into an artist and backing out restores the foc
   expect(selectedRow(rig.world)).toContain("Gorillaz");
   press(rig, A);
   const drilled = screenText(rig.world, "primary");
-  for (const part of ["Artists", "›", "Gorillaz", "4 songs", "Song Name", "Album", "Demon Days", "Kids with Guns"]) expect(drilled).toContain(part);
+  for (const part of ["Artists", "›", "Gorillaz", "4 songs", "Song Name", "Album", "Demon Days", "Kids with Guns"])
+    expect(drilled).toContain(part);
   press(rig, B);
   expect(selectedRow(rig.world)).toContain("Gorillaz");
 }, 120_000);
@@ -297,7 +322,9 @@ test("a held D-pad repeats and the focused row stays inside the list", async () 
   const rig = await boot();
   press(rig, BTN.DOWN, 60); // fires on frames 0, 18, 23 … 58: ten moves
   expect(selectedRow(rig.world)).toContain("Glósóli");
-  const row = flat(rig.world.tree("primary")).find((node) => node.type === "view" && node.bgColor >>> 0 === SELECTED_ROW)!;
+  const row = flat(rig.world.tree("primary")).find(
+    (node) => node.type === "view" && node.bgColor >>> 0 === SELECTED_ROW,
+  )!;
   const [, y, , h] = row.rect!;
   expect(y).toBeGreaterThanOrEqual(52);
   expect(y + h).toBeLessThanOrEqual(220);
@@ -341,7 +368,10 @@ test("a build without media.local, a garbled host reply, and an empty card each 
   expect(screenText(bare.world, "auxiliary")).toContain("Nothing playing");
 
   const garbledHost = createSimLocalMedia(LIBRARY);
-  const garbled = { host: garbledHost, world: await bootApp({ localmedia: { ...garbledHost.ns, tracks: () => "[{" } }) };
+  const garbled = {
+    host: garbledHost,
+    world: await bootApp({ localmedia: { ...garbledHost.ns, tracks: () => "[{" } }),
+  };
   frames(garbled, 3);
   expect(garbled.world.failure).toBeNull();
   expect(screenText(garbled.world, "primary")).toContain("Could not read the music library");
@@ -416,14 +446,18 @@ test("transport taps do nothing while nothing has played", async () => {
 
 test("the deck's transport row ends with the DJ gel, centred at 293", async () => {
   const rig = await boot();
-  const row = flat(rig.world.tree("auxiliary")).find((node) => node.rect !== null && node.rect[1] === 160 && node.rect[3] === 72)!;
+  const row = flat(rig.world.tree("auxiliary")).find(
+    (node) => node.rect !== null && node.rect[1] === 160 && node.rect[3] === 72,
+  )!;
   expect(row.children).toHaveLength(6);
   const dj = row.children[5]!.rect!;
   expect([dj[0] + dj[2] / 2, dj[1] + dj[3] / 2, dj[2]]).toEqual([293, 196, 34]);
 }, 120_000);
 
 test("an hour-long track shows h:mm:ss on both sides of the seek bar", async () => {
-  const rig = await boot([{ file: "mix.mp3", title: "Two Hour Mix", artist: "DJ", album: "Mixes", track: 1, durationMs: 7_200_000 }]);
+  const rig = await boot([
+    { file: "mix.mp3", title: "Two Hour Mix", artist: "DJ", album: "Mixes", track: 1, durationMs: 7_200_000 },
+  ]);
   press(rig, A);
   frames(rig, 70);
   const bottom = screenText(rig.world, "auxiliary");
@@ -494,8 +528,16 @@ const coverNode = (world: BundleWorld) =>
 
 /** The loading spinner: a 32×32 sprite inside the art frame (10..110 on both axes). */
 const spinnerNode = (world: BundleWorld) =>
-  flat(world.tree("auxiliary")).find((node) => node.type === "image" && node.rect?.[2] === 32 && node.rect?.[3] === 32
-    && node.rect[0] > 10 && node.rect[0] < 110 && node.rect[1] > 10 && node.rect[1] < 110);
+  flat(world.tree("auxiliary")).find(
+    (node) =>
+      node.type === "image" &&
+      node.rect?.[2] === 32 &&
+      node.rect?.[3] === 32 &&
+      node.rect[0] > 10 &&
+      node.rect[0] < 110 &&
+      node.rect[1] > 10 &&
+      node.rect[1] < 110,
+  );
 
 const artworkCalls = (host: SimLocalMediaHost) => host.log.filter((entry) => entry.startsWith("artwork("));
 const releases = (host: SimLocalMediaHost) => host.log.filter((entry) => entry.startsWith("releaseArtwork("));

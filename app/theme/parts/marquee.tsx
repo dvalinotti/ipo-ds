@@ -27,7 +27,13 @@ export function Marquee(props: {
   const textWidth = createMemo(() => (live() ? measured(props.text, props.slot) : 0));
   const overflow = () => Math.max(0, Math.ceil(textWidth() - props.width));
   const [start, setStart] = createSignal(virtualFrame());
-  createEffect(on(() => [props.text, props.active] as const, () => setStart(virtualFrame()), { defer: true }));
+  createEffect(
+    on(
+      () => [props.text, props.active] as const,
+      () => setStart(virtualFrame()),
+      { defer: true },
+    ),
+  );
   const [offset, setOffset] = createSignal(0);
   onFrame(() => {
     const next = live() && overflow() > 0 ? marqueeOffset(virtualFrame() - start(), overflow()) : 0;
@@ -35,7 +41,10 @@ export function Marquee(props: {
   });
   return (
     <View class="overflow-hidden" style={{ width: props.width }}>
-      <Text class={props.class} style={{ width: overflow() > 0 ? Math.ceil(textWidth()) : props.width, translateX: offset() }}>
+      <Text
+        class={props.class}
+        style={{ width: overflow() > 0 ? Math.ceil(textWidth()) : props.width, translateX: offset() }}
+      >
         {props.text}
       </Text>
     </View>

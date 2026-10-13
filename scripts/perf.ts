@@ -25,7 +25,9 @@ export interface Scenario {
   keepCard?: boolean;
 }
 
-const A = 0x2000, DOWN = 0x40, SELECT = 0x1;
+const A = 0x2000,
+  DOWN = 0x40,
+  SELECT = 0x1;
 /** SELECT held 66 frames from `at`: the hold fires at `at + 59` and swaps the screens. */
 const holdSelect = (at: number) => `${at}:0x${SELECT.toString(16)},${at + 66}:0x0`;
 /** One finger at x moving `step` px in y per frame from y0 for `count` frames, then lifted. */
@@ -43,23 +45,56 @@ const SEARCH_GEL = { x: 37, y: 231 };
 // a contact's owner is decided where it lands.
 export const SCENARIOS: readonly Scenario[] = [
   { name: "idle", tape: "0:0x0", capture: 3000, kind: "frame" },
-  { name: "scroll", tape: `0:0x0,2400:0x${A.toString(16)},2406:0x0,2700:0x${DOWN.toString(16)}`, capture: 3000, kind: "frame" },
+  {
+    name: "scroll",
+    tape: `0:0x0,2400:0x${A.toString(16)},2406:0x0,2700:0x${DOWN.toString(16)}`,
+    capture: 3000,
+    kind: "frame",
+  },
   { name: "now-playing", tape: `0:0x0,2400:0x${A.toString(16)},2406:0x0`, capture: 3000, kind: "frame" },
-  { name: "dj", tape: `0:0x0,2400:0x${A.toString(16)},2406:0x0,2460:0x${SELECT.toString(16)},2466:0x0`, capture: 3000, kind: "frame" },
+  {
+    name: "dj",
+    tape: `0:0x0,2400:0x${A.toString(16)},2406:0x0,2460:0x${SELECT.toString(16)},2466:0x0`,
+    capture: 3000,
+    kind: "frame",
+  },
   // Swapped: the wide deck idle on top, the narrow list below.
   { name: "swapped-idle", tape: `0:0x0,${holdSelect(2460)}`, capture: 3000, kind: "frame" },
   // A slow finger-follow drag (2 px per frame, y 214 → 16, frames 2900–2999, lifted at 3000) down through
   // the whole window: a sub-row shift every measured frame, a row boundary about every 10.
-  { name: "touch-drag", tape: `0:0x0,${holdSelect(2460)}`, touch: dragTape(2900, 160, 214, -2, 100), capture: 3000, kind: "frame" },
+  {
+    name: "touch-drag",
+    tape: `0:0x0,${holdSelect(2460)}`,
+    touch: dragTape(2900, 160, 214, -2, 100),
+    capture: 3000,
+    kind: "frame",
+  },
   // The fastest flick the cap allows (83 px per frame ≈ 5000 px/s over 215 → 132 → 49), lifted one frame
   // before the window: the fling crosses about 4 rows per frame as the window opens and decays through it.
-  { name: "touch-fling", tape: `0:0x0,${holdSelect(2460)}`, touch: dragTape(2937, 160, 215, -83, 3), capture: 3000, kind: "frame" },
+  {
+    name: "touch-fling",
+    tape: `0:0x0,${holdSelect(2460)}`,
+    touch: dragTape(2937, 160, 215, -83, 3),
+    capture: 3000,
+    kind: "frame",
+  },
   // The swap itself: the hold fires at 2959, inside the window, so both screens' remount is measured.
   { name: "swap", tape: `0:0x0,${holdSelect(2900)}`, capture: 3000, kind: "frame" },
   // DJ Mode replacing the narrow Explorer: a SELECT tap at 2975, released at 2977.
-  { name: "swap-dj", tape: `0:0x0,${holdSelect(2460)},2975:0x${SELECT.toString(16)},2977:0x0`, capture: 3000, kind: "frame" },
+  {
+    name: "swap-dj",
+    tape: `0:0x0,${holdSelect(2460)},2975:0x${SELECT.toString(16)},2977:0x0`,
+    capture: 3000,
+    kind: "frame",
+  },
   // The keyboard while swapped: both screens rebuild in one frame when the Search gel is tapped.
-  { name: "swap-search", tape: `0:0x0,${holdSelect(2460)}`, touch: `2975:1,${SEARCH_GEL.x},${SEARCH_GEL.y}@2976:-`, capture: 3000, kind: "frame" },
+  {
+    name: "swap-search",
+    tape: `0:0x0,${holdSelect(2460)}`,
+    touch: `2975:1,${SEARCH_GEL.x},${SEARCH_GEL.y}@2976:-`,
+    capture: 3000,
+    kind: "frame",
+  },
   { name: "scan-first", tape: "0:0x0", capture: 3600, kind: "scan" },
   { name: "scan-cached", tape: "0:0x0", capture: 3600, kind: "scan", keepCard: true },
 ];
@@ -70,7 +105,11 @@ export const SCAN_BUDGET_MS = { first: 10_000, cached: 1_000, confirm: 3_000 } a
 
 export interface HostStats {
   timingUs: {
-    js: [number, number]; tick: [number, number]; draw: [number, number]; gpu: [number, number]; frame: [number, number];
+    js: [number, number];
+    tick: [number, number];
+    draw: [number, number];
+    gpu: [number, number];
+    frame: [number, number];
     /** Each frame's js + tick + draw: its max is one real frame's. */
     work: [number, number];
     slowFrames: number;
@@ -93,9 +132,11 @@ export function overBudget(scenario: Scenario, model: "old" | "new", stats: Stat
   }
   const lm = stats.localmedia;
   if (!lm) return "no localmedia stats";
-  if (scenario.name === "scan-first" && lm.scanMs > SCAN_BUDGET_MS.first) return `scan ${lm.scanMs} ms > ${SCAN_BUDGET_MS.first} ms`;
+  if (scenario.name === "scan-first" && lm.scanMs > SCAN_BUDGET_MS.first)
+    return `scan ${lm.scanMs} ms > ${SCAN_BUDGET_MS.first} ms`;
   if (scenario.name === "scan-cached") {
-    if (lm.cachedMs < 0 || lm.cachedMs > SCAN_BUDGET_MS.cached) return `cached list ${lm.cachedMs} ms > ${SCAN_BUDGET_MS.cached} ms`;
+    if (lm.cachedMs < 0 || lm.cachedMs > SCAN_BUDGET_MS.cached)
+      return `cached list ${lm.cachedMs} ms > ${SCAN_BUDGET_MS.cached} ms`;
     if (lm.scanMs > SCAN_BUDGET_MS.confirm) return `confirmation ${lm.scanMs} ms > ${SCAN_BUDGET_MS.confirm} ms`;
   }
   return null;
@@ -140,7 +181,8 @@ function prepareHome(home: string, model: "old" | "new", keepCard: boolean): str
   if (!keepCard) {
     rmSync(home, { recursive: true, force: true });
     mkdirSync(`${sdmc}/3ds`, { recursive: true });
-    for (const dir of ["nand", "sysdata"]) if (existsSync(`${SOURCE}/${dir}`)) cpSync(`${SOURCE}/${dir}`, `${userDir}/${dir}`, { recursive: true });
+    for (const dir of ["nand", "sysdata"])
+      if (existsSync(`${SOURCE}/${dir}`)) cpSync(`${SOURCE}/${dir}`, `${userDir}/${dir}`, { recursive: true });
     // Clone, not copy: APFS clones make the 366 MB library free to lay out per run.
     const copy = Bun.spawnSync(["cp", "-cR", join(ROOT, "dist/test-music"), `${sdmc}/music`]);
     if (copy.exitCode !== 0) throw new Error(`perf: could not copy the test library: ${copy.stderr.toString()}`);
@@ -159,7 +201,20 @@ function kill(): void {
 
 async function runAzahar(home: string, captures: string, rom: string, log: string): Promise<void> {
   kill();
-  const launch = Bun.spawnSync(["open", "-n", "-a", AZAHAR, "--env", `HOME=${home}`, "--stdout", log, "--stderr", log, "--args", rom]);
+  const launch = Bun.spawnSync([
+    "open",
+    "-n",
+    "-a",
+    AZAHAR,
+    "--env",
+    `HOME=${home}`,
+    "--stdout",
+    log,
+    "--stderr",
+    log,
+    "--args",
+    rom,
+  ]);
   if (launch.exitCode !== 0) throw new Error(`perf: could not launch Azahar: ${launch.stderr.toString()}`);
   const started = Date.now();
   try {
@@ -176,10 +231,15 @@ async function runAzahar(home: string, captures: string, rom: string, log: strin
 
 function decodeScreen(raw: Uint8Array, width: number, height: number): Uint8Array {
   const rgba = new Uint8Array(width * height * 4);
-  for (let x = 0; x < width; x++) for (let y = 0; y < height; y++) {
-    const s = (x * height + (height - 1 - y)) * 4, d = (y * width + x) * 4;
-    rgba[d] = raw[s + 3]!; rgba[d + 1] = raw[s + 2]!; rgba[d + 2] = raw[s + 1]!; rgba[d + 3] = 255;
-  }
+  for (let x = 0; x < width; x++)
+    for (let y = 0; y < height; y++) {
+      const s = (x * height + (height - 1 - y)) * 4,
+        d = (y * width + x) * 4;
+      rgba[d] = raw[s + 3]!;
+      rgba[d + 1] = raw[s + 2]!;
+      rgba[d + 2] = raw[s + 1]!;
+      rgba[d + 3] = 255;
+    }
   return rgba;
 }
 
@@ -187,8 +247,15 @@ async function build(scenario: Scenario, out: string): Promise<string> {
   const log = join(out, `${scenario.name}.build.log`);
   const proc = Bun.spawn(["bun", "scripts/build.ts", "--capture"], {
     cwd: ROOT,
-    env: { ...process.env, POCKETJS_CAPTURE_INPUT: scenario.tape, POCKETJS_CAPTURE_TOUCH: scenario.touch ?? "", POCKETJS_CAP_START: String(scenario.capture), POCKETJS_CAP_N: "1" },
-    stdout: Bun.file(log), stderr: Bun.file(log),
+    env: {
+      ...process.env,
+      POCKETJS_CAPTURE_INPUT: scenario.tape,
+      POCKETJS_CAPTURE_TOUCH: scenario.touch ?? "",
+      POCKETJS_CAP_START: String(scenario.capture),
+      POCKETJS_CAP_N: "1",
+    },
+    stdout: Bun.file(log),
+    stderr: Bun.file(log),
   });
   if ((await proc.exited) !== 0) throw new Error(`perf: capture build for ${scenario.name} failed (see ${log})`);
   const rom = join(out, `${scenario.name}.3dsx`);
@@ -200,7 +267,10 @@ const fmt = (us: number) => (us / 1000).toFixed(1);
 
 if (import.meta.main) {
   const args = process.argv.slice(2);
-  const flag = (name: string) => { const i = args.indexOf(name); return i >= 0 ? args.splice(i, 2)[1] : undefined; };
+  const flag = (name: string) => {
+    const i = args.indexOf(name);
+    return i >= 0 ? args.splice(i, 2)[1] : undefined;
+  };
   const check = args.includes("--check") ? (args.splice(args.indexOf("--check"), 1), true) : false;
   const modelArg = flag("--model") ?? "both";
   const out = resolve(flag("--out") ?? join(ROOT, "dist/perf"));
@@ -221,9 +291,16 @@ if (import.meta.main) {
       writeFileSync(join(out, `${scenario.name}-${model}.stats.json`), statsText);
       const stats = JSON.parse(statsText) as Stats;
       const frame = String(scenario.capture).padStart(4, "0");
-      for (const [prefix, width, label] of [["", 400, "top"], ["aux-", 320, "bottom"]] as const) {
+      for (const [prefix, width, label] of [
+        ["", 400, "top"],
+        ["aux-", 320, "bottom"],
+      ] as const) {
         const raw = `${captures}/${prefix}f${frame}.raw`;
-        if (existsSync(raw)) writeFileSync(join(out, `${scenario.name}-${model}-${label}.png`), encodePNG(decodeScreen(readFileSync(raw), width, 240), width, 240));
+        if (existsSync(raw))
+          writeFileSync(
+            join(out, `${scenario.name}-${model}-${label}.png`),
+            encodePNG(decodeScreen(readFileSync(raw), width, 240), width, 240),
+          );
       }
       const failure = overBudget(scenario, model, stats);
       results.push({ scenario: scenario.name, model, stats, failure });
@@ -231,12 +308,18 @@ if (import.meta.main) {
     }
   }
   writeFileSync(join(out, "results.json"), JSON.stringify(results, null, 2));
-  console.log("| Scenario | Model | JS mean/max | Tick mean/max | Draw mean/max | CPU mean/max (ms) | Scan (ms) | Within budget |");
+  console.log(
+    "| Scenario | Model | JS mean/max | Tick mean/max | Draw mean/max | CPU mean/max (ms) | Scan (ms) | Within budget |",
+  );
   console.log("|---|---|---|---|---|---|---|---|");
   for (const r of results) {
-    const t = r.stats.host.timingUs, [mean, max] = cpuWork(r.stats), lm = r.stats.localmedia;
+    const t = r.stats.host.timingUs,
+      [mean, max] = cpuWork(r.stats),
+      lm = r.stats.localmedia;
     const scan = lm ? `cached ${lm.cachedMs}, walk ${lm.scanMs} (${lm.parsed}/${lm.files} read)` : "";
-    console.log(`| ${r.scenario} | ${r.model} | ${fmt(t.js[0])}/${fmt(t.js[1])} | ${fmt(t.tick[0])}/${fmt(t.tick[1])} | ${fmt(t.draw[0])}/${fmt(t.draw[1])} | ${fmt(mean)}/${fmt(max)} | ${scan} | ${r.failure ? `no: ${r.failure}` : "yes"} |`);
+    console.log(
+      `| ${r.scenario} | ${r.model} | ${fmt(t.js[0])}/${fmt(t.js[1])} | ${fmt(t.tick[0])}/${fmt(t.tick[1])} | ${fmt(t.draw[0])}/${fmt(t.draw[1])} | ${fmt(mean)}/${fmt(max)} | ${scan} | ${r.failure ? `no: ${r.failure}` : "yes"} |`,
+    );
   }
   if (check && results.some((r) => r.failure)) process.exit(1);
 }

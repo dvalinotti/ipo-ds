@@ -24,7 +24,9 @@ function flat(node: SimNode | null, out: SimNode[] = []): SimNode[] {
 
 /** Every text on a surface, concatenated in tree order. */
 export function screenText(world: BundleWorld, surface: "primary" | "auxiliary" = "primary"): string {
-  return flat(world.tree(surface)).map((node) => node.text).join("");
+  return flat(world.tree(surface))
+    .map((node) => node.text)
+    .join("");
 }
 
 /** Every path from the surface root to a node whose own text is exactly `text`, in tree order. */
@@ -65,6 +67,7 @@ export function backgroundOf(path: readonly SimNode[]): number {
 
 /** Colour of the <Text> element holding a text run (the run's parent), 0xAABBGGRR. */
 export function textColorOf(path: readonly SimNode[]): number {
-  const element = path.length >= 2 && path[path.length - 2]!.type === "text" ? path[path.length - 2]! : path[path.length - 1]!;
+  const element =
+    path.length >= 2 && path[path.length - 2]!.type === "text" ? path[path.length - 2]! : path[path.length - 1]!;
   return element.textColor >>> 0;
 }

@@ -31,17 +31,24 @@ export function RecycledList(props: {
   const indices: [Accessor<number>, Setter<number>][] = [];
   const slotSignal = (k: number) => (indices[k] ??= createSignal(slotIndex(k, props.top, Math.max(1, pool()))));
   createComputed(() => {
-    const n = pool(), top = props.top;
+    const n = pool(),
+      top = props.top;
     for (let k = 0; k < n; k++) slotSignal(k)[1](slotIndex(k, top, n));
   });
   return (
-    <View class="absolute left-[0] top-[0] w-full" style={{ translateY: -(props.top * props.rowHeight + (props.shift ?? 0)) }}>
+    <View
+      class="absolute left-[0] top-[0] w-full"
+      style={{ translateY: -(props.top * props.rowHeight + (props.shift ?? 0)) }}
+    >
       <Index each={slots()}>
         {(slot) => {
           const index = slotSignal(slot())[0];
           return (
             <Show when={index() < props.count}>
-              <View class="absolute left-[0] w-full" style={{ insetT: index() * props.rowHeight, height: props.rowHeight }}>
+              <View
+                class="absolute left-[0] w-full"
+                style={{ insetT: index() * props.rowHeight, height: props.rowHeight }}
+              >
                 {props.slot(index, slot())}
               </View>
             </Show>

@@ -27,12 +27,15 @@ export function vinylPixels(): Uint8Array {
   const c = VINYL_PX / 2;
   for (let y = 0; y < VINYL_PX; y++) {
     for (let x = 0; x < VINYL_PX; x++) {
-      const dx = x + 0.5 - c, dy = y + 0.5 - c;
+      const dx = x + 0.5 - c,
+        dy = y + 0.5 - c;
       const r = Math.hypot(dx, dy);
       const alpha = inside(R_OUTER, r) * (1 - inside(R_HOLE, r));
       let shade = 22;
-      if (r < R_GROOVES_IN) shade = 14; // the run-out beside the label
-      else if (r > R_GROOVES_OUT) shade = 30; // the rim
+      if (r < R_GROOVES_IN)
+        shade = 14; // the run-out beside the label
+      else if (r > R_GROOVES_OUT)
+        shade = 30; // the rim
       else if (Math.floor(r) % 4 === 0) shade = 32; // a groove ring every 4 px
       // One soft wedge of light centred on 45°: a turn moves it.
       const deg = (Math.atan2(dx, -dy) * 180) / Math.PI;

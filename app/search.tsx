@@ -7,7 +7,10 @@ import { AQUA } from "./theme/aqua.ts";
 import { KeyboardField } from "./theme/parts/strips.tsx";
 
 export function createSearch(store: ExplorerStore): OskController {
-  return createOsk({ value: () => store.state().query, setValue: (query) => store.dispatch({ type: "setQuery", query }) });
+  return createOsk({
+    value: () => store.state().query,
+    setValue: (query) => store.dispatch({ type: "setQuery", query }),
+  });
 }
 
 export function SearchKeyboard(props: { osk: OskController }) {

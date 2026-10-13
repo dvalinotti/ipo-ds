@@ -1,5 +1,8 @@
 import { normalize } from "../library/normalize.ts";
-export interface PlaceholderArt { hue: number; initials: string }
+export interface PlaceholderArt {
+  hue: number;
+  initials: string;
+}
 /** FNV-1a (32-bit) over the folded album name, finalized with fmix32, picks a hue; initials come from the name as written. */
 export function placeholderArt(album: string, hueCount: number): PlaceholderArt {
   let hash = 0x811c9dc5;
@@ -18,8 +21,9 @@ export function placeholderArt(album: string, hueCount: number): PlaceholderArt 
   // expands (ß → SS) keeps its own form so initials stay two characters.
   const letters = [...album].filter((ch) => /[\p{L}\p{N}]/u.test(ch));
   const fold = (ch: string, mapped: string) => ([...mapped].length === 1 ? mapped : ch);
-  const initials = letters.length === 0
-    ? "♪"
-    : fold(letters[0]!, letters[0]!.toUpperCase()) + (letters[1] ? fold(letters[1], letters[1].toLowerCase()) : "");
+  const initials =
+    letters.length === 0
+      ? "♪"
+      : fold(letters[0]!, letters[0]!.toUpperCase()) + (letters[1] ? fold(letters[1], letters[1].toLowerCase()) : "");
   return { hue: (hash >>> 0) % hueCount, initials };
 }

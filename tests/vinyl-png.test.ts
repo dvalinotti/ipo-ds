@@ -20,7 +20,7 @@ const polar = (radius: number, deg: number) => {
 test("the vinyl is an opaque disc with a transparent centre hole and transparent corners", () => {
   expect(vinyl.length).toBe(VINYL_PX * VINYL_PX * 4);
   expect(at(vinyl, VINYL_PX, 128, 128).a).toBe(0);
-  expect(polar(40, 0).a).toBe(0);    // inside the 84 px (at 200) hole
+  expect(polar(40, 0).a).toBe(0); // inside the 84 px (at 200) hole
   expect(polar(90, 0).a).toBe(255);
   expect(polar(120, 200).a).toBe(255);
   expect(at(vinyl, VINYL_PX, 2, 2).a).toBe(0);

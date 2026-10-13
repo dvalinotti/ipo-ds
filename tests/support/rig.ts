@@ -11,7 +11,9 @@ import { LIBRARY } from "../fixtures/library.ts";
 import { bootApp, screenText } from "./app-world.ts";
 
 export const SELECTED_ROW = 0xffd77538;
-export const BODY_TOP = 51, ROW = 21, BODY_PX = 168;
+export const BODY_TOP = 51,
+  ROW = 21,
+  BODY_PX = 168;
 export type Surface = "primary" | "auxiliary";
 
 export interface Rig {
@@ -71,12 +73,16 @@ export function flat(node: SimNode | null, out: SimNode[] = []): SimNode[] {
   return out;
 }
 
-const isRow = (n: SimNode) => n.rect !== null && n.rect[0] === 0 && n.rect[2] === 320 && (n.rect[3] === ROW || n.rect[3] === ROW + 1); // a mid-row shift rounds the rect outward: 22 tall
-const inBody = (n: SimNode, bodyTop: number, bodyPx: number) => n.rect![1] > bodyTop - ROW && n.rect![1] < bodyTop + bodyPx;
+const isRow = (n: SimNode) =>
+  n.rect !== null && n.rect[0] === 0 && n.rect[2] === 320 && (n.rect[3] === ROW || n.rect[3] === ROW + 1); // a mid-row shift rounds the rect outward: 22 tall
+const inBody = (n: SimNode, bodyTop: number, bodyPx: number) =>
+  n.rect![1] > bodyTop - ROW && n.rect![1] < bodyTop + bodyPx;
 
 /** The y of every row View on the bottom screen inside the body (slot rows and the overlay; pooled rows off-screen are left out). */
 export function rowYs(world: BundleWorld, bodyTop = BODY_TOP, bodyPx = BODY_PX): number[] {
-  return flat(world.tree("auxiliary")).filter((n) => isRow(n) && inBody(n, bodyTop, bodyPx)).map((n) => n.rect![1]);
+  return flat(world.tree("auxiliary"))
+    .filter((n) => isRow(n) && inBody(n, bodyTop, bodyPx))
+    .map((n) => n.rect![1]);
 }
 
 export const aligned = (ys: number[], bodyTop = BODY_TOP) => ys.every((y) => (y - bodyTop) % ROW === 0);
@@ -85,26 +91,51 @@ export const aligned = (ys: number[], bodyTop = BODY_TOP) => ys.every((y) => (y 
 export function listText(world: BundleWorld, bodyTop = BODY_TOP, bodyPx = BODY_PX): string {
   return flat(world.tree("auxiliary"))
     .filter((n) => isRow(n) && inBody(n, bodyTop, bodyPx) && n.bgColor >>> 0 !== 0 && n.bgColor >>> 0 !== SELECTED_ROW)
-    .map((n) => flat(n).map((c) => c.text).join(""))
+    .map((n) =>
+      flat(n)
+        .map((c) => c.text)
+        .join(""),
+    )
     .join("|");
 }
 
 /** The text of the striped row whose top is at screen y. */
 export function rowTextAt(world: BundleWorld, y: number): string {
-  const row = flat(world.tree("auxiliary")).find((n) => isRow(n) && n.rect![1] === y && n.bgColor >>> 0 !== 0 && n.bgColor >>> 0 !== SELECTED_ROW);
-  return row ? flat(row).map((c) => c.text).join("") : "";
+  const row = flat(world.tree("auxiliary")).find(
+    (n) => isRow(n) && n.rect![1] === y && n.bgColor >>> 0 !== 0 && n.bgColor >>> 0 !== SELECTED_ROW,
+  );
+  return row
+    ? flat(row)
+        .map((c) => c.text)
+        .join("")
+    : "";
 }
 
 /** The text of the striped row whose rect spans screen y (a mid-row scroll puts tops off the grid). */
 export function rowTextSpanning(world: BundleWorld, y: number): string {
-  const row = flat(world.tree("auxiliary")).find((n) => isRow(n) && n.rect![1] <= y && y < n.rect![1] + n.rect![3] && n.bgColor >>> 0 !== 0 && n.bgColor >>> 0 !== SELECTED_ROW);
-  return row ? flat(row).map((c) => c.text).join("") : "";
+  const row = flat(world.tree("auxiliary")).find(
+    (n) =>
+      isRow(n) &&
+      n.rect![1] <= y &&
+      y < n.rect![1] + n.rect![3] &&
+      n.bgColor >>> 0 !== 0 &&
+      n.bgColor >>> 0 !== SELECTED_ROW,
+  );
+  return row
+    ? flat(row)
+        .map((c) => c.text)
+        .join("")
+    : "";
 }
 
 /** The text of the focused (selected) list row on a surface. */
 export function selectedRow(world: BundleWorld, surface: Surface): string {
   const row = flat(world.tree(surface)).find((node) => node.type === "view" && node.bgColor >>> 0 === SELECTED_ROW);
-  return row ? flat(row).map((node) => node.text).join("") : "";
+  return row
+    ? flat(row)
+        .map((node) => node.text)
+        .join("")
+    : "";
 }
 
 export const opens = (host: SimLocalMediaHost) => host.log.filter((entry) => entry.startsWith("open("));

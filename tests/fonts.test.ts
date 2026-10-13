@@ -13,14 +13,25 @@ function sources(dir: string): string[] {
 }
 
 test("every character the app's source can show is baked by app/fonts.json", () => {
-  const fonts = JSON.parse(readFileSync(join(ROOT, "app/fonts.json"), "utf8")) as { ranges: string[]; characters: string };
-  const ranges = fonts.ranges.map((range) => range.replace(/U\+/g, "").split("-").map((hex) => parseInt(hex, 16)) as [number, number]);
+  const fonts = JSON.parse(readFileSync(join(ROOT, "app/fonts.json"), "utf8")) as {
+    ranges: string[];
+    characters: string;
+  };
+  const ranges = fonts.ranges.map(
+    (range) =>
+      range
+        .replace(/U\+/g, "")
+        .split("-")
+        .map((hex) => parseInt(hex, 16)) as [number, number],
+  );
   const declared = new Set([...fonts.characters].map((ch) => ch.codePointAt(0)!));
   const baked = (cp: number) => declared.has(cp) || ranges.some(([lo, hi]) => cp >= lo && cp <= hi);
   const missing = new Set<string>();
   for (const file of sources(join(ROOT, "app"))) {
     // Comments are not shown; strip them (keeping "://" in URLs) before scanning.
-    const code = readFileSync(file, "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+    const code = readFileSync(file, "utf8")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/(^|[^:])\/\/.*$/gm, "$1");
     for (const ch of code) if (ch.codePointAt(0)! > 0x7e && !baked(ch.codePointAt(0)!)) missing.add(ch);
   }
   expect([...missing]).toEqual([]);

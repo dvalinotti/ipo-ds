@@ -8,7 +8,8 @@ import { bootApp, disposeGuest, screenText } from "./support/app-world.ts";
 
 afterAll(disposeGuest);
 
-const A = BTN.CIRCLE, X = BTN.TRIANGLE;
+const A = BTN.CIRCLE,
+  X = BTN.TRIANGLE;
 
 interface Rig {
   world: BundleWorld;
@@ -55,7 +56,8 @@ function flat(node: SimNode | null, out: SimNode[] = []): SimNode[] {
   return out;
 }
 
-const platterShown = (world: BundleWorld) => flat(world.tree("auxiliary")).some((node) => node.rect?.join(",") === "10,20,200,200");
+const platterShown = (world: BundleWorld) =>
+  flat(world.tree("auxiliary")).some((node) => node.rect?.join(",") === "10,20,200,200");
 
 /** The platter's pixels on the bottom screen. */
 function platterPixels(world: BundleWorld): Buffer {
@@ -63,7 +65,9 @@ function platterPixels(world: BundleWorld): Buffer {
   const d = width / 320;
   const rows: Buffer[] = [];
   for (let y = PLATTER.y * d; y < (PLATTER.y + PLATTER.size) * d; y++) {
-    rows.push(Buffer.from(rgba.subarray((y * width + PLATTER.x * d) * 4, (y * width + (PLATTER.x + PLATTER.size) * d) * 4)));
+    rows.push(
+      Buffer.from(rgba.subarray((y * width + PLATTER.x * d) * 4, (y * width + (PLATTER.x + PLATTER.size) * d) * 4)),
+    );
   }
   return Buffer.concat(rows);
 }
@@ -71,7 +75,11 @@ function platterPixels(world: BundleWorld): Buffer {
 /** A contact on the platter, `deg` clockwise from 12 o'clock, 60 px out. */
 function onRecord(deg: number, extra: Partial<StepInput> = {}): StepInput {
   const rad = (deg * Math.PI) / 180;
-  return { touches: [{ x: Math.round(PLATTER.cx + 60 * Math.sin(rad)), y: Math.round(PLATTER.cy - 60 * Math.cos(rad)) }], surface: "auxiliary", ...extra } as StepInput;
+  return {
+    touches: [{ x: Math.round(PLATTER.cx + 60 * Math.sin(rad)), y: Math.round(PLATTER.cy - 60 * Math.cos(rad)) }],
+    surface: "auxiliary",
+    ...extra,
+  } as StepInput;
 }
 
 /** One frame per step, turning `degPerFrame` (positive clockwise) from `from`; returns the final angle. */
@@ -81,7 +89,10 @@ function turn(rig: Rig, from: number, degPerFrame: number, steps: number): numbe
 }
 
 const scratchLog = (host: SimLocalMediaHost) => host.log.filter((entry) => entry.startsWith("scratch"));
-const rates = (host: SimLocalMediaHost) => scratchLog(host).filter((entry) => entry.startsWith("scratchRate(")).map((entry) => Number(entry.slice("scratchRate(".length, -1)));
+const rates = (host: SimLocalMediaHost) =>
+  scratchLog(host)
+    .filter((entry) => entry.startsWith("scratchRate("))
+    .map((entry) => Number(entry.slice("scratchRate(".length, -1)));
 
 test("SELECT and the deck's DJ gel open DJ Mode; SELECT and the panel's gel go back; L+SELECT does nothing", async () => {
   const rig = await boot();
@@ -160,7 +171,8 @@ test("crossing the spindle sends no spike", async () => {
   const rig = await boot();
   play(rig);
   press(rig, BTN.SELECT);
-  for (const x of [-40, -30, -20, -8, 0, 8, 20, 30, 40]) frames(rig, 1, { touches: [{ x: PLATTER.cx + x, y: PLATTER.cy }], surface: "auxiliary" });
+  for (const x of [-40, -30, -20, -8, 0, 8, 20, 30, 40])
+    frames(rig, 1, { touches: [{ x: PLATTER.cx + x, y: PLATTER.cy }], surface: "auxiliary" });
   frames(rig, 2);
   expect(scratchLog(rig.host)[0]).toBe("scratchBegin()");
   expect(rates(rig.host).every((rate) => Math.abs(rate) < 0.01)).toBe(true);

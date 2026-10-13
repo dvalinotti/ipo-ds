@@ -24,7 +24,9 @@ const TRAIL = [1, 0.86, 0.73, 0.62, 0.52, 0.44, 0.37, 0.31, 0.26, 0.22, 0.19, 0.
 
 /** Opacity of a spoke `trail` spokes behind the lead (fractional: blended between steps). */
 function trailOpacity(trail: number): number {
-  const lower = Math.floor(trail) % SPOKES, upper = (lower + 1) % SPOKES, t = trail - Math.floor(trail);
+  const lower = Math.floor(trail) % SPOKES,
+    upper = (lower + 1) % SPOKES,
+    t = trail - Math.floor(trail);
   return Math.round((TRAIL[lower]! * (1 - t) + TRAIL[upper]! * t) * 100) / 100;
 }
 
@@ -32,19 +34,25 @@ const fixed = (n: number) => (Math.abs(n) < 0.005 ? 0 : n).toFixed(2);
 
 function spoke(cx: number, cy: number, index: number, opacity: number): string {
   const angle = (index * 2 * Math.PI) / SPOKES; // 0 at twelve o'clock, clockwise
-  const dx = Math.sin(angle), dy = -Math.cos(angle);
-  const nx = -dy * HALF_WIDTH, ny = dx * HALF_WIDTH;
-  const ax = cx + dx * INNER, ay = cy + dy * INNER;
-  const bx = cx + dx * OUTER, by = cy + dy * OUTER;
+  const dx = Math.sin(angle),
+    dy = -Math.cos(angle);
+  const nx = -dy * HALF_WIDTH,
+    ny = dx * HALF_WIDTH;
+  const ax = cx + dx * INNER,
+    ay = cy + dy * INNER;
+  const bx = cx + dx * OUTER,
+    by = cy + dy * OUTER;
   // Round ends as two cubic quarter circles each (the baker has no arc command).
   const k = 0.5523;
-  const ux = dx * HALF_WIDTH, uy = dy * HALF_WIDTH;
+  const ux = dx * HALF_WIDTH,
+    uy = dy * HALF_WIDTH;
   const P = (x: number, y: number) => `${fixed(x)} ${fixed(y)}`;
   /** From p + m round the end at p + s to p - m. */
   const cap = (px: number, py: number, mx: number, my: number, sx: number, sy: number) =>
     `C${P(px + mx + sx * k, py + my + sy * k)} ${P(px + sx + mx * k, py + sy + my * k)} ${P(px + sx, py + sy)}` +
     `C${P(px + sx - mx * k, py + sy - my * k)} ${P(px - mx + sx * k, py - my + sy * k)} ${P(px - mx, py - my)}`;
-  const d = `M${P(ax + nx, ay + ny)}L${P(bx + nx, by + ny)}${cap(bx, by, nx, ny, ux, uy)}` +
+  const d =
+    `M${P(ax + nx, ay + ny)}L${P(bx + nx, by + ny)}${cap(bx, by, nx, ny, ux, uy)}` +
     `L${P(ax - nx, ay - ny)}${cap(ax, ay, -nx, -ny, -ux, -uy)}Z`;
   return `  <path d="${d}" fill="${INK}" opacity="${opacity}" />`;
 }
@@ -56,7 +64,8 @@ export function spinnerAtlasSvg(): string {
     `<svg xmlns="http://www.w3.org/2000/svg" width="${cols * cell}" height="${rows * cell}" viewBox="0 0 ${cols * cell} ${rows * cell}">`,
   ];
   for (let frame = 0; frame < frames; frame++) {
-    const cx = (frame % cols) * cell + cell / 2, cy = Math.floor(frame / cols) * cell + cell / 2;
+    const cx = (frame % cols) * cell + cell / 2,
+      cy = Math.floor(frame / cols) * cell + cell / 2;
     const lead = (frame * SPOKES) / frames;
     for (let index = 0; index < SPOKES; index++) {
       lines.push(spoke(cx, cy, index, trailOpacity((lead - index + SPOKES) % SPOKES)));

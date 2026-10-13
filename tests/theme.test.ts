@@ -13,7 +13,14 @@ function aquaLiterals(): string[] {
   const out: string[] = [];
   const gel = (classes: GelClasses) => out.push(classes.body, classes.gloss);
   for (const [key, value] of Object.entries(AQUA)) {
-    if (typeof value === "string" && key !== "name" && key !== "osk" && !value.endsWith(".svg") && !value.endsWith(".png")) out.push(value);
+    if (
+      typeof value === "string" &&
+      key !== "name" &&
+      key !== "osk" &&
+      !value.endsWith(".svg") &&
+      !value.endsWith(".png")
+    )
+      out.push(value);
   }
   for (const flag of [true, false]) {
     gel(AQUA.badge(flag));
@@ -25,8 +32,14 @@ function aquaLiterals(): string[] {
       out.push(AQUA.headerLeft(flag, layout));
     }
     out.push(
-      AQUA.lcdStatus(layout), AQUA.rowTitleCell(layout), AQUA.infoLcd(layout), AQUA.idlePanel(layout),
-      AQUA.seekCapsule(layout), AQUA.seekTrack(layout), AQUA.seekTrackWide(layout), AQUA.transportRow(layout),
+      AQUA.lcdStatus(layout),
+      AQUA.rowTitleCell(layout),
+      AQUA.infoLcd(layout),
+      AQUA.idlePanel(layout),
+      AQUA.seekCapsule(layout),
+      AQUA.seekTrack(layout),
+      AQUA.seekTrackWide(layout),
+      AQUA.transportRow(layout),
     );
   }
   gel(AQUA.footerGel);
@@ -64,7 +77,8 @@ test("every icon the theme names exists and bakes to an opaque image of its size
   for (const name of ["shuffle", "repeat", "prev", "next", "play", "pause", "dj"] as IconName[]) {
     for (const ink of ["white", "ink", "blue"] as IconInk[]) keys.add(AQUA.icon(name, ink));
   }
-  for (const name of ["play", "pause"] as const) for (const ink of ["white", "ink"] as const) keys.add(AQUA.iconLarge(name, ink));
+  for (const name of ["play", "pause"] as const)
+    for (const ink of ["white", "ink"] as const) keys.add(AQUA.iconLarge(name, ink));
   for (const key of keys) {
     const path = join(ROOT, "app", key);
     expect(existsSync(path), key).toBe(true);

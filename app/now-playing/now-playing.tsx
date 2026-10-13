@@ -16,7 +16,16 @@ import { formatRemaining, formatTime, needsHours } from "../format.ts";
 import type { Session } from "../session.ts";
 import { frameNote } from "./frame-time.ts";
 import { AQUA } from "../theme/aqua.ts";
-import { ArtFrame, CoverImage, CoverLoading, InfoLcd, SeekCapsule, seekTrackLeft, seekTrackPx, TransportRow } from "../theme/parts/deck.tsx";
+import {
+  ArtFrame,
+  CoverImage,
+  CoverLoading,
+  InfoLcd,
+  SeekCapsule,
+  seekTrackLeft,
+  seekTrackPx,
+  TransportRow,
+} from "../theme/parts/deck.tsx";
 import { IdlePanel } from "../theme/parts/panels.tsx";
 import type { Layout } from "../theme/theme.ts";
 
@@ -38,11 +47,17 @@ export function NowPlaying(props: { layout: Layout; session: Session; dj?: boole
   // preview. Every open carries a new serial (a skip, the next song, repeat-one's reopen), so the
   // memo fires once per open and not on the 15 Hz status reads.
   const opened = createMemo(() => status().openSerial);
-  createEffect(on(opened, () => {
-    if (!scrubber.active()) return;
-    scrubber.cancel();
-    setPreview(null);
-  }, { defer: true }));
+  createEffect(
+    on(
+      opened,
+      () => {
+        if (!scrubber.active()) return;
+        scrubber.cancel();
+        setPreview(null);
+      },
+      { defer: true },
+    ),
+  );
   const trackPx = () => seekTrackPx(hours(), props.layout);
   const fractionAt = (x: number) => (x - seekTrackLeft(hours())) / trackPx();
   /** Downs on the time labels are not seeks (a tap on "-3:58" would jump to the end). */
@@ -79,7 +94,13 @@ export function NowPlaying(props: { layout: Layout; session: Session; dj?: boole
   // while the keyboard is open, so the handlers need no search gate; latched keeps a button that was
   // already down at mount (A through a swap) from firing.
   if (wide) {
-    onButtonPress(BTN.CIRCLE, () => { if (!idle()) dispatch({ type: "toggle" }); }, { latched: true });
+    onButtonPress(
+      BTN.CIRCLE,
+      () => {
+        if (!idle()) dispatch({ type: "toggle" });
+      },
+      { latched: true },
+    );
     // Left / right seek through the same scrubber as the capsule drag: the press previews ±5 s, each repeat
     // ±2 s more from the preview, and the release sends the one seek. A seek is a host command that forces
     // a status re-read and can flush the decoder, so a held button must not send one at the repeat rate.
@@ -97,8 +118,18 @@ export function NowPlaying(props: { layout: Layout; session: Session; dj?: boole
       scrubber.commit();
       setPreview(null);
     };
-    onRepeat(BTN.LEFT, (repeat) => seekBy(-1, repeat), () => true, commitSeek);
-    onRepeat(BTN.RIGHT, (repeat) => seekBy(1, repeat), () => true, commitSeek);
+    onRepeat(
+      BTN.LEFT,
+      (repeat) => seekBy(-1, repeat),
+      () => true,
+      commitSeek,
+    );
+    onRepeat(
+      BTN.RIGHT,
+      (repeat) => seekBy(1, repeat),
+      () => true,
+      commitSeek,
+    );
   }
   const position = () => preview() ?? status().positionMs;
   const SHOULDERS = BTN.LTRIGGER | BTN.RTRIGGER;
@@ -123,7 +154,11 @@ export function NowPlaying(props: { layout: Layout; session: Session; dj?: boole
     <View class={AQUA.bottomScreen}>
       <Show when={!idle()} fallback={<IdlePanel layout={props.layout} />}>
         <ArtFrame album={track()!.album}>
-          {props.session.coverLoading() ? <CoverLoading /> : props.session.cover() > 0 ? <CoverImage handle={props.session.cover()} /> : undefined}
+          {props.session.coverLoading() ? (
+            <CoverLoading />
+          ) : props.session.cover() > 0 ? (
+            <CoverImage handle={props.session.cover()} />
+          ) : undefined}
         </ArtFrame>
         <InfoLcd
           title={track()!.title}

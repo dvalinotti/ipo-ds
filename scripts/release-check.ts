@@ -12,13 +12,18 @@ export const RELEASE_VERSION_FILES = ["package.json", "pocket.json"] as const;
 // hyphen may start with digits (`-0a`). Build metadata (`+…`) is refused: it
 // does not change a version's precedence, so v1.2.3+a and v1.2.3+b would be
 // two releases of one version, and release.yml reads any `-` as a prerelease.
-const RELEASE_VERSION = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*)?$/;
+const RELEASE_VERSION =
+  /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*)?$/;
 
 /** The version a tag names (`v0.2.0`, `0.2.0`, `v0.2.0-beta.1`); throws for anything else. */
 export function tagVersion(tag: string): string {
   const version = tag.startsWith("v") ? tag.slice(1) : tag;
-  if (version.includes("+")) throw new Error(`release-check: ${JSON.stringify(tag)} carries build metadata; release tags are v<major>.<minor>.<patch>[-<prerelease>]`);
-  if (!RELEASE_VERSION.test(version)) throw new Error(`release-check: ${JSON.stringify(tag)} is not a version tag such as v0.2.0`);
+  if (version.includes("+"))
+    throw new Error(
+      `release-check: ${JSON.stringify(tag)} carries build metadata; release tags are v<major>.<minor>.<patch>[-<prerelease>]`,
+    );
+  if (!RELEASE_VERSION.test(version))
+    throw new Error(`release-check: ${JSON.stringify(tag)} is not a version tag such as v0.2.0`);
   return version;
 }
 
@@ -26,7 +31,8 @@ export function tagVersion(tag: string): string {
 export function versionMismatches(version: string, files: Readonly<Record<string, unknown>>): string[] {
   const mismatches: string[] = [];
   for (const [path, document] of Object.entries(files)) {
-    const found = typeof document === "object" && document !== null && "version" in document ? document.version : undefined;
+    const found =
+      typeof document === "object" && document !== null && "version" in document ? document.version : undefined;
     if (found !== version) mismatches.push(`  ${path}: ${typeof found === "string" ? found : "no .version string"}`);
   }
   return mismatches;

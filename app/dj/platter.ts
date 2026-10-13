@@ -32,13 +32,16 @@ export function angleAt(cx: number, cy: number, x: number, y: number): number {
 }
 
 export function inDeadZone(cx: number, cy: number, x: number, y: number): boolean {
-  const dx = x - cx, dy = y - cy;
+  const dx = x - cx,
+    dy = y - cy;
   return dx * dx + dy * dy < DEAD_ZONE_PX * DEAD_ZONE_PX;
 }
 
 /** Whether (x, y) is on the record itself, not in the corners of its square. */
 export function inDisc(cx: number, cy: number, x: number, y: number): boolean {
-  const dx = x - cx, dy = y - cy, r = PLATTER.size / 2;
+  const dx = x - cx,
+    dy = y - cy,
+    r = PLATTER.size / 2;
   return dx * dx + dy * dy <= r * r;
 }
 

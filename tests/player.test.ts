@@ -1,8 +1,13 @@
 import { expect, test } from "bun:test";
 import type { LocalStatus } from "@pocketjs/framework/localmedia";
 import {
-  IDLE_STATUS, currentId, initialPlayer, reducePlayer, shuffled,
-  type PlayerAction, type PlayerState,
+  IDLE_STATUS,
+  currentId,
+  initialPlayer,
+  reducePlayer,
+  shuffled,
+  type PlayerAction,
+  type PlayerState,
 } from "../app/player/reducer.ts";
 
 const zero = () => 0;
@@ -54,10 +59,12 @@ test("next walks the queue; at the end it stops with repeat off and wraps with r
 
 test("previous restarts after 3 s, otherwise opens the previous song", () => {
   const state = playing([0, 1, 2], 1);
-  expect(run({ ...state, status: status({ trackId: 1, phase: "playing", positionMs: 3001 }) }, { type: "prev" }).commands)
-    .toEqual([{ type: "seek", ms: 0 }]);
-  expect(run({ ...state, status: status({ trackId: 1, phase: "playing", positionMs: 3000 }) }, { type: "prev" }).commands)
-    .toEqual([{ type: "open", id: 0 }]);
+  expect(
+    run({ ...state, status: status({ trackId: 1, phase: "playing", positionMs: 3001 }) }, { type: "prev" }).commands,
+  ).toEqual([{ type: "seek", ms: 0 }]);
+  expect(
+    run({ ...state, status: status({ trackId: 1, phase: "playing", positionMs: 3000 }) }, { type: "prev" }).commands,
+  ).toEqual([{ type: "open", id: 0 }]);
 });
 
 test("previous on the first song restarts it, or wraps to the last with repeat all", () => {
@@ -67,10 +74,17 @@ test("previous on the first song restarts it, or wraps to the last with repeat a
 });
 
 test("an ended song advances; repeat one replays it; the last song stops at 0:00 or wraps", () => {
-  const ended = (id: number) => ({ type: "hostStatus", status: status({ trackId: id, phase: "ended", positionMs: 1000, durationMs: 1000 }) }) as const;
+  const ended = (id: number) =>
+    ({
+      type: "hostStatus",
+      status: status({ trackId: id, phase: "ended", positionMs: 1000, durationMs: 1000 }),
+    }) as const;
   expect(run(playing([0, 1], 0), ended(0)).commands).toEqual([{ type: "open", id: 1 }]);
   expect(run(playing([0, 1], 0, { repeat: "one" }), ended(0)).commands).toEqual([{ type: "open", id: 0 }]);
-  expect(run(playing([0, 1], 1), ended(1)).commands).toEqual([{ type: "seek", ms: 0 }, { type: "paused", value: true }]);
+  expect(run(playing([0, 1], 1), ended(1)).commands).toEqual([
+    { type: "seek", ms: 0 },
+    { type: "paused", value: true },
+  ]);
   expect(run(playing([0, 1], 1, { repeat: "all" }), ended(1)).commands).toEqual([{ type: "open", id: 0 }]);
 });
 
@@ -83,7 +97,8 @@ test("a status for another track is stored but never acted on", () => {
 });
 
 test("an error skips forward without retrying under repeat one, and an all-failing queue stops", () => {
-  const error = (id: number) => ({ type: "hostStatus", status: status({ trackId: id, phase: "error", error: "bad" }) }) as const;
+  const error = (id: number) =>
+    ({ type: "hostStatus", status: status({ trackId: id, phase: "error", error: "bad" }) }) as const;
   let out = run(playing([0, 1, 2], 0, { repeat: "one" }), error(0));
   expect(out.commands).toEqual([{ type: "open", id: 1 }]);
   out = run(playing([0, 1, 2], 0, { repeat: "all" }), error(0), error(1));
@@ -97,10 +112,18 @@ test("an error skips forward without retrying under repeat one, and an all-faili
 
 test("toggle pauses, resumes, and reopens a song the host is not holding", () => {
   const state = playing([0, 1], 0);
-  expect(run({ ...state, status: status({ trackId: 0, phase: "playing" }) }, { type: "toggle" }).commands).toEqual([{ type: "paused", value: true }]);
-  expect(run({ ...state, status: status({ trackId: 0, phase: "loading" }) }, { type: "toggle" }).commands).toEqual([{ type: "paused", value: true }]);
-  expect(run({ ...state, status: status({ trackId: 0, phase: "paused" }) }, { type: "toggle" }).commands).toEqual([{ type: "paused", value: false }]);
-  expect(run({ ...state, status: status({ trackId: -1, phase: "idle" }) }, { type: "toggle" }).commands).toEqual([{ type: "open", id: 0 }]);
+  expect(run({ ...state, status: status({ trackId: 0, phase: "playing" }) }, { type: "toggle" }).commands).toEqual([
+    { type: "paused", value: true },
+  ]);
+  expect(run({ ...state, status: status({ trackId: 0, phase: "loading" }) }, { type: "toggle" }).commands).toEqual([
+    { type: "paused", value: true },
+  ]);
+  expect(run({ ...state, status: status({ trackId: 0, phase: "paused" }) }, { type: "toggle" }).commands).toEqual([
+    { type: "paused", value: false },
+  ]);
+  expect(run({ ...state, status: status({ trackId: -1, phase: "idle" }) }, { type: "toggle" }).commands).toEqual([
+    { type: "open", id: 0 },
+  ]);
 });
 
 test("seek is clamped to the song and ignored when the host holds another song", () => {
@@ -122,8 +145,13 @@ test("repeat cycles off, all, one, off", () => {
 });
 
 test("transport actions with nothing queued do nothing", () => {
-  for (const action of [{ type: "next" }, { type: "prev" }, { type: "toggle" }, { type: "seek", ms: 5 },
-    { type: "hostStatus", status: status({ phase: "ended", trackId: 0 }) }] as PlayerAction[]) {
+  for (const action of [
+    { type: "next" },
+    { type: "prev" },
+    { type: "toggle" },
+    { type: "seek", ms: 5 },
+    { type: "hostStatus", status: status({ phase: "ended", trackId: 0 }) },
+  ] as PlayerAction[]) {
     expect(run(initialPlayer(), action).commands).toEqual([]);
   }
 });
@@ -134,8 +162,9 @@ test("a snapshot from an earlier open of the same song is ignored", () => {
   expect(stale.commands).toEqual([]);
   expect(stale.state.status.openSerial).toBe(4);
   state = stale.state;
-  expect(run(state, { type: "hostStatus", status: status({ trackId: 0, openSerial: 5, phase: "ended" }) }).commands)
-    .toEqual([{ type: "open", id: 0 }]);
+  expect(
+    run(state, { type: "hostStatus", status: status({ trackId: 0, openSerial: 5, phase: "ended" }) }).commands,
+  ).toEqual([{ type: "open", id: 0 }]);
 });
 
 test("prune drops ids a rescan no longer lists, keeping the current song and its place", () => {

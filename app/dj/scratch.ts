@@ -36,12 +36,16 @@ export function createScratchGrab(session: Session, platter: () => unknown, idle
   const opened = createMemo(() => status().openSerial);
   let serial = opened();
   createEffect(
-    on([opened, session.scratching], ([now, scratching]) => {
-      if (now !== serial) {
-        serial = now;
-        grab.release();
-      } else if (!scratching) grab.hostEnded();
-    }, { defer: true }),
+    on(
+      [opened, session.scratching],
+      ([now, scratching]) => {
+        if (now !== serial) {
+          serial = now;
+          grab.release();
+        } else if (!scratching) grab.hostEnded();
+      },
+      { defer: true },
+    ),
   );
   // Leaving DJ Mode (SELECT, the keyboard) with the finger down lets go too.
   onCleanup(grab.release);

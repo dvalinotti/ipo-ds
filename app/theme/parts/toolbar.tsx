@@ -22,7 +22,13 @@ export function Lights(props: { theme?: Theme }) {
   );
 }
 
-export function LcdStatus(props: { title: string; line: string; layout?: Layout; onPress?: () => void; theme?: Theme }) {
+export function LcdStatus(props: {
+  title: string;
+  line: string;
+  layout?: Layout;
+  onPress?: () => void;
+  theme?: Theme;
+}) {
   const t = () => props.theme ?? AQUA;
   const layout = () => props.layout ?? "wide";
   return (
@@ -38,8 +44,15 @@ function TabGel(props: { tab: Tab; active: boolean; layout: Layout; onSelect?: (
   const t = () => props.theme ?? AQUA;
   const onSelect = props.onSelect;
   return (
-    <Gel classes={t().tab(props.active, props.layout)} ref={tapTarget(onSelect && (() => onSelect(props.tab))) as never}>
-      <GelLabel text={props.tab} class={t().tabText(props.active)} shadow={props.active ? t().tabTextShadow : undefined} />
+    <Gel
+      classes={t().tab(props.active, props.layout)}
+      ref={tapTarget(onSelect && (() => onSelect(props.tab))) as never}
+    >
+      <GelLabel
+        text={props.tab}
+        class={t().tabText(props.active)}
+        shadow={props.active ? t().tabTextShadow : undefined}
+      />
     </Gel>
   );
 }
@@ -60,7 +73,13 @@ export function SegmentedTabs(props: { active: Tab; layout?: Layout; onSelect?: 
               <Show when={i() > 0}>
                 <View class={t().tabDivider} />
               </Show>
-              <TabGel tab={tab} active={tab === props.active} layout={layout()} onSelect={props.onSelect} theme={props.theme} />
+              <TabGel
+                tab={tab}
+                active={tab === props.active}
+                layout={layout()}
+                onSelect={props.onSelect}
+                theme={props.theme}
+              />
             </>
           )}
         </For>
@@ -74,13 +93,27 @@ export function SegmentedTabs(props: { active: Tab; layout?: Layout; onSelect?: 
   );
 }
 
-export function Toolbar(props: { title: string; line: string; active: Tab; layout?: Layout; onSelect?: (tab: Tab) => void; onPress?: () => void; theme?: Theme }) {
+export function Toolbar(props: {
+  title: string;
+  line: string;
+  active: Tab;
+  layout?: Layout;
+  onSelect?: (tab: Tab) => void;
+  onPress?: () => void;
+  theme?: Theme;
+}) {
   const t = () => props.theme ?? AQUA;
   return (
     <>
       <View class={t().toolbar}>
         <Lights theme={props.theme} />
-        <LcdStatus title={props.title} line={props.line} layout={props.layout} onPress={props.onPress} theme={props.theme} />
+        <LcdStatus
+          title={props.title}
+          line={props.line}
+          layout={props.layout}
+          onPress={props.onPress}
+          theme={props.theme}
+        />
         <SegmentedTabs active={props.active} layout={props.layout} onSelect={props.onSelect} theme={props.theme} />
       </View>
       <View class={t().toolbarRule} />

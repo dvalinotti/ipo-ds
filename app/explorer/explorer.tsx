@@ -17,16 +17,49 @@ import type { Session } from "../session.ts";
 import { AQUA } from "../theme/aqua.ts";
 import { ColumnHeader, ListRow, Scrollbar } from "../theme/parts/list.tsx";
 import { StatePanel } from "../theme/parts/panels.tsx";
-import { Breadcrumb, FooterGels, FooterLegend, SearchStrip, type TouchAction, type TouchLegendItem } from "../theme/parts/strips.tsx";
+import {
+  Breadcrumb,
+  FooterGels,
+  FooterLegend,
+  SearchStrip,
+  type TouchAction,
+  type TouchLegendItem,
+} from "../theme/parts/strips.tsx";
 import { RecycledList } from "./recycled-list.tsx";
-import { bodyTopPx, centredOffset, clampVelocity, NARROW_W, offsetForThumb, pageOffset, rowAt, snapToRow, thumbFor, TRACK_HIT_PX } from "./scroll.ts";
+import {
+  bodyTopPx,
+  centredOffset,
+  clampVelocity,
+  NARROW_W,
+  offsetForThumb,
+  pageOffset,
+  rowAt,
+  snapToRow,
+  thumbFor,
+  TRACK_HIT_PX,
+} from "./scroll.ts";
 import { nearestTop } from "./window.ts";
 import { settled } from "../reactive.ts";
 import { Toolbar } from "../theme/parts/toolbar.tsx";
 import type { Layout, RowKind } from "../theme/theme.ts";
 import {
-  crumbOfView, currentView, focusOf, headerOfView, initialExplorer, lcdLine, legendOf, panelOf, reduceExplorer, rowCellsIn, rowsKey, touchLegendOf, viewKey,
-  visibleRows, songIds, type ExplorerAction, type ExplorerState,
+  crumbOfView,
+  currentView,
+  focusOf,
+  headerOfView,
+  initialExplorer,
+  lcdLine,
+  legendOf,
+  panelOf,
+  reduceExplorer,
+  rowCellsIn,
+  rowsKey,
+  touchLegendOf,
+  viewKey,
+  visibleRows,
+  songIds,
+  type ExplorerAction,
+  type ExplorerState,
 } from "./model.ts";
 import type { LegendItem } from "../theme/parts/strips.tsx";
 
@@ -50,7 +83,13 @@ const BODY_PX = 168;
 export const UNAVAILABLE = "Music playback is unavailable on this build";
 export const READ_ERROR = "Could not read the music library";
 
-export function Explorer(props: { layout: Layout; session: Session; store: ExplorerStore; searching: () => boolean; openSearch: () => void }) {
+export function Explorer(props: {
+  layout: Layout;
+  session: Session;
+  store: ExplorerStore;
+  searching: () => boolean;
+  openSearch: () => void;
+}) {
   // The layout is constant for a mount (the shell remounts the Explorer when it changes sides), so the
   // handlers below are registered once for the layout that owns them: the d-pad, the circle pad and A
   // belong to the wide (top-screen) list; narrow (the touch screen) leaves them to the deck.
@@ -73,7 +112,10 @@ export function Explorer(props: { layout: Layout; session: Session; store: Explo
   createEffect(on(library, (lib) => lib && dispatch({ type: "reconcile", library: lib }), { defer: true }));
   // Focus moves replace the state object on every press; what the screen shows mostly depends on
   // the view, so these memos only change with it (and the rows only rebuild their cells then).
-  const view = settled(() => currentView(state()), (a, b) => viewKey(a) === viewKey(b));
+  const view = settled(
+    () => currentView(state()),
+    (a, b) => viewKey(a) === viewKey(b),
+  );
   const tab = settled(() => state().tab);
   const query = settled(() => state().query);
   const header = createMemo(() => headerOfView(view()));
@@ -86,9 +128,22 @@ export function Explorer(props: { layout: Layout; session: Session; store: Explo
   const kind = () => panelOf(props.session.available, props.session.readFailed(), library());
   // The list's buttons sleep under a panel (and under the keyboard); tabs, the Y chords and X do not.
   const listActive = () => active() && kind() === null;
-  const sameItems = <T extends { label: string }>(key: (item: T) => string) => (a: T[], b: T[]) => a.length === b.length && a.every((item, i) => key(item) === key(b[i]!) && item.label === b[i]!.label);
-  const legend = wide ? settled<LegendItem[]>(() => legendOf(state(), kind()), sameItems((item) => item.key)) : null;
-  const gels = wide ? null : settled<TouchLegendItem[]>(() => touchLegendOf(state(), kind()), sameItems((item) => item.action));
+  const sameItems =
+    <T extends { label: string }>(key: (item: T) => string) =>
+    (a: T[], b: T[]) =>
+      a.length === b.length && a.every((item, i) => key(item) === key(b[i]!) && item.label === b[i]!.label);
+  const legend = wide
+    ? settled<LegendItem[]>(
+        () => legendOf(state(), kind()),
+        sameItems((item) => item.key),
+      )
+    : null;
+  const gels = wide
+    ? null
+    : settled<TouchLegendItem[]>(
+        () => touchLegendOf(state(), kind()),
+        sameItems((item) => item.action),
+      );
   const strips = () => (query() ? 1 : 0) + (crumb() ? 1 : 0);
   const bodyPx = () => BODY_PX - strips() * ROW_PX;
   const page = () => Math.floor(bodyPx() / ROW_PX);
@@ -131,18 +186,23 @@ export function Explorer(props: { layout: Layout; session: Session; store: Explo
       else props.session.dispatch({ type: "cycleRepeat" }); // narrow: Y is repeat (spec §6.2)
     }
   });
-  if (wide) onButtonPress(BTN.CIRCLE, () => {
-    const lib = library();
-    if (!lib) return;
-    // This frame's own move or tab step is in state() already but not yet in the settled focus or
-    // the rows memo (they catch up when the frame's batch ends): read the row from fresh state.
-    const now = state();
-    const list = visibleRows(lib, now);
-    const row = list[Math.min(focusOf(now), list.length - 1)];
-    if (!row) return;
-    if (row.kind === "song") props.session.dispatch({ type: "playFrom", ids: songIds(list), startId: row.id });
-    else dispatch({ type: "open", row });
-  }, { active: listActive, latched: true });
+  if (wide)
+    onButtonPress(
+      BTN.CIRCLE,
+      () => {
+        const lib = library();
+        if (!lib) return;
+        // This frame's own move or tab step is in state() already but not yet in the settled focus or
+        // the rows memo (they catch up when the frame's batch ends): read the row from fresh state.
+        const now = state();
+        const list = visibleRows(lib, now);
+        const row = list[Math.min(focusOf(now), list.length - 1)];
+        if (!row) return;
+        if (row.kind === "song") props.session.dispatch({ type: "playFrom", ids: songIds(list), startId: row.id });
+        else dispatch({ type: "open", row });
+      },
+      { active: listActive, latched: true },
+    );
   // X: wide, a tap searches; narrow, it toggles shuffle (the touch footer searches). Over the empty-library
   // panel a tap scans again in both layouts; the read-error panel asks for a hold. A 1 s hold always rescans.
   const tapX = () => {
@@ -200,31 +260,49 @@ export function Explorer(props: { layout: Layout; session: Session; store: Explo
     // No `snap` option: with it the framework's endDrag replaces the fling with a 150–450 ms tween whose
     // first frames move up to 13 rows, so the fling state would never run and the velocity cap would mean
     // nothing. The real fling decays from the clamped release velocity; onSettle aligns the rest.
-    const s = createScroller({ max: maxOffset, extent: bodyPx, initial: previousTop * ROW_PX, overscroll: 0, onSettle: () => alignToRow() });
+    const s = createScroller({
+      max: maxOffset,
+      extent: bodyPx,
+      initial: previousTop * ROW_PX,
+      overscroll: 0,
+      onSettle: () => alignToRow(),
+    });
     scroller = s;
     onFrame(() => s.step());
     // A view change (tab, drill, back) shows that view where it was left; a query change starts at the top;
     // a reveal into another view centres the revealed row instead (effects run after the batch, when the
     // settled values are fresh).
-    createEffect(on(key, () => {
-      const now = viewKey(currentView(untrack(state)));
-      if (pendingReveal) {
-        pendingReveal = false;
-        shownKey = now; // before the scroll: the computation on `top` stores the new position under this key
-        s.scrollTo(centredOffset(focus(), page(), ROW_PX, maxOffset()));
-        return;
-      }
-      if (now === shownKey) {
-        s.scrollTo(0, { immediate: true });
-        return;
-      }
-      shownKey = now;
-      s.scrollTo((props.store.scrollRow.get(now) ?? 0) * ROW_PX, { immediate: true });
-    }, { defer: true }));
+    createEffect(
+      on(
+        key,
+        () => {
+          const now = viewKey(currentView(untrack(state)));
+          if (pendingReveal) {
+            pendingReveal = false;
+            shownKey = now; // before the scroll: the computation on `top` stores the new position under this key
+            s.scrollTo(centredOffset(focus(), page(), ROW_PX, maxOffset()));
+            return;
+          }
+          if (now === shownKey) {
+            s.scrollTo(0, { immediate: true });
+            return;
+          }
+          shownKey = now;
+          s.scrollTo((props.store.scrollRow.get(now) ?? 0) * ROW_PX, { immediate: true });
+        },
+        { defer: true },
+      ),
+    );
     // A rescan that drops rows under the window: clamp at once, or the list would show nothing.
-    createEffect(on(count, () => {
-      if (s.offset() > maxOffset()) s.scrollTo(maxOffset(), { immediate: true });
-    }, { defer: true }));
+    createEffect(
+      on(
+        count,
+        () => {
+          if (s.offset() > maxOffset()) s.scrollTo(maxOffset(), { immediate: true });
+        },
+        { defer: true },
+      ),
+    );
   }
   /** What is drawn: the offset clamped to the range, so no path can draw a row above the first or past the last. */
   const pos = () => Math.min(maxOffset(), Math.max(0, scroller!.offset()));
@@ -241,11 +319,13 @@ export function Explorer(props: { layout: Layout; session: Session; store: Explo
   } else {
     // Keyed by the view the scroller shows, not view(): on a view change `top` still holds the old view's row
     // until the key effect restores the new one, and view() would store that row under the new key.
-    createComputed(on(top, () => {
-      // A raw offset past the range is the transition itself (the new view's rows are fewer, the key effect has not
-      // clamped yet): `top` is the clamped, wrong value for the view still named by shownKey.
-      if (count() > 0 && scroller!.offset() <= maxOffset()) props.store.scrollRow.set(shownKey, top());
-    }));
+    createComputed(
+      on(top, () => {
+        // A raw offset past the range is the transition itself (the new view's rows are fewer, the key effect has not
+        // clamped yet): `top` is the clamped, wrong value for the view still named by shownKey.
+        if (count() > 0 && scroller!.offset() <= maxOffset()) props.store.scrollRow.set(shownKey, top());
+      }),
+    );
   }
 
   // --- touch (narrow) --------------------------------------------------------
@@ -270,7 +350,9 @@ export function Explorer(props: { layout: Layout; session: Session; store: Explo
         s.beginDrag();
         s.drag(-(c.dy - c.fdy)); // the travel inside the pan slop, which no onPanMove carries
       },
-      onPanMove: (c) => { if (listActive()) s.drag(-c.fdy); },
+      onPanMove: (c) => {
+        if (listActive()) s.drag(-c.fdy);
+      },
       onPanEnd: (c) => {
         if (!listActive()) return;
         const v = -clampVelocity(c.vy, FLING_MAX_PX_PER_S);
@@ -284,7 +366,9 @@ export function Explorer(props: { layout: Layout; session: Session; store: Explo
           s.scrollTo(snapToRow(rest, ROW_PX, maxOffset()), { durMs: 150 });
         }
       },
-      onUp: () => { if (listActive()) alignToRow(); },
+      onUp: () => {
+        if (listActive()) alignToRow();
+      },
       onCancel: () => {
         if (s.state() === "tracking") s.endDrag(0);
         else alignToRow(); // a down that stopped a fling and was cancelled leaves the list off a row
@@ -315,7 +399,9 @@ export function Explorer(props: { layout: Layout; session: Session; store: Explo
     createGesture({
       surface: "auxiliary",
       axis: "y",
-      region: { rect: () => (thumb() ? { x: NARROW_W - TRACK_HIT_PX, y: bodyTop(), w: TRACK_HIT_PX, h: bodyPx() } : null) },
+      region: {
+        rect: () => (thumb() ? { x: NARROW_W - TRACK_HIT_PX, y: bodyTop(), w: TRACK_HIT_PX, h: bodyPx() } : null),
+      },
       onDown: (c) => {
         grab = null;
         if (!listActive()) return;
@@ -327,8 +413,12 @@ export function Explorer(props: { layout: Layout; session: Session; store: Explo
         if (grab === null || !t || !listActive()) return;
         s.scrollTo(offsetForThumb(c.y - bodyTop() - grab, count() * ROW_PX, bodyPx(), t.height), { immediate: true });
       },
-      onPanEnd: () => { grab = null; },
-      onUp: () => { if (listActive()) alignToRow(); },
+      onPanEnd: () => {
+        grab = null;
+      },
+      onUp: () => {
+        if (listActive()) alignToRow();
+      },
       onCancel: () => {
         grab = null;
         alignToRow();
@@ -357,68 +447,110 @@ export function Explorer(props: { layout: Layout; session: Session; store: Explo
 
   const panel = () => {
     switch (kind()) {
-      case "unavailable": return { title: UNAVAILABLE, lines: ["This build has no media.local module."] };
-      case "readError": return { title: READ_ERROR, lines: [["Press and hold", "X", "to scan again."] as const] };
-      case "scanning": return { title: "Scanning your music…", lines: ["sdmc:/music/"] };
-      case "empty": return { title: "No music found", lines: ["Copy .mp3 files to the /music folder on your SD card,", ["then press", "X", "to scan again."] as const] };
-      default: return null;
+      case "unavailable":
+        return { title: UNAVAILABLE, lines: ["This build has no media.local module."] };
+      case "readError":
+        return { title: READ_ERROR, lines: [["Press and hold", "X", "to scan again."] as const] };
+      case "scanning":
+        return { title: "Scanning your music…", lines: ["sdmc:/music/"] };
+      case "empty":
+        return {
+          title: "No music found",
+          lines: [
+            "Copy .mp3 files to the /music folder on your SD card,",
+            ["then press", "X", "to scan again."] as const,
+          ],
+        };
+      default:
+        return null;
     }
   };
 
   return (
     <View class={AQUA.topScreen}>
-      <Toolbar title="iPoDS" line={lcdLine(props.session.available, props.session.scanning(), library())} active={tab()} layout={props.layout} onSelect={wide ? undefined : (tab) => dispatch({ type: "setTab", tab })} onPress={wide ? undefined : reveal} />
-      <Show when={panel()} fallback={
-        <>
-          <Show when={query()}>
-            <SearchStrip query={query()} count={rows().length} />
-          </Show>
-          <Show when={crumb()}>{(c) => <Breadcrumb root={c().root} leaf={c().leaf} detail={c().detail} onBack={wide ? undefined : () => dispatch({ type: "back" })} />}</Show>
-          <ColumnHeader layout={props.layout} left={header().left} right={header().right} lead={header().lead} count={header().count} />
-          <View class={AQUA.listBody}>
-            <Show when={rows().length > 0} fallback={<StatePanel title="No matches" lines={[`Nothing here matches "${query()}"`]} />}>
-            <RecycledList
-              count={rows().length}
-              rowHeight={ROW_PX}
-              rows={page()}
-              top={top()}
-              shift={shift()}
-              slot={(index, slot) => {
-                // Rows can shrink under a slot (search, rescan) before the pool does; every read is null-safe.
-                const row = () => rows()[index()];
-                const cells = createMemo(() => cellsAt(index()));
-                return (
-                  <Show when={row()}>
-                    <ListRow
-                      layout={props.layout}
-                      kind={kindAt(slot)}
-                      title={cells().title}
-                      detail={cells().detail}
-                      lead={cells().lead}
-                      count={cells().count}
-                      playing={isPlaying(index())}
-                    />
-                  </Show>
-                );
-              }}
-            />
-            <View class="absolute left-[0] top-[0] w-full h-[21]" style={{ translateY: (focus() - top()) * ROW_PX - shift() }}>
-              <ListRow
-                layout={props.layout}
-                kind="selected"
-                title={focusCells().title}
-                detail={focusCells().detail}
-                lead={focusCells().lead}
-                count={focusCells().count}
-                playing={isPlaying(focus())}
-                marquee
-              />
-            </View>
-            <Show when={thumb()}>{(t) => <Scrollbar thumbTop={t().top} thumbHeight={t().height} />}</Show>
+      <Toolbar
+        title="iPoDS"
+        line={lcdLine(props.session.available, props.session.scanning(), library())}
+        active={tab()}
+        layout={props.layout}
+        onSelect={wide ? undefined : (tab) => dispatch({ type: "setTab", tab })}
+        onPress={wide ? undefined : reveal}
+      />
+      <Show
+        when={panel()}
+        fallback={
+          <>
+            <Show when={query()}>
+              <SearchStrip query={query()} count={rows().length} />
             </Show>
-          </View>
-        </>
-      }>
+            <Show when={crumb()}>
+              {(c) => (
+                <Breadcrumb
+                  root={c().root}
+                  leaf={c().leaf}
+                  detail={c().detail}
+                  onBack={wide ? undefined : () => dispatch({ type: "back" })}
+                />
+              )}
+            </Show>
+            <ColumnHeader
+              layout={props.layout}
+              left={header().left}
+              right={header().right}
+              lead={header().lead}
+              count={header().count}
+            />
+            <View class={AQUA.listBody}>
+              <Show
+                when={rows().length > 0}
+                fallback={<StatePanel title="No matches" lines={[`Nothing here matches "${query()}"`]} />}
+              >
+                <RecycledList
+                  count={rows().length}
+                  rowHeight={ROW_PX}
+                  rows={page()}
+                  top={top()}
+                  shift={shift()}
+                  slot={(index, slot) => {
+                    // Rows can shrink under a slot (search, rescan) before the pool does; every read is null-safe.
+                    const row = () => rows()[index()];
+                    const cells = createMemo(() => cellsAt(index()));
+                    return (
+                      <Show when={row()}>
+                        <ListRow
+                          layout={props.layout}
+                          kind={kindAt(slot)}
+                          title={cells().title}
+                          detail={cells().detail}
+                          lead={cells().lead}
+                          count={cells().count}
+                          playing={isPlaying(index())}
+                        />
+                      </Show>
+                    );
+                  }}
+                />
+                <View
+                  class="absolute left-[0] top-[0] w-full h-[21]"
+                  style={{ translateY: (focus() - top()) * ROW_PX - shift() }}
+                >
+                  <ListRow
+                    layout={props.layout}
+                    kind="selected"
+                    title={focusCells().title}
+                    detail={focusCells().detail}
+                    lead={focusCells().lead}
+                    count={focusCells().count}
+                    playing={isPlaying(focus())}
+                    marquee
+                  />
+                </View>
+                <Show when={thumb()}>{(t) => <Scrollbar thumbTop={t().top} thumbHeight={t().height} />}</Show>
+              </Show>
+            </View>
+          </>
+        }
+      >
         {(p) => <StatePanel title={p().title} lines={p().lines} />}
       </Show>
       {wide ? <FooterLegend items={legend!()} /> : <FooterGels items={gels!()} onPress={onFooter} />}

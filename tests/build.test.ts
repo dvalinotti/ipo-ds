@@ -12,7 +12,14 @@ test("--manifest builds the bundle that manifest names and keeps it out of dist/
     manifest.app.output = "ipo-ds-probe";
     writeFileSync(join(dir, "probe.pocket.json"), JSON.stringify(manifest));
     const run = Bun.spawnSync(
-      [process.execPath, "scripts/build.ts", "--pocket-only", `--manifest=${join(dir, "probe.pocket.json")}`, `--outdir=${join(dir, "guest")}`, `--package-outdir=${dir}`],
+      [
+        process.execPath,
+        "scripts/build.ts",
+        "--pocket-only",
+        `--manifest=${join(dir, "probe.pocket.json")}`,
+        `--outdir=${join(dir, "guest")}`,
+        `--package-outdir=${dir}`,
+      ],
       { cwd: ROOT, stdout: "pipe", stderr: "pipe" },
     );
     expect(run.exitCode, `${run.stdout}${run.stderr}`).toBe(0);

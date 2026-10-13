@@ -1,7 +1,13 @@
 import type { SimLocalTrack } from "../../runtime/hosts/sim/localmedia.ts";
 
-const song = (file: string, title: string, artist: string, album: string, track: number, seconds: number): SimLocalTrack =>
-  ({ file, title, artist, album, track, durationMs: seconds * 1000 });
+const song = (
+  file: string,
+  title: string,
+  artist: string,
+  album: string,
+  track: number,
+  seconds: number,
+): SimLocalTrack => ({ file, title, artist, album, track, durationMs: seconds * 1000 });
 
 /** 20 songs, 4 artists, 5 albums; one over-long title and one decomposed accent (Hoppi + U+0301). */
 export const LIBRARY: SimLocalTrack[] = [
@@ -21,7 +27,14 @@ export const LIBRARY: SimLocalTrack[] = [
   song("sr-02.mp3", "Hoppi\u0301polla", "Sigur Rós", "Takk...", 3, 268),
   song("sr-03.mp3", "Sæglópur", "Sigur Rós", "Takk...", 5, 492),
   song("sr-04.mp3", "Gong", "Sigur Rós", "Takk...", 6, 330),
-  song("qu-01.mp3", "Bohemian Rhapsody (Remastered 2011, Live at Wembley Stadium, Extended)", "Queen", "A Night at the Opera", 11, 355),
+  song(
+    "qu-01.mp3",
+    "Bohemian Rhapsody (Remastered 2011, Live at Wembley Stadium, Extended)",
+    "Queen",
+    "A Night at the Opera",
+    11,
+    355,
+  ),
   song("qu-02.mp3", "You're My Best Friend", "Queen", "A Night at the Opera", 4, 172),
   song("qu-03.mp3", "Love of My Life", "Queen", "A Night at the Opera", 9, 219),
   song("qu-04.mp3", "Death on Two Legs", "Queen", "A Night at the Opera", 1, 223),

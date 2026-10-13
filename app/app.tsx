@@ -34,8 +34,12 @@ export default function App() {
   const chorded = (held: number) => (held & (BTN.LTRIGGER | BTN.RTRIGGER)) !== 0;
   onTapOrHold(
     BTN.SELECT,
-    (held) => { if (!chorded(held)) setMode((now) => (now === "dj" ? "deck" : "dj")); },
-    (held) => { if (!chorded(held)) setSwapped((now) => !now); },
+    (held) => {
+      if (!chorded(held)) setMode((now) => (now === "dj" ? "deck" : "dj"));
+    },
+    (held) => {
+      if (!chorded(held)) setSwapped((now) => !now);
+    },
     notSearching,
   );
   const explorer = (layout: "wide" | "narrow") => (

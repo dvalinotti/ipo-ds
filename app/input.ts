@@ -9,7 +9,12 @@ import { HOLD_UP, repeatFires, stepAnalog, stepHold, stepLatch } from "./input-t
  * `release` runs once when a press that fired ends. Latched: see stepLatch. Starts latched, so a button
  * already down when the screen mounts (a swap, the keyboard closing) is ignored until it is released.
  */
-export function onRepeat(button: number, fire: (repeat: boolean) => void, active: () => boolean, release?: () => void): void {
+export function onRepeat(
+  button: number,
+  fire: (repeat: boolean) => void,
+  active: () => boolean,
+  release?: () => void,
+): void {
   let held = -1;
   let ignoring = true;
   onFrame((buttons) => {
@@ -31,7 +36,12 @@ export function onRepeat(button: number, fire: (repeat: boolean) => void, active
  * release), the press up to the hold time for `hold` (it fires there, not on release).
  * Latched: see stepLatch; starts latched like onRepeat.
  */
-export function onTapOrHold(button: number, tap: (held: number) => void, hold: (held: number) => void, active: () => boolean): void {
+export function onTapOrHold(
+  button: number,
+  tap: (held: number) => void,
+  hold: (held: number) => void,
+  active: () => boolean,
+): void {
   let state = HOLD_UP;
   let ignoring = true;
   let held = 0;

@@ -51,15 +51,27 @@ function connect(): LocalMedia | null {
 }
 
 function composed(track: LocalTrack): LocalTrack {
-  return { ...track, title: composeMarks(track.title), artist: composeMarks(track.artist), album: composeMarks(track.album) };
+  return {
+    ...track,
+    title: composeMarks(track.title),
+    artist: composeMarks(track.artist),
+    album: composeMarks(track.album),
+  };
 }
 
 /** Frames between status reads (15 Hz at 60 fps); "loading" and a failed read poll every frame. */
 export const POLL_EVERY = 4;
 
 function samePlayer(a: PlayerState, b: PlayerState): boolean {
-  return a.queue === b.queue && a.order === b.order && a.index === b.index && a.shuffle === b.shuffle
-    && a.repeat === b.repeat && a.serial === b.serial && a.failures === b.failures;
+  return (
+    a.queue === b.queue &&
+    a.order === b.order &&
+    a.index === b.index &&
+    a.shuffle === b.shuffle &&
+    a.repeat === b.repeat &&
+    a.serial === b.serial &&
+    a.failures === b.failures
+  );
 }
 
 export function createSession(media: LocalMedia | null = connect()): Session {
@@ -96,7 +108,14 @@ export function createSession(media: LocalMedia | null = connect()): Session {
       // corrupt open is skipped at once; a command re-reads at once (pollNext); a failed read retries.
       // While the platter is held the status is read every frame, so the time follows the finger.
       frame++;
-      if (!pollNext && !statusFailed() && status().phase !== "loading" && !status().scratching && frame % POLL_EVERY !== 0) return;
+      if (
+        !pollNext &&
+        !statusFailed() &&
+        status().phase !== "loading" &&
+        !status().scratching &&
+        frame % POLL_EVERY !== 0
+      )
+        return;
       pollNext = false;
       let now: LocalStatus;
       try {

@@ -1,5 +1,13 @@
 import { expect, test } from "bun:test";
-import { BUDGET_US, cpuWork, overBudget, SCAN_BUDGET_MS, SCENARIOS, type Scenario, type Stats } from "../scripts/perf.ts";
+import {
+  BUDGET_US,
+  cpuWork,
+  overBudget,
+  SCAN_BUDGET_MS,
+  SCENARIOS,
+  type Scenario,
+  type Stats,
+} from "../scripts/perf.ts";
 
 const scenario = (name: string): Scenario => SCENARIOS.find((s) => s.name === name)!;
 const stats = (work: [number, number], localmedia?: Stats["localmedia"]): Stats => ({
@@ -8,7 +16,20 @@ const stats = (work: [number, number], localmedia?: Stats["localmedia"]): Stats 
 });
 
 test("the scenarios are the spec's, and the budgets its targets", () => {
-  expect(SCENARIOS.map((s) => s.name)).toEqual(["idle", "scroll", "now-playing", "dj", "swapped-idle", "touch-drag", "touch-fling", "swap", "swap-dj", "swap-search", "scan-first", "scan-cached"]);
+  expect(SCENARIOS.map((s) => s.name)).toEqual([
+    "idle",
+    "scroll",
+    "now-playing",
+    "dj",
+    "swapped-idle",
+    "touch-drag",
+    "touch-fling",
+    "swap",
+    "swap-dj",
+    "swap-search",
+    "scan-first",
+    "scan-cached",
+  ]);
   expect(BUDGET_US).toEqual({ new: 14_000, old: 30_000 });
   expect(SCAN_BUDGET_MS).toEqual({ first: 10_000, cached: 1_000, confirm: 3_000 });
   expect(scenario("scan-cached").keepCard).toBe(true); // it reads the cache scan-first wrote
@@ -23,34 +44,53 @@ test("frame scenarios are judged by the worst frame's CPU work", () => {
 });
 
 test("scan scenarios are judged by the scan's timings", () => {
-  const first = scenario("scan-first"), cached = scenario("scan-cached");
+  const first = scenario("scan-first"),
+    cached = scenario("scan-cached");
   expect(overBudget(first, "old", stats([0, 0]))).toBe("no localmedia stats");
   expect(overBudget(first, "old", stats([0, 0], { cachedMs: -1, scanMs: 10_000, files: 324, parsed: 324 }))).toBeNull();
-  expect(overBudget(first, "old", stats([0, 0], { cachedMs: -1, scanMs: 10_001, files: 324, parsed: 324 }))).toBe("scan 10001 ms > 10000 ms");
+  expect(overBudget(first, "old", stats([0, 0], { cachedMs: -1, scanMs: 10_001, files: 324, parsed: 324 }))).toBe(
+    "scan 10001 ms > 10000 ms",
+  );
   expect(overBudget(cached, "old", stats([0, 0], { cachedMs: 345, scanMs: 936, files: 324, parsed: 0 }))).toBeNull();
-  expect(overBudget(cached, "old", stats([0, 0], { cachedMs: -1, scanMs: 936, files: 324, parsed: 0 }))).toBe("cached list -1 ms > 1000 ms");
-  expect(overBudget(cached, "old", stats([0, 0], { cachedMs: 1_001, scanMs: 936, files: 324, parsed: 0 }))).toBe("cached list 1001 ms > 1000 ms");
-  expect(overBudget(cached, "old", stats([0, 0], { cachedMs: 345, scanMs: 3_001, files: 324, parsed: 0 }))).toBe("confirmation 3001 ms > 3000 ms");
+  expect(overBudget(cached, "old", stats([0, 0], { cachedMs: -1, scanMs: 936, files: 324, parsed: 0 }))).toBe(
+    "cached list -1 ms > 1000 ms",
+  );
+  expect(overBudget(cached, "old", stats([0, 0], { cachedMs: 1_001, scanMs: 936, files: 324, parsed: 0 }))).toBe(
+    "cached list 1001 ms > 1000 ms",
+  );
+  expect(overBudget(cached, "old", stats([0, 0], { cachedMs: 345, scanMs: 3_001, files: 324, parsed: 0 }))).toBe(
+    "confirmation 3001 ms > 3000 ms",
+  );
 });
 
 test("the touch tapes land where they mean to: list drags inside the body, the search tap in the footer, the swap inside the window", () => {
   const WINDOW = { first: 2941, last: 3000 }; // the host's timing window ends at the capture frame
-  const points = (name: string) => scenario(name).touch!.split("@").map((entry) => {
-    const [frame, payload] = entry.split(":");
-    if (payload === "-") return { frame: Number(frame), lift: true, x: 0, y: 0 };
-    const [, x, y] = payload!.split(",").map(Number);
-    return { frame: Number(frame), lift: false, x: x!, y: y! };
-  });
+  const points = (name: string) =>
+    scenario(name)
+      .touch!.split("@")
+      .map((entry) => {
+        const [frame, payload] = entry.split(":");
+        if (payload === "-") return { frame: Number(frame), lift: true, x: 0, y: 0 };
+        const [, x, y] = payload!.split(",").map(Number);
+        return { frame: Number(frame), lift: false, x: x!, y: y! };
+      });
   for (const name of ["touch-drag", "touch-fling"]) {
     const tape = points(name);
     expect(tape[0]!.frame).toBeGreaterThanOrEqual(2526); // after the swap hold's release (2526)
     expect(tape.at(-1)!.frame).toBeLessThanOrEqual(WINDOW.last);
-    if (name === "touch-drag") expect(tape[0]!.frame).toBeLessThanOrEqual(WINDOW.first); // the drag spans the whole window
+    if (name === "touch-drag")
+      expect(tape[0]!.frame).toBeLessThanOrEqual(WINDOW.first); // the drag spans the whole window
     else expect(tape.at(-1)!.frame).toBeLessThan(WINDOW.first); // the fling fills the window
     expect(tape[0]!.y).toBeGreaterThanOrEqual(51); // the down lands in the list body…
     expect(tape[0]!.y).toBeLessThan(219);
     expect(tape[0]!.x).toBeLessThan(300); // …left of the scrollbar's hit region
-    for (const p of tape) if (!p.lift) { expect(p.x).toBeGreaterThanOrEqual(0); expect(p.x).toBeLessThanOrEqual(319); expect(p.y).toBeGreaterThanOrEqual(0); expect(p.y).toBeLessThanOrEqual(239); }
+    for (const p of tape)
+      if (!p.lift) {
+        expect(p.x).toBeGreaterThanOrEqual(0);
+        expect(p.x).toBeLessThanOrEqual(319);
+        expect(p.y).toBeGreaterThanOrEqual(0);
+        expect(p.y).toBeLessThanOrEqual(239);
+      }
     expect(tape.at(-1)!.lift).toBe(true);
   }
   const search = points("swap-search");

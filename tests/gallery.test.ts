@@ -2,7 +2,15 @@ import { afterAll, beforeAll, expect, test } from "bun:test";
 import { BTN } from "@pocketjs/framework/input";
 import type { BundleWorld, SimNode } from "../runtime/hosts/sim/sim.ts";
 import { GALLERY_STATES, type GalleryStateName } from "../app/gallery/names.ts";
-import { backgroundOf, bootGallery, disposeGuest, pathTo, pathsTo, screenText, textColorOf } from "./support/app-world.ts";
+import {
+  backgroundOf,
+  bootGallery,
+  disposeGuest,
+  pathTo,
+  pathsTo,
+  screenText,
+  textColorOf,
+} from "./support/app-world.ts";
 
 // Colours as the core holds them: 0xAABBGGRR.
 const SELECTED_ROW = 0xffd77538; // #3875d7
@@ -40,7 +48,16 @@ function expectAll(text: string, parts: readonly string[]): void {
 
 test("main: songs with a selected and a playing row; Now Playing with embedded art", () => {
   show("main");
-  expectAll(screenText(world, "primary"), ["iPoDS", "142 songs · 9.6 hrs", "Song Name", "Artist", "Digital Love", "Starálfur", "♪", "Now Playing"]);
+  expectAll(screenText(world, "primary"), [
+    "iPoDS",
+    "142 songs · 9.6 hrs",
+    "Song Name",
+    "Artist",
+    "Digital Love",
+    "Starálfur",
+    "♪",
+    "Now Playing",
+  ]);
   const selected = pathTo(world, "primary", "Digital Love");
   expect(backgroundOf(selected)).toBe(SELECTED_ROW);
   expect(textColorOf(selected)).toBe(WHITE);
@@ -142,8 +159,18 @@ test("gels: each body's first child is its gloss; a blue label carries one shado
   expect(glossOffset(segment)).toEqual([0, 0, rect(segment)[2], 6]);
   expect(tabLabel("Artists")).toHaveLength(1);
   // Transport (Now Playing): shuffle, prev, pause, next, repeat, dj.
-  const [row] = findAll(world.tree("auxiliary"), (node) => JSON.stringify(node.rect) === JSON.stringify([10, 160, 300, 72]));
-  expect(row!.children.map(glossOffset)).toEqual([[5, 3, 24, 16], [6, 3, 30, 20], [10, 3, 44, 30], [6, 3, 30, 20], [5, 3, 24, 16], [5, 3, 24, 16]]);
+  const [row] = findAll(
+    world.tree("auxiliary"),
+    (node) => JSON.stringify(node.rect) === JSON.stringify([10, 160, 300, 72]),
+  );
+  expect(row!.children.map(glossOffset)).toEqual([
+    [5, 3, 24, 16],
+    [6, 3, 30, 20],
+    [10, 3, 44, 30],
+    [6, 3, 30, 20],
+    [5, 3, 24, 16],
+    [5, 3, 24, 16],
+  ]);
   // Seek knob: the track's second child.
   const capsule = pathTo(world, "auxiliary", "1:42").at(-3)!;
   expect(glossOffset(capsule.children[1]!.children[1]!)).toEqual([2, 3, 14, 8]);
@@ -187,8 +214,12 @@ test("album drill-down: breadcrumb and numbered rows; Now Playing with placehold
   // "#" is its own column, centred over the track numbers; "Song Name" starts where the titles start.
   const centre = (r: Rect) => r[0] + r[2] / 2;
   // Both are centred in the same 22 px column; glyphs of different widths can land half a pixel apart.
-  expect(Math.abs(centre(rect(pathTo(world, "primary", "#").at(-2))) - centre(rect(pathTo(world, "primary", "1").at(-2))))).toBeLessThanOrEqual(1);
-  expect(rect(pathTo(world, "primary", "Song Name").at(-2))[0]).toBe(rect(pathTo(world, "primary", "One More Time").at(-2))[0]);
+  expect(
+    Math.abs(centre(rect(pathTo(world, "primary", "#").at(-2))) - centre(rect(pathTo(world, "primary", "1").at(-2)))),
+  ).toBeLessThanOrEqual(1);
+  expect(rect(pathTo(world, "primary", "Song Name").at(-2))[0]).toBe(
+    rect(pathTo(world, "primary", "One More Time").at(-2))[0],
+  );
   expect(backgroundOf(pathTo(world, "primary", "Aerodynamic"))).toBe(SELECTED_ROW);
   // A title longer than its column is clipped by its 214 px cell (6 px gutter); the time column stays put.
   const long = pathTo(world, "primary", "Harder, Better, Faster, Stronger (Extended Club Mix)");
@@ -207,7 +238,12 @@ test("scanning: LCD and panel report progress; idle Now Playing", () => {
   const [px, py, , ph2] = rect(progress);
   const [fx2, fy2, , fh2] = rect(progress.children[0]);
   expect([fx2, fy2, fh2]).toEqual([px + 1, py + 1, ph2 - 2]);
-  expectAll(screenText(world, "primary"), ["Scanning…", "Scanning your music…", "sdmc:/music/ · 87 of 142 files", "Now Playing"]);
+  expectAll(screenText(world, "primary"), [
+    "Scanning…",
+    "Scanning your music…",
+    "sdmc:/music/ · 87 of 142 files",
+    "Now Playing",
+  ]);
   expect(screenText(world, "auxiliary")).toContain("Nothing playing");
 });
 
@@ -242,9 +278,16 @@ test("stress: over-long LCD lines, query and breadcrumb clip in place; curly quo
 test("loading: while a cover decodes, the art frame shows the spinner centred on grey, not the placeholder", () => {
   show("loading");
   const all: SimNode[] = [];
-  const walk = (node: SimNode | null) => { if (node) { all.push(node); node.children.forEach(walk); } };
+  const walk = (node: SimNode | null) => {
+    if (node) {
+      all.push(node);
+      node.children.forEach(walk);
+    }
+  };
   walk(world.tree("auxiliary"));
-  const spinner = all.find((node) => node.type === "image" && node.rect?.[2] === 32 && node.rect?.[3] === 32 && node.rect[0] < 110);
+  const spinner = all.find(
+    (node) => node.type === "image" && node.rect?.[2] === 32 && node.rect?.[3] === 32 && node.rect[0] < 110,
+  );
   expect(spinner?.rect).toEqual([44, 44, 32, 32]);
   expect(pathsTo(world, "auxiliary", "Di")).toHaveLength(0); // no placeholder initials
   expect(screenText(world, "auxiliary")).toContain("Digital Love");
@@ -259,7 +302,10 @@ test("gels: the reference pill, every transport state, and a fill too narrow for
   expect(rect(body).slice(2)).toEqual([115, 44]);
   expect(glossOffset(body)).toEqual([9, 2, 97, 18]);
   // Three progress tracks (2 %, 10 %, 60 %): the 4 px fill's gloss has no room and paints nothing outside the fill.
-  const tracks = findAll(world.tree("primary"), (node) => node.rect !== null && node.rect[2] === 220 && node.rect[3] === 12);
+  const tracks = findAll(
+    world.tree("primary"),
+    (node) => node.rect !== null && node.rect[2] === 220 && node.rect[3] === 12,
+  );
   expect(tracks).toHaveLength(3);
   const fill = tracks[0]!.children[0]!;
   expect(rect(fill)[2]).toBe(4);
@@ -269,9 +315,21 @@ test("gels: the reference pill, every transport state, and a fill too narrow for
     expect(gloss[0] + gloss[2]).toBeLessThanOrEqual(rect(fill)[0] + rect(fill)[2]);
   }
   // Transport: an enabled blue/grey row, an enabled grey row, a disabled row (no gloss: it would show through at 45 %).
-  const rows = findAll(world.tree("auxiliary"), (node) => node.children.length === 6 && node.children.every((child) => child.rect !== null && child.rect[2] === child.rect[3] && child.rect[2] >= 34));
+  const rows = findAll(
+    world.tree("auxiliary"),
+    (node) =>
+      node.children.length === 6 &&
+      node.children.every((child) => child.rect !== null && child.rect[2] === child.rect[3] && child.rect[2] >= 34),
+  );
   expect(rows).toHaveLength(3);
-  expect(rows[0]!.children.map(glossOffset)).toEqual([[5, 3, 24, 16], [6, 3, 30, 20], [10, 3, 44, 30], [6, 3, 30, 20], [5, 3, 24, 16], [5, 3, 24, 16]]);
+  expect(rows[0]!.children.map(glossOffset)).toEqual([
+    [5, 3, 24, 16],
+    [6, 3, 30, 20],
+    [10, 3, 44, 30],
+    [6, 3, 30, 20],
+    [5, 3, 24, 16],
+    [5, 3, 24, 16],
+  ]);
   expect(rows[2]!.children.every((button) => button.children[0]!.hidden)).toBe(true);
 });
 
@@ -279,13 +337,15 @@ test("dj: the platter's box and spindle; the side panel with the song, its time 
   show("dj");
   expectAll(screenText(world, "auxiliary"), ["One More Time", "Daft Punk", "1:42", "-3:58"]);
   const boxes = findAll(world.tree("auxiliary"), (node) => node.rect !== null).map((node) => node.rect!.join(","));
-  expect(boxes).toContain("10,20,200,200");  // the platter
-  expect(boxes).toContain("107,117,6,6");    // the spindle at its centre
-  expect(boxes).toContain("220,10,90,220");  // the side panel
-  expect(boxes).toContain("248,186,34,34");  // its gel back to the deck
+  expect(boxes).toContain("10,20,200,200"); // the platter
+  expect(boxes).toContain("107,117,6,6"); // the spindle at its centre
+  expect(boxes).toContain("220,10,90,220"); // the side panel
+  expect(boxes).toContain("248,186,34,34"); // its gel back to the deck
   // Prev / next are 34 px gels 8 px apart, centred in the panel's 88 px interior: 6 px from each side.
-  const skips = findAll(world.tree("auxiliary"), (node) => node.rect !== null && node.rect[1] < 186 && node.rect[2] === 34 && node.rect[3] === 34)
-    .map((node) => node.rect![0]);
+  const skips = findAll(
+    world.tree("auxiliary"),
+    (node) => node.rect !== null && node.rect[1] < 186 && node.rect[2] === 34 && node.rect[3] === 34,
+  ).map((node) => node.rect![0]);
   expect(skips).toEqual([227, 269]);
 });
 
@@ -313,7 +373,15 @@ test("swapped: the wide deck on top, the narrow Songs list with footer gels belo
 
 test("swapped-album: the album drill-down with its breadcrumb and an Albums gel", () => {
   show("swapped-album");
-  expectAll(screenText(world, "auxiliary"), ["Discovery", "Daft Punk · 14 songs", "Song Name", "Time", "#", "Search", "Albums"]);
+  expectAll(screenText(world, "auxiliary"), [
+    "Discovery",
+    "Daft Punk · 14 songs",
+    "Song Name",
+    "Time",
+    "#",
+    "Search",
+    "Albums",
+  ]);
   expectAll(screenText(world, "primary"), ["Aerodynamic", "2 of 14"]);
 });
 
@@ -340,4 +408,3 @@ test("search: query strip with results; the classic keyboard on the bottom scree
   expect(aux.rgba[foot + 2]! - aux.rgba[foot]!).toBeGreaterThanOrEqual(6);
   expect(pathTo(world, "auxiliary", "q").length).toBeGreaterThan(0);
 });
-

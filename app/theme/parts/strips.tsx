@@ -53,7 +53,11 @@ export function KeyBadge(props: { letter: string; primary?: boolean; theme?: The
   const t = () => props.theme ?? AQUA;
   return (
     <Gel classes={t().badge(props.primary ?? false)}>
-      <GelLabel text={props.letter} class={t().badgeText(props.primary ?? false)} shadow={props.primary ? t().badgeTextShadow : undefined} />
+      <GelLabel
+        text={props.letter}
+        class={t().badgeText(props.primary ?? false)}
+        shadow={props.primary ? t().badgeTextShadow : undefined}
+      />
     </Gel>
   );
 }
@@ -102,7 +106,11 @@ function FooterGel(props: { item: TouchLegendItem; onPress?: (action: TouchActio
 }
 
 /** The narrow (touch) footer: a gel per action. */
-export function FooterGels(props: { items: readonly TouchLegendItem[]; onPress?: (action: TouchAction) => void; theme?: Theme }) {
+export function FooterGels(props: {
+  items: readonly TouchLegendItem[];
+  onPress?: (action: TouchAction) => void;
+  theme?: Theme;
+}) {
   const t = () => props.theme ?? AQUA;
   return (
     <>

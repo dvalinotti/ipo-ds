@@ -13,5 +13,7 @@ test("encodePng writes RGBA that the PocketJS PNG decoder reads back unchanged",
 
 test("scale repeats each pixel factor × factor times", () => {
   const out = scale(2, 1, Uint8Array.of(1, 2, 3, 4, 5, 6, 7, 8), 2);
-  expect([...out]).toEqual([1, 2, 3, 4, 1, 2, 3, 4, 5, 6, 7, 8, 5, 6, 7, 8, 1, 2, 3, 4, 1, 2, 3, 4, 5, 6, 7, 8, 5, 6, 7, 8]);
+  expect([...out]).toEqual([
+    1, 2, 3, 4, 1, 2, 3, 4, 5, 6, 7, 8, 5, 6, 7, 8, 1, 2, 3, 4, 1, 2, 3, 4, 5, 6, 7, 8, 5, 6, 7, 8,
+  ]);
 });

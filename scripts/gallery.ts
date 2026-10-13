@@ -14,7 +14,10 @@ try {
   const world = await bootBuilt(buildBundle("gallery.pocket.json"));
   for (let f = 0; f < 6; f++) world.step();
   for (const [index, name] of GALLERY_STATES.entries()) {
-    for (const [surface, label] of [["primary", "top"], ["auxiliary", "bottom"]] as const) {
+    for (const [surface, label] of [
+      ["primary", "top"],
+      ["auxiliary", "bottom"],
+    ] as const) {
       const { width, height, rgba } = world.pixels(surface);
       const file = join(out, `${index + 1}-${name}-${label}@2x.png`);
       writeFileSync(file, encodePng(width * 2, height * 2, scale(width, height, rgba, 2)));

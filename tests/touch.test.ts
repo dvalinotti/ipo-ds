@@ -6,7 +6,28 @@ import { BTN } from "@pocketjs/framework/input";
 import { LIBRARY } from "./fixtures/library.ts";
 import { bodyTopPx } from "../app/explorer/scroll.ts";
 import { disposeGuest, pathsTo, pathTo, screenText } from "./support/app-world.ts";
-import { aligned, BODY_PX, BODY_TOP, bootSwapped, drag, flat, frames, holdSelect, listText, opens, press, rowTextAt, rowTextSpanning, rowYs, ROW, scans, SELECTED_ROW, selectedRow, tap, type Rig } from "./support/rig.ts";
+import {
+  aligned,
+  BODY_PX,
+  BODY_TOP,
+  bootSwapped,
+  drag,
+  flat,
+  frames,
+  holdSelect,
+  listText,
+  opens,
+  press,
+  rowTextAt,
+  rowTextSpanning,
+  rowYs,
+  ROW,
+  scans,
+  SELECTED_ROW,
+  selectedRow,
+  tap,
+  type Rig,
+} from "./support/rig.ts";
 
 afterAll(disposeGuest);
 
@@ -164,7 +185,14 @@ test("an album drilled into and left returns the Albums list where it was", asyn
   // Twelve one-song albums: the Albums list is longer than its window.
   const many = Array.from({ length: 12 }, (_, i) => {
     const n = String(i).padStart(2, "0");
-    return { file: `a-${n}.mp3`, title: `Song ${n}`, artist: "Artist", album: `Album ${n}`, track: 1, durationMs: 200_000 };
+    return {
+      file: `a-${n}.mp3`,
+      title: `Song ${n}`,
+      artist: "Artist",
+      album: `Album ${n}`,
+      track: 1,
+      durationMs: 200_000,
+    };
   });
   const rig = await bootSwapped(many);
   press(rig, BTN.RTRIGGER);
@@ -277,7 +305,9 @@ test("inside an album a tap under the breadcrumb plays; the breadcrumb and the B
   const crumb = pathTo(rig.world, "auxiliary", "›").at(-2)!.rect!;
   tap(rig, 200, crumb[1] + crumb[3] / 2); // anywhere on the strip
   expect(screenText(rig.world, "auxiliary")).not.toContain("Albums›");
-  const highlight = flat(rig.world.tree("auxiliary")).find((n) => n.type === "view" && n.bgColor >>> 0 === SELECTED_ROW)!.rect!;
+  const highlight = flat(rig.world.tree("auxiliary")).find(
+    (n) => n.type === "view" && n.bgColor >>> 0 === SELECTED_ROW,
+  )!.rect!;
   expect(highlight[1]).toBe(BODY_TOP + 2 * ROW); // the tapped album is highlighted where it was
   tap(rig, 100, BODY_TOP + 2 * ROW + 10);
   tapText(rig, "Albums", true); // the footer's Back gel reads "Albums" in a drill-down; the tab is the first match

@@ -1,5 +1,17 @@
 import { expect, test } from "bun:test";
-import { angleAt, DEAD_ZONE_PX, fingerRate, inDeadZone, inDisc, MAX_RATE, PLATTER, smoothRate, SPIN_PER_FRAME, wrap360, wrapDelta } from "../app/dj/platter.ts";
+import {
+  angleAt,
+  DEAD_ZONE_PX,
+  fingerRate,
+  inDeadZone,
+  inDisc,
+  MAX_RATE,
+  PLATTER,
+  smoothRate,
+  SPIN_PER_FRAME,
+  wrap360,
+  wrapDelta,
+} from "../app/dj/platter.ts";
 
 const { cx, cy } = PLATTER;
 
@@ -19,7 +31,7 @@ test("angles run clockwise from 12 o'clock", () => {
 test("wrap360 and wrapDelta keep turns short across 12 o'clock", () => {
   expect(wrap360(-10)).toBeCloseTo(350);
   expect(wrap360(370)).toBeCloseTo(10);
-  expect(wrapDelta(5 - 355)).toBeCloseTo(10);   // 355° → 5°: 10° clockwise, not -350°
+  expect(wrapDelta(5 - 355)).toBeCloseTo(10); // 355° → 5°: 10° clockwise, not -350°
   expect(wrapDelta(355 - 5)).toBeCloseTo(-10);
   expect(wrapDelta(180)).toBe(180);
   expect(wrapDelta(-180)).toBe(180);
