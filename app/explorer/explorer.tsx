@@ -164,6 +164,8 @@ export function Explorer(props: { layout: Layout; session: Session; store: Explo
   let scroller: Scroller | null = null;
   /** A reveal that changed the view: the view-change effect centres the row after the batch (see reveal). */
   let pendingReveal = false;
+  /** The view the narrow scroller is showing: the key its position is stored under (the key effect moves it). */
+  let shownKey = key0;
 
   /**
    * Jump to the playing song: the Songs tab, focus on it; narrow also tweens the window to centre it.
@@ -204,12 +206,11 @@ export function Explorer(props: { layout: Layout; session: Session; store: Explo
     // A view change (tab, drill, back) shows that view where it was left; a query change starts at the top;
     // a reveal into another view centres the revealed row instead (effects run after the batch, when the
     // settled values are fresh).
-    let shownKey = key0;
     createEffect(on(key, () => {
       const now = viewKey(currentView(untrack(state)));
       if (pendingReveal) {
         pendingReveal = false;
-        shownKey = now;
+        shownKey = now; // before the scroll: the computation on `top` stores the new position under this key
         s.scrollTo(centredOffset(focus(), page(), ROW_PX, maxOffset()));
         return;
       }
@@ -225,15 +226,27 @@ export function Explorer(props: { layout: Layout; session: Session; store: Explo
       if (s.offset() > maxOffset()) s.scrollTo(maxOffset(), { immediate: true });
     }, { defer: true }));
   }
+  /** What is drawn: the offset clamped to the range, so no path can draw a row above the first or past the last. */
+  const pos = () => Math.min(maxOffset(), Math.max(0, scroller!.offset()));
   const top = wide
     ? settled(() => (previousTop = nearestTop(previousTop, focus(), page(), count())))
-    : settled(() => Math.floor(scroller!.offset() / ROW_PX));
-  const shift = wide ? () => 0 : createMemo(() => scroller!.offset() - top() * ROW_PX);
-  const thumb = createMemo(() => thumbFor(wide ? top() * ROW_PX : scroller!.offset(), count() * ROW_PX, bodyPx()));
+    : settled(() => Math.floor(pos() / ROW_PX));
+  const shift = wide ? () => 0 : createMemo(() => pos() - top() * ROW_PX);
+  const thumb = createMemo(() => thumbFor(wide ? top() * ROW_PX : pos(), count() * ROW_PX, bodyPx()));
   // Written as it changes, not on cleanup: on a swap the new Explorer can mount before the old one is disposed.
-  createComputed(() => {
-    if (rows().length > 0) props.store.scrollRow.set(viewKey(view()), top());
-  });
+  if (wide) {
+    createComputed(() => {
+      if (rows().length > 0) props.store.scrollRow.set(viewKey(view()), top());
+    });
+  } else {
+    // Keyed by the view the scroller shows, not view(): on a view change `top` still holds the old view's row
+    // until the key effect restores the new one, and view() would store that row under the new key.
+    createComputed(on(top, () => {
+      // A raw offset past the range is the transition itself (the new view's rows are fewer, the key effect has not
+      // clamped yet): `top` is the clamped, wrong value for the view still named by shownKey.
+      if (count() > 0 && scroller!.offset() <= maxOffset()) props.store.scrollRow.set(shownKey, top());
+    }));
+  }
 
   // --- touch (narrow) --------------------------------------------------------
   if (!wide) {
@@ -258,9 +271,24 @@ export function Explorer(props: { layout: Layout; session: Session; store: Explo
         s.drag(-(c.dy - c.fdy)); // the travel inside the pan slop, which no onPanMove carries
       },
       onPanMove: (c) => { if (listActive()) s.drag(-c.fdy); },
-      onPanEnd: (c) => { if (listActive()) s.endDrag(-clampVelocity(c.vy, FLING_MAX_PX_PER_S)); },
+      onPanEnd: (c) => {
+        if (!listActive()) return;
+        const v = -clampVelocity(c.vy, FLING_MAX_PX_PER_S);
+        const rest = s.projectFling(v);
+        if (rest >= 0 && rest <= maxOffset()) s.endDrag(v);
+        else {
+          // A fling that would cross an end: the framework hands its velocity to the spring even with
+          // overscroll 0, so the list would pass the end and bounce (spec §5.2: it stops hard). Tween to the
+          // edge row instead. The hard stop belongs upstream in PocketJS.
+          s.endDrag(0);
+          s.scrollTo(snapToRow(rest, ROW_PX, maxOffset()), { durMs: 150 });
+        }
+      },
       onUp: () => { if (listActive()) alignToRow(); },
-      onCancel: () => { if (s.state() === "tracking") s.endDrag(0); },
+      onCancel: () => {
+        if (s.state() === "tracking") s.endDrag(0);
+        else alignToRow(); // a down that stopped a fling and was cancelled leaves the list off a row
+      },
       onTap: () => {
         if (!listActive() || rowDown < 0) return;
         const lib = library();
@@ -301,7 +329,10 @@ export function Explorer(props: { layout: Layout; session: Session; store: Explo
       },
       onPanEnd: () => { grab = null; },
       onUp: () => { if (listActive()) alignToRow(); },
-      onCancel: () => { grab = null; },
+      onCancel: () => {
+        grab = null;
+        alignToRow();
+      },
       onTap: (c) => {
         const t = thumb();
         if (!t || !listActive() || thumbAt(c.y) !== null) return;

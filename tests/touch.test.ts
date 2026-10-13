@@ -41,16 +41,19 @@ test("a tap on the gap below the last row does nothing", async () => {
 
 test("a drag follows the finger mid-row; a flick flings and comes to rest on a row; the list never passes its end", async () => {
   const rig = await bootSwapped();
-  drag(rig, 100, 180, -8, 4); // 24 px of travel: panning, mid-row
+  drag(rig, 100, 180, -8, 4); // 24 px of travel (the first contact is at 180, the last at 156): panning, mid-row
   expect(aligned(rowYs(rig.world))).toBe(false);
+  // The list followed the finger by exactly its travel: row 0 (y 51) is now at 27, above the body's visible rows, so
+  // the lowest row y in the body is row 1 at 51 + 21 - 24 = 48.
+  expect(Math.min(...rowYs(rig.world))).toBe(BODY_TOP + ROW - 24);
   drag(rig, 100, 148, -8, 6); // 72 px in all, then lift at 480 px/s
   frames(rig, 150);
   const ys = rowYs(rig.world);
   expect(aligned(ys)).toBe(true);
   expect(listText(rig.world)).not.toContain("Aerodynamic");
-  // 20 rows, 8 per window: the end is top 12, rows 12–19 at y 51–198, nothing drawn below.
+  // 72 px of drag and the fling's run carry it on, about four rows in all, to rest on a row; the end fling is tested below.
   expect(Math.min(...ys)).toBe(BODY_TOP);
-  expect(Math.max(...ys)).toBe(BODY_TOP + 7 * ROW);
+  expect(Math.max(...ys)).toBe(BODY_TOP + 7 * ROW); // eight whole rows fill the body, nothing past them
   expect(opens(rig.host)).toEqual([]); // dragging never plays
 }, 120_000);
 
@@ -92,8 +95,9 @@ test("the list keeps its touch-scrolled place across a swap and back when the ta
 
 test("a rescan that drops rows under a scrolled window clamps it and shows the rest from a row", async () => {
   const rig = await bootSwapped();
-  drag(rig, 100, 200, -8, 10);
-  frames(rig, 150); // at the end: top 12
+  drag(rig, 100, 200, -83, 3); // a fling at the cap into the end
+  frames(rig, 150); // at the end: 20 rows, 8 per window, top 12
+  expect(Math.max(...rowYs(rig.world))).toBe(BODY_TOP + 7 * ROW);
   expect(listText(rig.world)).not.toContain("Aerodynamic");
   rig.host.setLibrary([LIBRARY[0]!, LIBRARY[1]!, LIBRARY[2]!]);
   press(rig, X, 70); // hold X: a rescan, in narrow layout too
@@ -107,9 +111,83 @@ test("a rescan that drops rows under a scrolled window clamps it and shows the r
   expect(listText(rig.world)).toContain("Aerodynamic");
 }, 120_000);
 
+/** The distinct row ys: pooled rows may trade slots, and the highlight overlay adds a row where the focus sits. */
+const sorted = (ys: number[]) => [...new Set(ys)].sort((a, b) => a - b);
+const sortedText0 = (text: string) => text.split("|").sort();
+const sortedText = (world: Rig["world"]) => sortedText0(listText(world));
+
+test("a fling into either end stops hard on the edge row and never shows a gap", async () => {
+  const rig = await bootSwapped();
+  const lowest = BODY_TOP + 7 * ROW;
+  // Down the list: a drag of -83 px per frame is about 5000 px/s, the cap. Past the end the offset would spring back.
+  drag(rig, 100, 200, -83, 3);
+  for (let i = 0; i < 70; i++) {
+    frames(rig, 1);
+    expect(Math.max(...rowYs(rig.world))).toBeGreaterThanOrEqual(lowest); // the last row never rises off the body's foot
+  }
+  let ys = rowYs(rig.world);
+  expect(aligned(ys)).toBe(true);
+  expect(Math.max(...ys)).toBe(lowest);
+  expect(Math.min(...ys)).toBe(BODY_TOP);
+  expect(listText(rig.world)).toContain("You're My Best Friend");
+  // Up the list from the end.
+  drag(rig, 100, 52, 83, 3);
+  for (let i = 0; i < 70; i++) {
+    frames(rig, 1);
+    expect(Math.min(...rowYs(rig.world))).toBeLessThanOrEqual(BODY_TOP); // the first row never drops below the body's head
+  }
+  ys = rowYs(rig.world);
+  expect(aligned(ys)).toBe(true);
+  expect(Math.min(...ys)).toBe(BODY_TOP);
+  expect(listText(rig.world)).toContain("Aerodynamic");
+  expect(opens(rig.host)).toEqual([]);
+}, 120_000);
+
+test("a touch-scrolled Songs list keeps its place across a tab round trip", async () => {
+  const rig = await bootSwapped();
+  drag(rig, 100, 200, -20, 3);
+  drag(rig, 100, 140, 0, 6); // 60 px up and held still: rests on row 3
+  frames(rig, 60);
+  const before = rowYs(rig.world);
+  const text = listText(rig.world);
+  expect(aligned(before)).toBe(true);
+  expect(text).not.toContain("Aerodynamic");
+  press(rig, BTN.RTRIGGER);
+  expect(listText(rig.world)).toContain("Gorillaz"); // Artists
+  press(rig, BTN.LTRIGGER);
+  frames(rig, 5);
+  expect(sorted(rowYs(rig.world))).toEqual(sorted(before)); // pooled rows may trade slots: compare as sets
+  expect(sortedText(rig.world)).toEqual(sortedText0(text));
+}, 120_000);
+
+test("an album drilled into and left returns the Albums list where it was", async () => {
+  // Twelve one-song albums: the Albums list is longer than its window.
+  const many = Array.from({ length: 12 }, (_, i) => {
+    const n = String(i).padStart(2, "0");
+    return { file: `a-${n}.mp3`, title: `Song ${n}`, artist: "Artist", album: `Album ${n}`, track: 1, durationMs: 200_000 };
+  });
+  const rig = await bootSwapped(many);
+  press(rig, BTN.RTRIGGER);
+  press(rig, BTN.RTRIGGER); // Albums
+  drag(rig, 100, 200, -20, 3);
+  drag(rig, 100, 140, 0, 6); // 60 px up: rests on row 3
+  frames(rig, 60);
+  const before = rowYs(rig.world);
+  const text = listText(rig.world);
+  expect(aligned(before)).toBe(true);
+  expect(text).not.toContain("Album 00");
+  tap(rig, 100, BODY_TOP + 10); // the album at the top of the scrolled window: Album 03
+  expect(screenText(rig.world, "auxiliary")).toContain("Albums›");
+  press(rig, BTN.CROSS); // Back
+  frames(rig, 5);
+  expect(screenText(rig.world, "auxiliary")).not.toContain("Albums›");
+  expect(sorted(rowYs(rig.world))).toEqual(sorted(before));
+  expect(sortedText(rig.world)).toEqual(sortedText0(text));
+}, 120_000);
+
 test("dragging the thumb scrolls by the track ratio, not the finger's pixels, and rests on a row", async () => {
   const rig = await bootSwapped();
-  // 20 rows in a 168 px window: the thumb is 67 px tall, its travel 101 px for 252 px of content.
+  // 20 rows in a 168 px window: the thumb is 67 px tall, its travel 101 px for 252 px of travel (content 420 minus the 168 px window).
   drag(rig, 313, BODY_TOP + 10, 0, 1); // down on the thumb
   drag(rig, 313, BODY_TOP + 10, 10, 6); // 50 px down the track: about 125 px of content, 6 rows
   frames(rig, 40);
@@ -233,13 +311,21 @@ test("the LCD tap reveals the playing song from another tab, centred in the Song
   expect(rowTextAt(rig.world, BODY_TOP + 4 * ROW)).toContain("Digital Love"); // centred: row 7 in a window from row 3
 }, 120_000);
 
-test("over the empty panel only the Scan again gel does anything", async () => {
+test("over the empty panel the list body does nothing, the tabs still switch, and the Scan again gel rescans", async () => {
   const rig = await bootSwapped([]);
   expect(screenText(rig.world, "auxiliary")).toContain("No music found");
   drag(rig, 100, 150, -8, 6);
   frames(rig, 10);
-  tap(rig, 100, 120);
+  tap(rig, 100, 120); // the list body
+  tapText(rig, "iPoDS"); // the LCD
   expect(scans(rig.host)).toHaveLength(1);
+  expect(screenText(rig.world, "auxiliary")).toContain("No music found");
+  tapText(rig, "Albums"); // the tabs stay live
+  expect(scans(rig.host)).toHaveLength(1);
+  rig.host.setLibrary(LIBRARY);
   tapText(rig, "Scan again");
   expect(scans(rig.host)).toHaveLength(2);
+  frames(rig, 10);
+  expect(listText(rig.world)).toContain("Discovery"); // the Albums tab was the one switched to
+  expect(listText(rig.world)).not.toContain("Aerodynamic");
 }, 120_000);
