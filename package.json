@@ -11,7 +11,9 @@
     "test": "bun test --conditions=browser ./tests",
     "gallery": "bun scripts/gallery.ts",
     "format": "prettier --write \"app/**/*.{ts,tsx}\" \"scripts/**/*.ts\" \"tests/**/*.ts\" \"*.{ts,js}\"",
-    "format:check": "prettier --check \"app/**/*.{ts,tsx}\" \"scripts/**/*.ts\" \"tests/**/*.ts\" \"*.{ts,js}\""
+    "format:check": "prettier --check \"app/**/*.{ts,tsx}\" \"scripts/**/*.ts\" \"tests/**/*.ts\" \"*.{ts,js}\"",
+    "lint": "bun --bun eslint .",
+    "lint:fix": "bun --bun eslint . --fix"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
