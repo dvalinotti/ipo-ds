@@ -33,7 +33,7 @@ export function buildBundle(manifest: string): BuiltBundle {
     ],
     { cwd: ROOT, stdout: "pipe", stderr: "pipe" },
   );
-  if (run.exitCode !== 0) throw new Error(`${output} build failed\n${run.stdout}${run.stderr}`);
+  if (run.exitCode !== 0) throw new Error(`${output} build failed\n${run.stdout.toString()}${run.stderr.toString()}`);
   const bundle = { dir, js: join(dir, "guest", `${output}.js`), pak: join(dir, "guest", `${output}.pak`) };
   built.set(manifest, bundle);
   return bundle;

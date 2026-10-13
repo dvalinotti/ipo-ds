@@ -13,7 +13,7 @@ export function Gel(props: {
   children?: JSX.Element;
 }) {
   return (
-    <View class={props.classes.body} style={props.style} ref={props.ref as never}>
+    <View class={props.classes.body} style={props.style} ref={props.ref}>
       <View class={props.classes.gloss} />
       {props.children}
     </View>
@@ -25,7 +25,7 @@ export function GelLabel(props: { text: string; class: string; shadow?: string }
   return (
     <Show when={props.shadow} fallback={<Text class={props.class}>{props.text}</Text>}>
       <View class="relative">
-        <Text class={props.shadow!}>{props.text}</Text>
+        <Text class={props.shadow}>{props.text}</Text>
         <Text class={props.class}>{props.text}</Text>
       </View>
     </Show>

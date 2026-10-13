@@ -1,6 +1,7 @@
 // The bottom screen in DJ Mode: the record (turning under the motor or the
 // finger, app/dj/scratch.ts) and the side panel with the song, its time,
 // prev / next and the gel back to the deck.
+import { untrack } from "solid-js";
 import { View } from "@pocketjs/framework/components";
 import { formatRemaining, formatTime, needsHours } from "../format.ts";
 import type { Session } from "../session.ts";
@@ -9,7 +10,7 @@ import { DjPanel, Platter } from "../theme/parts/platter.tsx";
 import { createScratchGrab } from "./scratch.ts";
 
 export function DjMode(props: { session: Session; onDeck: () => void }) {
-  const session = props.session;
+  const session = untrack(() => props.session);
   const status = session.status;
   const idle = () => session.player().index < 0 || session.track() === null;
   let platter: unknown = null;

@@ -49,7 +49,7 @@ test("shuffle keeps the current song first; turning it off restores list order a
 
 test("next walks the queue; at the end it stops with repeat off and wraps with repeat all", () => {
   let state = playing([0, 1], 0);
-  let out = run(state, { type: "next" });
+  const out = run(state, { type: "next" });
   expect(out.commands).toEqual([{ type: "open", id: 1 }]);
   state = out.state;
   expect(run(state, { type: "next" }).commands).toEqual([]);

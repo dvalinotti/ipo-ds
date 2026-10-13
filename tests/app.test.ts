@@ -524,7 +524,7 @@ const COVERS: SimLocalTrack[] = [
 
 /** The cover image node: drawn at the art frame's 98×98 interior. */
 const coverNode = (world: BundleWorld) =>
-  flat(world.tree("auxiliary")).find((node) => node.type === "image" && node.rect?.[2] === 98 && node.rect?.[3] === 98);
+  flat(world.tree("auxiliary")).find((node) => node.type === "image" && node.rect?.[2] === 98 && node.rect[3] === 98);
 
 /** The loading spinner: a 32×32 sprite inside the art frame (10..110 on both axes). */
 const spinnerNode = (world: BundleWorld) =>
@@ -532,7 +532,7 @@ const spinnerNode = (world: BundleWorld) =>
     (node) =>
       node.type === "image" &&
       node.rect?.[2] === 32 &&
-      node.rect?.[3] === 32 &&
+      node.rect[3] === 32 &&
       node.rect[0] > 10 &&
       node.rect[0] < 110 &&
       node.rect[1] > 10 &&

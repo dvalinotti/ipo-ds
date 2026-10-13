@@ -79,7 +79,7 @@ function onRecord(deg: number, extra: Partial<StepInput> = {}): StepInput {
     touches: [{ x: Math.round(PLATTER.cx + 60 * Math.sin(rad)), y: Math.round(PLATTER.cy - 60 * Math.cos(rad)) }],
     surface: "auxiliary",
     ...extra,
-  } as StepInput;
+  };
 }
 
 /** One frame per step, turning `degPerFrame` (positive clockwise) from `from`; returns the final angle. */
@@ -131,7 +131,7 @@ test("a clockwise circle scratches forward, a still finger settles on 0 and stop
   const rig = await boot();
   play(rig);
   press(rig, BTN.SELECT);
-  let at = turn(rig, 0, 10, 18); // 10° a frame: 3x forward
+  const at = turn(rig, 0, 10, 18); // 10° a frame: 3x forward
   expect(scratchLog(rig.host)[0]).toBe("scratchBegin()");
   const forward = rates(rig.host);
   expect(forward.length).toBeGreaterThan(5);
@@ -143,7 +143,7 @@ test("a clockwise circle scratches forward, a still finger settles on 0 and stop
   const settled = rates(rig.host).length;
   frames(rig, 10, onRecord(at));
   expect(rates(rig.host)).toHaveLength(settled);
-  at = turn(rig, at, -10, 18);
+  turn(rig, at, -10, 18);
   const backward = rates(rig.host).slice(settled);
   expect(backward.some((rate) => rate < 0)).toBe(true);
   expect(Math.min(...backward)).toBeCloseTo(-3, 0);

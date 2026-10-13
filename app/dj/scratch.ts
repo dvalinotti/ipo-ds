@@ -3,7 +3,7 @@
 // owns it (app/dj/grab.ts): each frame, the angle it turned the record since
 // the last frame becomes the scratch rate and turns the record by as much.
 // Lifting the finger, a track change, or leaving DJ Mode lets go.
-import { createEffect, createMemo, createSignal, on, onCleanup, type Accessor } from "solid-js";
+import { createEffect, createMemo, createSignal, on, onCleanup, untrack, type Accessor } from "solid-js";
 import { createGesture } from "@pocketjs/framework/gesture";
 import { onFrame } from "@pocketjs/framework/lifecycle";
 import type { Session } from "../session.ts";
@@ -34,7 +34,7 @@ export function createScratchGrab(session: Session, platter: () => unknown, idle
   // also end a scratch itself (a seek, such as ZL restarting the song): the grab goes with it, with
   // nothing to send. One effect, so a track change (which ends the host's scratch too) still sends its end.
   const opened = createMemo(() => status().openSerial);
-  let serial = opened();
+  let serial = untrack(opened);
   createEffect(
     on(
       [opened, session.scratching],

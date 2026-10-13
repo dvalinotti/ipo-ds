@@ -93,10 +93,9 @@ export function Explorer(props: {
   // The layout is constant for a mount (the shell remounts the Explorer when it changes sides), so the
   // handlers below are registered once for the layout that owns them: the d-pad, the circle pad and A
   // belong to the wide (top-screen) list; narrow (the touch screen) leaves them to the deck.
-  const wide = props.layout === "wide";
-  const state = props.store.state;
-  const dispatch = props.store.dispatch;
-  const library = props.session.library;
+  const wide = untrack(() => props.layout) === "wide";
+  const { state, dispatch } = untrack(() => props.store);
+  const library = untrack(() => props.session.library);
   const active = () => !props.searching();
 
   // The rows depend on the library, view and query, not on focus: moving focus must not rebuild them.
@@ -220,7 +219,7 @@ export function Explorer(props: {
   // so a frame that crosses no row boundary re-runs nothing downstream) and `shift` the remainder, read
   // by exactly two paint-only translates. The store is written by the computation on `top` (Plan 9).
   const key0 = viewKey(currentView(untrack(state)));
-  let previousTop = props.store.scrollRow.get(key0) ?? 0;
+  let previousTop = untrack(() => props.store.scrollRow.get(key0)) ?? 0;
   let scroller: Scroller | null = null;
   /** A reveal that changed the view: the view-change effect centres the row after the batch (see reveal). */
   let pendingReveal = false;
@@ -309,7 +308,9 @@ export function Explorer(props: {
   const top = wide
     ? settled(() => (previousTop = nearestTop(previousTop, focus(), page(), count())))
     : settled(() => Math.floor(pos() / ROW_PX));
-  const shift = wide ? () => 0 : createMemo(() => pos() - top() * ROW_PX);
+  // Only the narrow Explorer has a sub-row remainder (and a scroller), so only it creates the memo.
+  const narrowShift = () => createMemo(() => pos() - top() * ROW_PX);
+  const shift = wide ? () => 0 : narrowShift();
   const thumb = createMemo(() => thumbFor(wide ? top() * ROW_PX : pos(), count() * ROW_PX, bodyPx()));
   // Written as it changes, not on cleanup: on a swap the new Explorer can mount before the old one is disposed.
   if (wide) {

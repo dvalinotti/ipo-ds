@@ -45,7 +45,7 @@ test("every file that disagrees with the tag, or has no version, is reported", (
 
 test("package.json and pocket.json declare the same version", () => {
   const [first, ...rest] = RELEASE_VERSION_FILES.map(
-    (path) => JSON.parse(readFileSync(resolve(ROOT, path), "utf8")).version,
+    (path) => (JSON.parse(readFileSync(resolve(ROOT, path), "utf8")) as { version: unknown }).version,
   );
   for (const version of rest) expect(version).toBe(first);
 });

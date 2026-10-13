@@ -286,7 +286,7 @@ test("loading: while a cover decodes, the art frame shows the spinner centred on
   };
   walk(world.tree("auxiliary"));
   const spinner = all.find(
-    (node) => node.type === "image" && node.rect?.[2] === 32 && node.rect?.[3] === 32 && node.rect[0] < 110,
+    (node) => node.type === "image" && node.rect?.[2] === 32 && node.rect[3] === 32 && node.rect[0] < 110,
   );
   expect(spinner?.rect).toEqual([44, 44, 32, 32]);
   expect(pathsTo(world, "auxiliary", "Di")).toHaveLength(0); // no placeholder initials

@@ -1,6 +1,6 @@
 // The top screen's toolbar: window lights, the iTunes status LCD and the
 // Songs / Artists / Albums segmented tabs with their L / R hints.
-import { For, Show } from "solid-js";
+import { For, Show, untrack } from "solid-js";
 import { Text, View } from "@pocketjs/framework/components";
 import { AQUA } from "../aqua.ts";
 import { TAB_ORDER, type Layout, type Tab, type Theme } from "../theme.ts";
@@ -32,7 +32,7 @@ export function LcdStatus(props: {
   const t = () => props.theme ?? AQUA;
   const layout = () => props.layout ?? "wide";
   return (
-    <View class={t().lcdStatus(layout())} ref={tapTarget(props.onPress) as never}>
+    <View class={t().lcdStatus(layout())} ref={tapTarget(props.onPress)}>
       <Text class={t().lcdTitle}>{props.title}</Text>
       <Marquee text={props.line} class={t().lcdLine} slot={FONT_12} width={LCD_TEXT_PX[layout()]} />
     </View>
@@ -42,12 +42,10 @@ export function LcdStatus(props: {
 /** One tab gel; with `onSelect` (the narrow Explorer) it is a tap target. */
 function TabGel(props: { tab: Tab; active: boolean; layout: Layout; onSelect?: (tab: Tab) => void; theme?: Theme }) {
   const t = () => props.theme ?? AQUA;
-  const onSelect = props.onSelect;
+  // Whether the tab is a tap target is decided once, at mount.
+  const onSelect = untrack(() => props.onSelect);
   return (
-    <Gel
-      classes={t().tab(props.active, props.layout)}
-      ref={tapTarget(onSelect && (() => onSelect(props.tab))) as never}
-    >
+    <Gel classes={t().tab(props.active, props.layout)} ref={tapTarget(onSelect && (() => onSelect(props.tab)))}>
       <GelLabel
         text={props.tab}
         class={t().tabText(props.active)}

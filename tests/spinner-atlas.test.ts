@@ -10,7 +10,7 @@ test("the committed spinner atlas is the generator's output (run bun scripts/spi
 });
 
 test("sprites.json declares the atlas as a 4x4 grid of 16 frames, about one turn a second", () => {
-  const sprites = JSON.parse(readFileSync(join(ROOT, "app/sprites.json"), "utf8"));
+  const sprites = JSON.parse(readFileSync(join(ROOT, "app/sprites.json"), "utf8")) as Record<string, unknown>;
   // The core needs power-of-two atlas sides that divide into the frame grid, so 16 frames, not 12.
   expect(sprites["theme/icons/spinner-atlas.svg"]).toEqual({ cols: 4, rows: 4, frames: 16, step: 4 });
   expect(SPINNER.frames * SPINNER.step).toBe(64);

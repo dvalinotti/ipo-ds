@@ -2,7 +2,7 @@
 // transport buttons (shuffle, previous, play/pause, next, repeat, and the DJ
 // Mode gel). Each transport button owns its touch recognizer and calls
 // `onPress`; the screen (app/now-playing) wires the seek drag and the actions.
-import { children, Show } from "solid-js";
+import { children, Show, untrack } from "solid-js";
 import { Image, Sprite, Text, View } from "@pocketjs/framework/components";
 import { createGesture } from "@pocketjs/framework/gesture";
 import { ready, ResourceImage } from "@pocketjs/framework/resource";
@@ -144,7 +144,7 @@ export function SeekCapsule(props: {
   const layout = () => props.layout ?? "narrow";
   const x = () => trackOffset(props.fraction, seekTrackPx(props.hours ?? false, layout()));
   return (
-    <View class={t().seekCapsule(layout())} ref={props.ref as never}>
+    <View class={t().seekCapsule(layout())} ref={props.ref}>
       <Text class={props.hours ? t().seekTimeWide : t().seekTime}>{props.elapsed}</Text>
       <View class={props.hours ? t().seekTrackWide(layout()) : t().seekTrack(layout())}>
         <Show when={props.enabled}>
@@ -179,7 +179,8 @@ export function TransportButton(props: {
   // screen needs its own recognizer over this button. On the top screen (touch false) there is no
   // digitizer: no recognizer.
   let node: unknown = null;
-  if (props.touch ?? true) {
+  // Whether the button has a touch recognizer is decided once, at mount.
+  if (untrack(() => props.touch) ?? true) {
     createGesture({
       surface: "auxiliary",
       region: { node: () => node as never },
@@ -197,15 +198,7 @@ export function TransportButton(props: {
       }
       ref={(n: unknown) => (node = n)}
     >
-      <Show
-        when={big()}
-        fallback={
-          <Image
-            class="w-[16] h-[16]"
-            src={t().icon(props.kind as "shuffle" | "repeat" | "prev" | "next" | "dj", ink())}
-          />
-        }
-      >
+      <Show when={big()} fallback={<Image class="w-[16] h-[16]" src={t().icon(props.kind, ink())} />}>
         <Image
           class="w-[32] h-[32]"
           src={t().iconLarge(props.kind as "play" | "pause", ink() === "white" ? "white" : "ink")}

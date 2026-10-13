@@ -3,7 +3,7 @@
 // LCD's status row shows a playback error, or diagnostics while L+R are held.
 // The transport row's last gel opens DJ Mode. On the top screen (layout "wide", swapped) the deck is
 // 400 px wide, has no touch, and owns A (play / pause) and left / right (seek).
-import { createEffect, createMemo, createSignal, on, Show } from "solid-js";
+import { createEffect, createMemo, createSignal, on, Show, untrack } from "solid-js";
 import { getOps } from "@pocketjs/framework";
 import { View } from "@pocketjs/framework/components";
 import { createGesture } from "@pocketjs/framework/gesture";
@@ -30,11 +30,14 @@ import { IdlePanel } from "../theme/parts/panels.tsx";
 import type { Layout } from "../theme/theme.ts";
 
 export function NowPlaying(props: { layout: Layout; session: Session; dj?: boolean; onDj?: () => void }) {
-  const wide = props.layout === "wide";
-  const status = props.session.status;
-  const player = props.session.player;
-  const dispatch = props.session.dispatch;
-  const track = props.session.track;
+  // The layout is constant for a mount (the shell remounts Now Playing when it changes sides) and the
+  // session lives as long as the app, so both are read once.
+  const wide = untrack(() => props.layout) === "wide";
+  const session = untrack(() => props.session);
+  const status = session.status;
+  const player = session.player;
+  const dispatch = session.dispatch;
+  const track = session.track;
   const idle = () => player().index < 0 || track() === null;
   const duration = () => status().durationMs;
   const hours = () => needsHours(duration());

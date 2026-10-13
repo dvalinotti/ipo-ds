@@ -3,7 +3,17 @@
 // size, so scrolling one row rebinds one slot (its texts and its top) and
 // moves the list by a transform; no row is created or destroyed while the
 // list scrolls. The Explorer owns focus and the scroll position (`top`).
-import { createComputed, createMemo, createSignal, Index, Show, type Accessor, type JSX, type Setter } from "solid-js";
+import {
+  createComputed,
+  createMemo,
+  createSignal,
+  Index,
+  Show,
+  untrack,
+  type Accessor,
+  type JSX,
+  type Setter,
+} from "solid-js";
 import { View } from "@pocketjs/framework/components";
 import { slotIndex } from "./window.ts";
 
@@ -42,7 +52,7 @@ export function RecycledList(props: {
     >
       <Index each={slots()}>
         {(slot) => {
-          const index = slotSignal(slot())[0];
+          const index = slotSignal(untrack(slot))[0];
           return (
             <Show when={index() < props.count}>
               <View

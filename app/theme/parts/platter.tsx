@@ -25,7 +25,7 @@ export function Platter(props: {
 }) {
   const t = () => props.theme ?? AQUA;
   return (
-    <View class={t().platter} ref={props.ref as never}>
+    <View class={t().platter} ref={props.ref}>
       <View class={t().platterDisc} style={{ rotate: props.angle }}>
         <View class={t().platterLabel}>
           <Show when={props.cover > 0} fallback={<Image class="w-[88] h-[88]" src={t().labelArt} />}>

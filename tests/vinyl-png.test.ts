@@ -55,6 +55,6 @@ test("the committed PNGs are the generator's output", () => {
 });
 
 test("both are sampled linear, for rotation", () => {
-  const images = JSON.parse(readFileSync(join(ROOT, "app/images.json"), "utf8"));
+  const images: unknown = JSON.parse(readFileSync(join(ROOT, "app/images.json"), "utf8"));
   expect(images).toEqual({ "theme/vinyl.png": { linear: true }, "theme/label.png": { linear: true } });
 });
