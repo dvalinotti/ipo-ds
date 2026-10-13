@@ -24,7 +24,9 @@ The root `bun.lock` holds the lint and format tools; `typescript` there matches 
 ## Commands
 
 ```sh
-bun run check                                          # tsc --noEmit
+bun run check                                          # tsc with tsconfig.json, then tsconfig.lint.json (noUncheckedIndexedAccess)
+bun run lint                                           # ESLint; `bun run lint:fix` applies the fixable findings
+bun run format                                         # Prettier; `bun run format:check` only reports
 bun run test                                           # every test under tests/
 bun test --conditions=browser tests/player.test.ts     # one file
 bun test --conditions=browser tests/app.test.ts -t "search"   # tests whose name matches
@@ -68,12 +70,14 @@ bun run gallery                                        # theme states as PNGs in
 
 ## Code standards
 
+ESLint and Prettier enforce the mechanical rules; run `bun run format` and `bun run lint` before committing.
+
 ### PocketJS guest code (`app/`)
 
 - `app/` runs in the 3DS guest on QuickJS: no DOM, Node or Bun APIs (those stay in `scripts/` and `tests/`) and no event loop. `setTimeout` runs on the next microtask whatever its delay, `clearTimeout` does nothing, and there is no `performance`. Time in frames: `onFrame`, or `virtualFrame()` / `after()` from `@pocketjs/framework/clock`.
 - The PocketJS Solid build rejects `createResource`, `useTransition` and `startTransition`.
 - Reach the framework only through `@pocketjs/framework/*`. An `app/` import of a `runtime/` path pulls compiler or tool code into the bundle.
-- A class literal compiles only if every token is a supported utility. Otherwise the whole literal is dropped, and the 3DS build prints `class "…" does not compile` as a warning and still succeeds; treat that warning as a failure. Choose between complete literals with a ternary: `classList` and template literals in `class` fail the build, and a concatenated string matches no compiled style.
+- A class literal compiles only if every token is a supported utility. Otherwise the whole literal is dropped, and the 3DS build prints `class "…" does not compile` as a warning and still succeeds; treat that warning as a failure (`tests/build.test.ts` fails on it for both manifests). Choose between complete literals with a ternary: `classList` and template literals in `class` fail the build, and a concatenated string matches no compiled style.
 - `style={{ … }}` keys are PocketJS prop names (`translateX`, `insetT`, `rotate`) with numeric values, not CSS. An unknown key throws, and dropping a key does not reset the prop: write its resting value.
 - Prefer motion the core runs (`<Sprite>` atlases such as the cover spinner, `animate()`) to per-frame signal writes. A value JS must change every frame is written only when it changes (`theme/parts/marquee.tsx`, `dj/scratch.ts`). Changes on a frame path keep `docs/perf.md`'s budgets (14 ms of CPU per frame on New 3DS, 30 ms on Old) and the op-count test "a focus move touches only the selection" in `tests/app.test.ts`.
 

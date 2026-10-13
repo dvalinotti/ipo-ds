@@ -36,6 +36,8 @@ on a console.
 
 ```sh
 bun run check          # TypeScript
+bun run lint           # ESLint
+bun run format         # Prettier
 bun run test           # unit and sim tests
 bun run gallery        # dist/gallery/<n>-<state>-{top,bottom}@2x.png
 bun run test-library   # dist/test-music/: 324 tagged MP3s for a device or Azahar
@@ -57,9 +59,9 @@ git add runtime
 
 ## Release
 
-`.github/workflows/build.yml` typechecks, tests and builds the `.3dsx` and
-`.cia` for every pull request and push to `main`, and uploads them as the
-`ipo-ds-3ds` workflow artifact. To release:
+`.github/workflows/build.yml` typechecks, lints, checks the format, tests and
+builds the `.3dsx` and `.cia` for every pull request and push to `main`, and
+uploads them as the `ipo-ds-3ds` workflow artifact. To release:
 
 1. Set the same version in `package.json` and `pocket.json` and merge it.
 2. Tag the merge commit and push the tag:
