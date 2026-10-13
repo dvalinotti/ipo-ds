@@ -29,3 +29,27 @@ test("--manifest builds the bundle that manifest names and keeps it out of dist/
     rmSync(dir, { recursive: true, force: true });
   }
 }, 120_000);
+
+test("every class literal compiles, in the app and in the gallery (the 3DS build only warns)", () => {
+  for (const manifest of ["pocket.json", "gallery.pocket.json"]) {
+    const dir = mkdtempSync(join(tmpdir(), "ipo-ds-classes-"));
+    try {
+      const run = Bun.spawnSync(
+        [
+          process.execPath,
+          "scripts/build.ts",
+          "--pocket-only",
+          `--manifest=${manifest}`,
+          `--outdir=${join(dir, "guest")}`,
+          `--package-outdir=${dir}`,
+        ],
+        { cwd: ROOT, stdout: "pipe", stderr: "pipe" },
+      );
+      const output = `${run.stdout.toString()}${run.stderr.toString()}`;
+      expect(run.exitCode, output).toBe(0);
+      expect(output.split("\n").filter((line) => line.includes("does not compile"))).toEqual([]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }
+}, 240_000);
