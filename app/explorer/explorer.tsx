@@ -15,7 +15,7 @@ import type { Session } from "../session.ts";
 import { AQUA } from "../theme/aqua.ts";
 import { ColumnHeader, ListRow, Scrollbar } from "../theme/parts/list.tsx";
 import { StatePanel } from "../theme/parts/panels.tsx";
-import { Breadcrumb, FooterGels, FooterLegend, SearchStrip, type TouchLegendItem } from "../theme/parts/strips.tsx";
+import { Breadcrumb, FooterGels, FooterLegend, SearchStrip, type TouchAction, type TouchLegendItem } from "../theme/parts/strips.tsx";
 import { RecycledList } from "./recycled-list.tsx";
 import { bodyTopPx, centredOffset, clampVelocity, NARROW_W, offsetForThumb, pageOffset, rowAt, snapToRow, thumbFor, TRACK_HIT_PX } from "./scroll.ts";
 import { nearestTop } from "./window.ts";
@@ -125,11 +125,8 @@ export function Explorer(props: { layout: Layout; session: Session; store: Explo
       if (event === "tabPrev") dispatch({ type: "tab", delta: -1 });
       else if (event === "tabNext") dispatch({ type: "tab", delta: 1 });
       else if (event === "prev" || event === "next") props.session.dispatch({ type: event });
-      else if (wide) {
-        const lib = library();
-        const id = playingId();
-        if (lib && id >= 0) dispatch({ type: "reveal", id, library: lib });
-      } else props.session.dispatch({ type: "cycleRepeat" }); // narrow: Y is repeat (spec §6.2)
+      else if (wide) reveal();
+      else props.session.dispatch({ type: "cycleRepeat" }); // narrow: Y is repeat (spec §6.2)
     }
   });
   if (wide) onButtonPress(BTN.CIRCLE, () => {
@@ -165,6 +162,29 @@ export function Explorer(props: { layout: Layout; session: Session; store: Explo
   let scroller: Scroller | null = null;
   /** A reveal that changed the view: the view-change effect centres the row after the batch (see reveal). */
   let pendingReveal = false;
+
+  /**
+   * Jump to the playing song: the Songs tab, focus on it; narrow also tweens the window to centre it.
+   * Handlers run inside the frame's batch, where the settled values and effects are stale until it ends:
+   * in the same view the tween starts now; when the reveal changes the view or clears the query, the
+   * view-change effect centres the row after the batch, instead of restoring that view's remembered row.
+   */
+  const reveal = () => {
+    const lib = library();
+    const id = playingId();
+    if (!lib || id < 0) return;
+    const before = rowsKey(state());
+    dispatch({ type: "reveal", id, library: lib });
+    if (!scroller) return;
+    if (rowsKey(state()) === before) scroller.scrollTo(centredOffset(focusOf(state()), page(), ROW_PX, maxOffset()));
+    else pendingReveal = true;
+  };
+
+  const onFooter = (action: TouchAction) => {
+    if (action === "search") props.openSearch();
+    else if (action === "back") dispatch({ type: "back" });
+    else props.session.rescan();
+  };
   /** Rest on a row: a fling, or a tween a finger stopped, can leave the window mid-row. */
   const alignToRow = () => {
     const s = scroller!;
@@ -314,13 +334,13 @@ export function Explorer(props: { layout: Layout; session: Session; store: Explo
 
   return (
     <View class={AQUA.topScreen}>
-      <Toolbar title="iPoDS" line={lcdLine(props.session.available, props.session.scanning(), library())} active={tab()} layout={props.layout} />
+      <Toolbar title="iPoDS" line={lcdLine(props.session.available, props.session.scanning(), library())} active={tab()} layout={props.layout} onSelect={wide ? undefined : (tab) => dispatch({ type: "setTab", tab })} onPress={wide ? undefined : reveal} />
       <Show when={panel()} fallback={
         <>
           <Show when={query()}>
             <SearchStrip query={query()} count={rows().length} />
           </Show>
-          <Show when={crumb()}>{(c) => <Breadcrumb root={c().root} leaf={c().leaf} detail={c().detail} />}</Show>
+          <Show when={crumb()}>{(c) => <Breadcrumb root={c().root} leaf={c().leaf} detail={c().detail} onBack={wide ? undefined : () => dispatch({ type: "back" })} />}</Show>
           <ColumnHeader layout={props.layout} left={header().left} right={header().right} lead={header().lead} count={header().count} />
           <View class={AQUA.listBody}>
             <Show when={rows().length > 0} fallback={<StatePanel title="No matches" lines={[`Nothing here matches "${query()}"`]} />}>
@@ -368,7 +388,7 @@ export function Explorer(props: { layout: Layout; session: Session; store: Explo
       }>
         {(p) => <StatePanel title={p().title} lines={p().lines} />}
       </Show>
-      {wide ? <FooterLegend items={legend!()} /> : <FooterGels items={gels!()} />}
+      {wide ? <FooterLegend items={legend!()} /> : <FooterGels items={gels!()} onPress={onFooter} />}
     </View>
   );
 }

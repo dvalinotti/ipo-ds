@@ -4,8 +4,9 @@
 import { afterAll, expect, test } from "bun:test";
 import { BTN } from "@pocketjs/framework/input";
 import { LIBRARY } from "./fixtures/library.ts";
-import { disposeGuest, screenText } from "./support/app-world.ts";
-import { aligned, BODY_TOP, bootSwapped, drag, frames, holdSelect, listText, opens, press, rowTextAt, rowTextSpanning, rowYs, ROW, scans, selectedRow, tap } from "./support/rig.ts";
+import { bodyTopPx } from "../app/explorer/scroll.ts";
+import { disposeGuest, pathsTo, pathTo, screenText } from "./support/app-world.ts";
+import { aligned, BODY_PX, BODY_TOP, bootSwapped, drag, flat, frames, holdSelect, listText, opens, press, rowTextAt, rowTextSpanning, rowYs, ROW, scans, SELECTED_ROW, selectedRow, tap, type Rig } from "./support/rig.ts";
 
 afterAll(disposeGuest);
 
@@ -129,4 +130,116 @@ test("a tap on the track below the thumb pages down; above it pages up; a short 
   const short = await bootSwapped([LIBRARY[0]!, LIBRARY[1]!, LIBRARY[2]!]);
   tap(short, 313, BODY_TOP + ROW + 10); // no thumb: the right edge belongs to the rows // row 1 of three by title: Digital Love, handle 2
   expect(opens(short.host)).toEqual(["open(2)"]);
+}, 120_000);
+
+/** Taps the centre of the text node reading `text` on the bottom screen (inside its gel); `last` takes the last match in tree order. */
+function tapText(rig: Rig, text: string, last = false): void {
+  const paths = pathsTo(rig.world, "auxiliary", text);
+  const [x, y, w, h] = (last ? paths.at(-1)! : paths[0]!).at(-2)!.rect!;
+  tap(rig, x + w / 2, y + h / 2);
+}
+
+/** Taps a key of the open keyboard by its label. */
+function typeKeys(rig: Rig, keys: string): void {
+  for (const key of keys) tapText(rig, key);
+}
+
+test("tapping a tab switches to it; L / R still step", async () => {
+  const rig = await bootSwapped();
+  tapText(rig, "Albums");
+  expect(screenText(rig.world, "auxiliary")).toContain("Album");
+  expect(listText(rig.world)).toContain("Discovery");
+  tapText(rig, "Artists");
+  expect(listText(rig.world)).toContain("Daft Punk");
+  expect(listText(rig.world)).not.toContain("Discovery");
+  press(rig, BTN.LTRIGGER);
+  expect(screenText(rig.world, "auxiliary")).toContain("Song Name");
+}, 120_000);
+
+test("the Search gel opens the keyboard with the Explorer pulled up; START closes it and the swap returns", async () => {
+  const rig = await bootSwapped();
+  tapText(rig, "Search");
+  expect(screenText(rig.world, "primary")).toContain("Song Name");
+  expect(screenText(rig.world, "primary")).not.toContain("Nothing playing");
+  typeKeys(rig, "gor"); // Gorillaz: the search covers artists too, so "da" would keep Daft Punk's songs
+  expect(screenText(rig.world, "primary")).toContain("Search:gor");
+  press(rig, BTN.START);
+  expect(screenText(rig.world, "primary")).toContain("Nothing playing");
+  const bottom = screenText(rig.world, "auxiliary");
+  for (const part of ["Search:gor", "Edit search", "Clear"]) expect(bottom).toContain(part);
+  const matches = listText(rig.world, bodyTopPx(1), BODY_PX - ROW); // one strip: the body starts at 72
+  expect(matches).toContain("DARE");
+  expect(matches).not.toContain("Aerodynamic");
+  tapText(rig, "Clear");
+  expect(listText(rig.world)).toContain("Aerodynamic");
+}, 120_000);
+
+test("a search typed while scrolled shows the matches from the top, under the search strip", async () => {
+  const rig = await bootSwapped();
+  drag(rig, 100, 200, -6, 10);
+  frames(rig, 150);
+  expect(listText(rig.world)).not.toContain("Aerodynamic");
+  tapText(rig, "Search");
+  typeKeys(rig, "dig");
+  press(rig, BTN.START);
+  expect(rig.world.failure).toBeNull();
+  const ys = rowYs(rig.world, bodyTopPx(1), BODY_PX - ROW);
+  expect(Math.min(...ys)).toBe(bodyTopPx(1));
+  expect(aligned(ys, bodyTopPx(1))).toBe(true);
+  expect(listText(rig.world, bodyTopPx(1), BODY_PX - ROW)).toContain("Digital Love");
+}, 120_000);
+
+test("inside an album a tap under the breadcrumb plays; the breadcrumb and the Back gel return with the album highlighted", async () => {
+  const rig = await bootSwapped();
+  tapText(rig, "Albums");
+  tap(rig, 100, BODY_TOP + 2 * ROW + 10); // the third album
+  expect(screenText(rig.world, "auxiliary")).toContain("Albums›");
+  tap(rig, 100, bodyTopPx(1) + 10); // the album's first song, under the crumb strip
+  expect(opens(rig.host)).toHaveLength(1);
+  const crumb = pathTo(rig.world, "auxiliary", "›").at(-2)!.rect!;
+  tap(rig, 200, crumb[1] + crumb[3] / 2); // anywhere on the strip
+  expect(screenText(rig.world, "auxiliary")).not.toContain("Albums›");
+  const highlight = flat(rig.world.tree("auxiliary")).find((n) => n.type === "view" && n.bgColor >>> 0 === SELECTED_ROW)!.rect!;
+  expect(highlight[1]).toBe(BODY_TOP + 2 * ROW); // the tapped album is highlighted where it was
+  tap(rig, 100, BODY_TOP + 2 * ROW + 10);
+  tapText(rig, "Albums", true); // the footer's Back gel reads "Albums" in a drill-down; the tab is the first match
+  expect(screenText(rig.world, "auxiliary")).not.toContain("Albums›");
+}, 120_000);
+
+test("the LCD tap reveals the playing song and scrolls it into view", async () => {
+  const rig = await bootSwapped();
+  tap(rig, 100, BODY_TOP + 10); // Aerodynamic plays
+  drag(rig, 100, 200, -8, 10);
+  frames(rig, 150);
+  expect(listText(rig.world)).not.toContain("Aerodynamic");
+  tapText(rig, "iPoDS");
+  frames(rig, 40);
+  expect(rowTextAt(rig.world, BODY_TOP)).toContain("Aerodynamic");
+  expect(listText(rig.world)).toContain("♪");
+  expect(selectedRow(rig.world, "auxiliary")).toContain("Aerodynamic");
+  expect(aligned(rowYs(rig.world))).toBe(true);
+}, 120_000);
+
+test("the LCD tap reveals the playing song from another tab, centred in the Songs list", async () => {
+  const rig = await bootSwapped();
+  tap(rig, 100, BODY_TOP + 7 * ROW + 10); // Digital Love, row 7
+  tapText(rig, "Albums");
+  expect(listText(rig.world)).not.toContain("Digital Love");
+  tapText(rig, "iPoDS");
+  frames(rig, 40);
+  expect(screenText(rig.world, "auxiliary")).toContain("Song Name");
+  expect(selectedRow(rig.world, "auxiliary")).toContain("Digital Love");
+  expect(aligned(rowYs(rig.world))).toBe(true);
+  expect(rowTextAt(rig.world, BODY_TOP + 4 * ROW)).toContain("Digital Love"); // centred: row 7 in a window from row 3
+}, 120_000);
+
+test("over the empty panel only the Scan again gel does anything", async () => {
+  const rig = await bootSwapped([]);
+  expect(screenText(rig.world, "auxiliary")).toContain("No music found");
+  drag(rig, 100, 150, -8, 6);
+  frames(rig, 10);
+  tap(rig, 100, 120);
+  expect(scans(rig.host)).toHaveLength(1);
+  tapText(rig, "Scan again");
+  expect(scans(rig.host)).toHaveLength(2);
 }, 120_000);

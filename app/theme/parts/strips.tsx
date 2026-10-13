@@ -4,7 +4,7 @@ import { For } from "solid-js";
 import { Text, View } from "@pocketjs/framework/components";
 import { AQUA } from "../aqua.ts";
 import type { Theme } from "../theme.ts";
-import { Gel, GelLabel } from "./gel.tsx";
+import { Gel, GelLabel, tapTarget } from "./gel.tsx";
 
 export function SearchStrip(props: { query: string; count: number; theme?: Theme }) {
   const t = () => props.theme ?? AQUA;
@@ -32,11 +32,11 @@ export function KeyboardField(props: { text: string; theme?: Theme }) {
   );
 }
 
-export function Breadcrumb(props: { root: string; leaf: string; detail: string; theme?: Theme }) {
+export function Breadcrumb(props: { root: string; leaf: string; detail: string; onBack?: () => void; theme?: Theme }) {
   const t = () => props.theme ?? AQUA;
   return (
     <>
-      <View class={t().crumb}>
+      <View class={t().crumb} ref={tapTarget(props.onBack) as never}>
         <Text class={t().crumbLink}>{props.root}</Text>
         <Text class={t().crumbText}>›</Text>
         <View class={t().crumbLeaf}>
@@ -90,20 +90,25 @@ export interface TouchLegendItem {
   label: string;
 }
 
-/** The narrow (touch) footer: a gel per action. Plan 10 gives each a tap recognizer. */
-export function FooterGels(props: { items: readonly TouchLegendItem[]; theme?: Theme }) {
+/** One footer gel; with `onPress` it is a tap target. */
+function FooterGel(props: { item: TouchLegendItem; onPress?: (action: TouchAction) => void; theme?: Theme }) {
+  const t = () => props.theme ?? AQUA;
+  const onPress = props.onPress;
+  return (
+    <Gel classes={t().footerGel} ref={tapTarget(onPress && (() => onPress(props.item.action))) as never}>
+      <GelLabel text={props.item.label} class={t().footerText} />
+    </Gel>
+  );
+}
+
+/** The narrow (touch) footer: a gel per action. */
+export function FooterGels(props: { items: readonly TouchLegendItem[]; onPress?: (action: TouchAction) => void; theme?: Theme }) {
   const t = () => props.theme ?? AQUA;
   return (
     <>
       <View class={t().footerRule} />
       <View class={t().footer}>
-        <For each={props.items}>
-          {(item) => (
-            <Gel classes={t().footerGel}>
-              <GelLabel text={item.label} class={t().footerText} />
-            </Gel>
-          )}
-        </For>
+        <For each={props.items}>{(item) => <FooterGel item={item} onPress={props.onPress} theme={props.theme} />}</For>
       </View>
     </>
   );
