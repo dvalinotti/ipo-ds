@@ -308,9 +308,8 @@ export function Explorer(props: {
   const top = wide
     ? settled(() => (previousTop = nearestTop(previousTop, focus(), page(), count())))
     : settled(() => Math.floor(pos() / ROW_PX));
-  // Only the narrow Explorer has a sub-row remainder (and a scroller), so only it creates the memo.
-  const narrowShift = () => createMemo(() => pos() - top() * ROW_PX);
-  const shift = wide ? () => 0 : narrowShift();
+  // Only the narrow Explorer has a sub-row remainder; wide never reads the scroller.
+  const shift = createMemo(() => (wide ? 0 : pos() - top() * ROW_PX));
   const thumb = createMemo(() => thumbFor(wide ? top() * ROW_PX : pos(), count() * ROW_PX, bodyPx()));
   // Written as it changes, not on cleanup: on a swap the new Explorer can mount before the old one is disposed.
   if (wide) {
