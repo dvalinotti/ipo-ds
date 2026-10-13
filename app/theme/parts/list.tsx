@@ -92,7 +92,8 @@ export function Scrollbar(props: { thumbTop: number; thumbHeight: number; theme?
   const t = () => props.theme ?? AQUA;
   return (
     <View class={t().scrollTrack}>
-      <Gel classes={t().scrollThumb} style={{ insetT: props.thumbTop, height: props.thumbHeight }} />
+      {/* translate, not inset: the thumb moves every frame under a finger and must not relayout */}
+      <Gel classes={t().scrollThumb} style={{ translateY: props.thumbTop, height: props.thumbHeight }} />
     </View>
   );
 }

@@ -14,6 +14,9 @@ export function RecycledList(props: {
   rows: number;
   /** Index of the first row in the window. */
   top: number;
+  /** Sub-row px the window is scrolled past `top` (touch scrolling); 0 keeps the window on a row. The pool
+   * already holds one row past the window, so a shifted window's partial row at the bottom has a slot. */
+  shift?: number;
   /** Renders slot `slot` (constant), which shows row `index()`; with the even pool, `index()`
    * always has the parity of `slot`. */
   slot: (index: Accessor<number>, slot: number) => JSX.Element;
@@ -32,7 +35,7 @@ export function RecycledList(props: {
     for (let k = 0; k < n; k++) slotSignal(k)[1](slotIndex(k, top, n));
   });
   return (
-    <View class="absolute left-[0] top-[0] w-full" style={{ translateY: -props.top * props.rowHeight }}>
+    <View class="absolute left-[0] top-[0] w-full" style={{ translateY: -(props.top * props.rowHeight + (props.shift ?? 0)) }}>
       <Index each={slots()}>
         {(slot) => {
           const index = slotSignal(slot())[0];

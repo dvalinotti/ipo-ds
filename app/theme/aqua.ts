@@ -65,7 +65,7 @@ const BADGE_GREY: GelClasses = {
   gloss: "absolute left-[3] top-[3] w-[8] h-[2] rounded-[1] bg-gradient-to-b from-[#fdfdfd] via-[#ececec] to-[#d6d6d6]",
 };
 const SCROLL_THUMB: GelClasses = {
-  body: "absolute left-[1] w-[11] rounded-[6] bg-gradient-to-r from-[#4a80da] via-[#4a80da] to-[#c8daf6] border border-[#2b4f8c]",
+  body: "absolute left-[1] top-[0] w-[11] rounded-[6] bg-gradient-to-r from-[#4a80da] via-[#4a80da] to-[#c8daf6] border border-[#2b4f8c]",
   gloss: "absolute left-[2] top-[3] bottom-[3] w-[4] rounded-[2] bg-gradient-to-r from-[#f5f8fe] via-[#d3e1f8] to-[#93b4eb]",
 };
 const PROGRESS_FILL: GelClasses = {
