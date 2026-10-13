@@ -1,6 +1,8 @@
-// The top screen: Toolbar, search strip / breadcrumb, column header, the
-// library list (app-owned focus over a pool of recycled rows) and the footer legend.
-// Model logic lives in model.ts; this file renders it and maps buttons.
+// The Explorer: Toolbar, search strip / breadcrumb, column header, the library list (app-owned
+// focus over a pool of recycled rows) and the footer. Wide (the 400 px top screen) it is driven by
+// the buttons; narrow (the 320 px touch screen, swapped) by a finger: a kinetic scroller, row taps,
+// the scrollbar, the tabs, the footer gels, the breadcrumb and the LCD. Model logic lives in
+// model.ts and the scroll arithmetic in scroll.ts; this file renders them and binds the input.
 import { createComputed, createEffect, createMemo, createSignal, on, Show, untrack, type Accessor } from "solid-js";
 import { View } from "@pocketjs/framework/components";
 import { BTN } from "@pocketjs/framework/input";

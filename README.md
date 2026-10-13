@@ -41,7 +41,11 @@ previous, play/pause, next, repeat, DJ Mode, and a drag-to-seek capsule. In DJ
 Mode the record spins while the song plays; drag it clockwise to play forward
 at your finger's speed, counter-clockwise to play backwards, and hold it still
 for silence. Lifting your finger lets the song play on from there. Swapped, the
-bottom screen is the library. DJ Mode takes the bottom screen in either mode, so
+bottom screen is the library: drag the list to scroll it and flick
+it to fling, drag the scrollbar's thumb or tap its track to page, tap a tab to
+switch, tap a song to play it or an album to open it, and tap the footer's
+Search and Back, the breadcrumb, or the iPoDS LCD to jump to the playing song.
+DJ Mode takes the bottom screen in either mode, so
 while it is open in swapped mode the library and its buttons (B, X, Y, L, R)
 wait until you leave it.
 
