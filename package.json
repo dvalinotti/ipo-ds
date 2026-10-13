@@ -9,7 +9,9 @@
     "perf": "bun scripts/perf.ts",
     "check": "bun runtime/node_modules/typescript/bin/tsc --noEmit",
     "test": "bun test --conditions=browser ./tests",
-    "gallery": "bun scripts/gallery.ts"
+    "gallery": "bun scripts/gallery.ts",
+    "format": "prettier --write \"app/**/*.{ts,tsx}\" \"scripts/**/*.ts\" \"tests/**/*.ts\" \"*.{ts,js}\"",
+    "format:check": "prettier --check \"app/**/*.{ts,tsx}\" \"scripts/**/*.ts\" \"tests/**/*.ts\" \"*.{ts,js}\""
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
