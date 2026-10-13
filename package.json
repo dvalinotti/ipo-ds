@@ -7,7 +7,7 @@
     "3ds": "bun scripts/build.ts",
     "test-library": "bun scripts/make-test-library.ts",
     "perf": "bun scripts/perf.ts",
-    "check": "bun runtime/node_modules/typescript/bin/tsc --noEmit",
+    "check": "bun scripts/check.ts",
     "test": "bun test --conditions=browser ./tests",
     "gallery": "bun scripts/gallery.ts",
     "format": "prettier --write \"app/**/*.{ts,tsx}\" \"scripts/**/*.ts\" \"tests/**/*.ts\" \"*.{ts,js}\"",

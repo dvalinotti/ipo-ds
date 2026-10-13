@@ -3,6 +3,8 @@
 // Hosts without the op, a window not yet complete, or a garbled reply show F:-.
 
 const usable = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value) && value > 0;
+const usablePair = (value: unknown): value is [number, number] =>
+  Array.isArray(value) && value.length === 2 && value.every(usable);
 
 export function frameNote(raw: string | undefined): string {
   if (!raw) return "F:-";
@@ -12,6 +14,6 @@ export function frameNote(raw: string | undefined): string {
   } catch {
     return "F:-";
   }
-  if (!Array.isArray(frame) || frame.length !== 2 || !frame.every(usable)) return "F:-";
+  if (!usablePair(frame)) return "F:-";
   return `F:${Math.round(frame[0] / 1000)}/${Math.round(frame[1] / 1000)}`;
 }
