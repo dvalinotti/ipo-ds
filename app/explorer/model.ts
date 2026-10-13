@@ -3,7 +3,7 @@
 // into what the top screen shows. No Solid, no host: unit-tested directly.
 import { formatTime } from "../format.ts";
 import { rows, type Library, type Row, type View } from "../library/library.ts";
-import type { LegendItem } from "../theme/parts/strips.tsx";
+import type { LegendItem, TouchLegendItem } from "../theme/parts/strips.tsx";
 import { TAB_ORDER, type Tab } from "../theme/theme.ts";
 
 export interface ExplorerState {
@@ -17,6 +17,8 @@ export interface ExplorerState {
 
 export type ExplorerAction =
   | { type: "tab"; delta: 1 | -1 }
+  /** A tab tap (narrow layout). */
+  | { type: "setTab"; tab: Tab }
   /** Drill into an artist or album row. Song rows play instead (the screen handles them). */
   | { type: "open"; row: Row }
   | { type: "back" }
@@ -58,6 +60,8 @@ export function reduceExplorer(state: ExplorerState, action: ExplorerAction): Ex
       const next = TAB_ORDER.indexOf(state.tab) + action.delta;
       return next < 0 || next >= TAB_ORDER.length ? state : { ...state, tab: TAB_ORDER[next]! };
     }
+    case "setTab":
+      return action.tab === state.tab ? state : { ...state, tab: action.tab };
     case "open": {
       if (action.row.kind === "song") return state;
       const view: View = action.row.kind === "artist" ? { kind: "artist", key: action.row.key } : { kind: "album", key: action.row.key };
@@ -202,13 +206,25 @@ export function legendOf(state: ExplorerState, panel: ListPanel | null): LegendI
   if (panel === "empty") return [{ key: "X", label: "Scan again", primary: true }];
   const view = currentView(state);
   const opens = view.kind === "artists" || view.kind === "albums";
-  const back = state.drill[state.tab] ? (state.tab === "Artists" ? "Artists" : "Albums") : state.query ? "Clear" : "Back";
+  const back = backLabel(state);
   return [
     { key: "A", label: opens ? "Open" : "Play", primary: true },
     { key: "X", label: state.query ? "Edit search" : "Search" },
     { key: "B", label: back },
     { key: "Y", label: "Now Playing" },
   ];
+}
+
+/** What B (or the Back gel) does here: up a drill-down, clear the search, or nothing to go back to. */
+function backLabel(state: ExplorerState): string {
+  return state.drill[state.tab] ? (state.tab === "Artists" ? "Artists" : "Albums") : state.query ? "Clear" : "Back";
+}
+
+/** The narrow footer's gels: Search and Back, or Scan again over the empty / read-error panel (spec §5.5). */
+export function touchLegendOf(state: ExplorerState, panel: ListPanel | null): TouchLegendItem[] {
+  if (panel === "unavailable" || panel === "scanning") return [];
+  if (panel === "readError" || panel === "empty") return [{ action: "rescan", label: "Scan again" }];
+  return [{ action: "search", label: state.query ? "Edit search" : "Search" }, { action: "back", label: backLabel(state) }];
 }
 
 /** The toolbar LCD's second line. */

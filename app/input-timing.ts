@@ -64,6 +64,8 @@ export interface ShoulderState {
 }
 
 export const SHOULDERS_UP: ShoulderState = { mask: 0, chorded: false };
+/** Everything held and chorded: the seed for a screen that mounts under buttons already down (a swap), so a Y or L released after the mount is not a press or a reveal. */
+export const SHOULDERS_HELD: ShoulderState = { mask: ~0, chorded: true };
 
 /**
  * One frame of Y / L / R. L or R alone steps tabs. Held with Y they skip to

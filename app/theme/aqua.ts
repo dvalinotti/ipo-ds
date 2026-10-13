@@ -42,6 +42,20 @@ const TAB_GREY: GelClasses = {
   body: "relative h-[18] px-[8] items-center justify-center bg-gradient-to-b from-[#c4c4c4] via-[#c4c4c4] to-[#f4f4f4]",
   gloss: "absolute left-[0] right-[0] top-[0] h-[6] bg-gradient-to-b from-[#fdfdfd] via-[#ececec] to-[#d6d6d6]",
 };
+const TAB_BLUE_NARROW: GelClasses = {
+  body: "relative h-[18] px-[6] items-center justify-center bg-gradient-to-b from-[#4a80da] via-[#4a80da] to-[#c8daf6]",
+  gloss: TAB_BLUE.gloss,
+};
+const TAB_GREY_NARROW: GelClasses = {
+  body: "relative h-[18] px-[6] items-center justify-center bg-gradient-to-b from-[#c4c4c4] via-[#c4c4c4] to-[#f4f4f4]",
+  gloss: TAB_GREY.gloss,
+};
+// The narrow footer's touch buttons: a grey gel 18 px tall inside the 20 px footer (the gel is the touch
+// target, so it is as tall as the footer allows) with a 5 px gloss band under the label.
+const FOOTER_GEL: GelClasses = {
+  body: "relative h-[18] px-[8] rounded-[9] items-center justify-center bg-gradient-to-b from-[#c4c4c4] via-[#c4c4c4] to-[#f4f4f4] border border-[#6e6e6e]",
+  gloss: "absolute left-[3] right-[3] top-[3] h-[5] rounded-[2] bg-gradient-to-b from-[#fdfdfd] via-[#ececec] to-[#d6d6d6]",
+};
 const BADGE_BLUE: GelClasses = {
   body: "relative w-[14] h-[14] rounded-[7] items-center justify-center bg-gradient-to-b from-[#4a80da] via-[#4a80da] to-[#c8daf6] border border-[#2b4f8c]",
   gloss: "absolute left-[3] top-[3] w-[8] h-[2] rounded-[1] bg-gradient-to-b from-[#f5f8fe] via-[#d3e1f8] to-[#93b4eb]",
@@ -105,13 +119,15 @@ export const AQUA: Theme = {
     color === "red" ? "w-[10] h-[10] rounded-[5] border border-[#00000059] bg-gradient-to-b from-[#ffb3a8] to-[#e0443a]"
     : color === "amber" ? "w-[10] h-[10] rounded-[5] border border-[#00000059] bg-gradient-to-b from-[#ffe2a1] to-[#e3a21a]"
     : "w-[10] h-[10] rounded-[5] border border-[#00000059] bg-gradient-to-b from-[#c9f0a8] to-[#4fa83a]",
-  lcdStatus: "w-[144] h-[30] shrink-0 ml-[4] px-[6] flex-col items-center justify-center overflow-hidden rounded-[6] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
+  lcdStatus: (layout) => layout === "wide"
+    ? "w-[144] h-[30] shrink-0 ml-[4] px-[6] flex-col items-center justify-center overflow-hidden rounded-[6] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]"
+    : "w-[92] h-[30] shrink-0 ml-[4] px-[6] flex-col items-center justify-center overflow-hidden rounded-[6] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
   lcdTitle: "w-full leading-[13] text-center text-xs font-bold text-[#2b2b2b]",
   lcdLine: "w-full leading-[13] text-center text-xs text-[#4a4c3f]",
   tabs: "flex-row items-center ml-[6] gap-[3]",
   tabGroup: "relative h-[20] p-[1] flex-row items-center rounded-[4] bg-[#7d7d7d] overflow-hidden",
   tabFrame: "absolute left-[0] top-[0] w-full h-full rounded-[4] border border-[#7d7d7d]",
-  tab: (active) => (active ? TAB_BLUE : TAB_GREY),
+  tab: (active, layout) => (layout === "wide" ? (active ? TAB_BLUE : TAB_GREY) : (active ? TAB_BLUE_NARROW : TAB_GREY_NARROW)),
   tabDivider: "w-[1] h-[18] bg-[#7d7d7d]",
   tabText: (active) => (active ? "text-xs text-white" : "text-xs text-[#2b2b2b]"),
   tabTextShadow: "absolute left-[0] top-[1] text-xs text-[#1d3f8099]",
@@ -119,9 +135,13 @@ export const AQUA: Theme = {
 
   header: "w-full h-[15] shrink-0 flex-row items-center bg-gradient-to-b from-[#ffffff] via-[#e7e7e7] to-[#d4d4d4]",
   headerRule: "w-full h-[1] shrink-0 bg-[#a5a5a5]",
-  headerLeft: (sorted) => sorted
-    ? "w-[242] h-[15] flex-row items-center bg-gradient-to-b from-[#d9ebff] via-[#a9cdf6] to-[#8fbbef]"
-    : "w-[242] h-[15] flex-row items-center",
+  headerLeft: (sorted, layout) => layout === "wide"
+    ? (sorted
+      ? "w-[242] h-[15] flex-row items-center bg-gradient-to-b from-[#d9ebff] via-[#a9cdf6] to-[#8fbbef]"
+      : "w-[242] h-[15] flex-row items-center")
+    : (sorted
+      ? "w-[162] h-[15] flex-row items-center bg-gradient-to-b from-[#d9ebff] via-[#a9cdf6] to-[#8fbbef]"
+      : "w-[162] h-[15] flex-row items-center"),
   headerLead: "w-[22] h-[15] items-center justify-center",
   headerRight: "flex-1 h-[15] pl-[6] flex-row items-center",
   headerRightEnd: "flex-1 h-[15] pr-[22] flex-row items-center justify-end",
@@ -134,7 +154,10 @@ export const AQUA: Theme = {
     : kind === "odd" ? "w-full h-[21] flex-row items-center bg-[#edf3fe]"
     : "w-full h-[21] flex-row items-center bg-white",
   rowLead: "w-[22] h-[21] items-center justify-center",
-  rowTitleCell: "w-[214] h-[21] mr-[6] flex-col justify-center overflow-hidden",
+  rowTitleCell: (layout) => layout === "wide"
+    ? "w-[214] h-[21] mr-[6] flex-col justify-center overflow-hidden"
+    : "w-[134] h-[21] mr-[6] flex-col justify-center overflow-hidden",
+  footerGel: FOOTER_GEL,
   rowDetailCell: "flex-1 h-[21] pl-[6] flex-col justify-center overflow-hidden",
   rowWideCell: "flex-1 h-[21] flex-col justify-center overflow-hidden",
   rowCountCell: "w-[60] h-[21] pr-[22] flex-col items-end justify-center",
@@ -182,7 +205,9 @@ export const AQUA: Theme = {
     ? "absolute left-[8] top-[8] w-[76] h-[76] rounded-[38] border-[2] border-[#f4f6e6] opacity-85"
     : "absolute left-[22] top-[22] w-[48] h-[48] rounded-[24] border-[2] border-[#f4f6e6] opacity-85"),
   hub: "w-[32] h-[32] rounded-[16] items-center justify-center bg-[#f4f6e6]",
-  infoLcd: "absolute left-[118] top-[10] w-[192] h-[100] flex-col items-center px-[8] pt-[6] overflow-hidden rounded-[10] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
+  infoLcd: (layout) => layout === "narrow"
+    ? "absolute left-[118] top-[10] w-[192] h-[100] flex-col items-center px-[8] pt-[6] overflow-hidden rounded-[10] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]"
+    : "absolute left-[118] top-[10] w-[272] h-[100] flex-col items-center px-[8] pt-[6] overflow-hidden rounded-[10] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
   infoTitle: "w-full text-center text-base font-bold text-[#1f2018]",
   infoArtist: "w-full text-center text-xs text-[#3c3e31] mt-[3]",
   infoAlbum: "w-full text-center text-xs text-[#6a6c5a] mt-[1]",
@@ -192,21 +217,31 @@ export const AQUA: Theme = {
   infoAlert: "w-full text-center text-xs font-bold text-[#b0281c]",
   infoFlagText: "text-xs font-bold text-[#1c6fd1]",
 
-  seekCapsule: "absolute left-[10] top-[120] w-[300] h-[30] flex-row items-center px-[8] gap-[8] rounded-[15] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
+  seekCapsule: (layout) => layout === "narrow"
+    ? "absolute left-[10] top-[120] w-[300] h-[30] flex-row items-center px-[8] gap-[8] rounded-[15] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]"
+    : "absolute left-[10] top-[120] w-[380] h-[30] flex-row items-center px-[8] gap-[8] rounded-[15] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
   seekTime: "w-[34] text-xs font-bold text-[#1f2018]",
   seekTimeRight: "w-[34] text-xs font-bold text-[#1f2018] text-right",
   seekTimeWide: "w-[46] text-xs font-bold text-[#1f2018]",
   seekTimeRightWide: "w-[46] text-xs font-bold text-[#1f2018] text-right",
-  seekTrack: "w-[200] h-[8] relative rounded-[4] border border-[#8a8c78] bg-[#c9cbb3]",
-  seekTrackWide: "w-[176] h-[8] relative rounded-[4] border border-[#8a8c78] bg-[#c9cbb3]",
+  seekTrack: (layout) => layout === "narrow"
+    ? "w-[200] h-[8] relative rounded-[4] border border-[#8a8c78] bg-[#c9cbb3]"
+    : "w-[280] h-[8] relative rounded-[4] border border-[#8a8c78] bg-[#c9cbb3]",
+  seekTrackWide: (layout) => layout === "narrow"
+    ? "w-[176] h-[8] relative rounded-[4] border border-[#8a8c78] bg-[#c9cbb3]"
+    : "w-[256] h-[8] relative rounded-[4] border border-[#8a8c78] bg-[#c9cbb3]",
   seekFill: "absolute left-[1] top-[1] h-[6] rounded-[3] bg-[#4a4c3f]",
   seekKnob: SEEK_KNOB,
 
-  transportRow: "absolute left-[10] top-[160] w-[300] h-[72] flex-row items-center justify-center gap-[10]",
+  transportRow: (layout) => layout === "narrow"
+    ? "absolute left-[10] top-[160] w-[300] h-[72] flex-row items-center justify-center gap-[10]"
+    : "absolute left-[10] top-[160] w-[380] h-[72] flex-row items-center justify-center gap-[20]",
   transport: (kind, on, enabled) => transportClass(kind, on, enabled),
   transportCompact: (enabled) => (enabled ? MODE_GREY : MODE_OFF),
 
-  idlePanel: "absolute left-[10] top-[10] w-[300] h-[100] flex-col items-center justify-center gap-[4] rounded-[10] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
+  idlePanel: (layout) => layout === "narrow"
+    ? "absolute left-[10] top-[10] w-[300] h-[100] flex-col items-center justify-center gap-[4] rounded-[10] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]"
+    : "absolute left-[10] top-[10] w-[380] h-[100] flex-col items-center justify-center gap-[4] rounded-[10] border border-[#7d7f6e] bg-gradient-to-b from-[#f4f6e6] via-[#e9ecd5] to-[#d9ddc0]",
   platter: "absolute left-[10] top-[20] w-[200] h-[200]",
   platterDisc: "absolute left-[0] top-[0] w-[200] h-[200]",
   platterLabel: "absolute left-[56] top-[56] w-[88] h-[88]",

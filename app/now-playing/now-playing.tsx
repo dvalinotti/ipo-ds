@@ -1,22 +1,27 @@
 // The bottom screen while not searching: the playing song's art, info LCD,
 // a drag-to-seek capsule (one seek on release) and the transport row. The
 // LCD's status row shows a playback error, or diagnostics while L+R are held.
-// The transport row's last gel opens DJ Mode.
+// The transport row's last gel opens DJ Mode. On the top screen (layout "wide", swapped) the deck is
+// 400 px wide, has no touch, and owns A (play / pause) and left / right (seek).
 import { createEffect, createMemo, createSignal, on, Show } from "solid-js";
 import { getOps } from "@pocketjs/framework";
 import { View } from "@pocketjs/framework/components";
 import { createGesture } from "@pocketjs/framework/gesture";
 import { BTN } from "@pocketjs/framework/input";
-import { onFrame } from "@pocketjs/framework/lifecycle";
+import { onButtonPress, onFrame } from "@pocketjs/framework/lifecycle";
 import { createMediaScrubber } from "@pocketjs/framework/media";
+import { seekTarget } from "../controls.ts";
+import { onRepeat } from "../input.ts";
 import { formatRemaining, formatTime, needsHours } from "../format.ts";
 import type { Session } from "../session.ts";
 import { frameNote } from "./frame-time.ts";
 import { AQUA } from "../theme/aqua.ts";
-import { ArtFrame, CoverImage, CoverLoading, InfoLcd, SEEK_TRACK_PX, SEEK_TRACK_WIDE_PX, SeekCapsule, seekTrackLeft, TransportRow } from "../theme/parts/deck.tsx";
+import { ArtFrame, CoverImage, CoverLoading, InfoLcd, SeekCapsule, seekTrackLeft, seekTrackPx, TransportRow } from "../theme/parts/deck.tsx";
 import { IdlePanel } from "../theme/parts/panels.tsx";
+import type { Layout } from "../theme/theme.ts";
 
-export function NowPlaying(props: { session: Session; onDj?: () => void }) {
+export function NowPlaying(props: { layout: Layout; session: Session; dj?: boolean; onDj?: () => void }) {
+  const wide = props.layout === "wide";
   const status = props.session.status;
   const player = props.session.player;
   const dispatch = props.session.dispatch;
@@ -38,35 +43,63 @@ export function NowPlaying(props: { session: Session; onDj?: () => void }) {
     scrubber.cancel();
     setPreview(null);
   }, { defer: true }));
-  const trackPx = () => (hours() ? SEEK_TRACK_WIDE_PX : SEEK_TRACK_PX);
+  const trackPx = () => seekTrackPx(hours(), props.layout);
   const fractionAt = (x: number) => (x - seekTrackLeft(hours())) / trackPx();
   /** Downs on the time labels are not seeks (a tap on "-3:58" would jump to the end). */
   const onTrack = (x: number) => x >= seekTrackLeft(hours()) - 6 && x <= seekTrackLeft(hours()) + trackPx() + 6;
   let capsule: unknown = null;
-  createGesture({
-    surface: "auxiliary",
-    axis: "x",
-    region: { node: () => capsule as never },
-    onDown: (c) => {
-      // No duration (a VBR file without a header reports 0): nothing to map the contact to, so no seek.
-      if (idle() || duration() <= 0 || !onTrack(c.x)) return;
-      scrubber.begin(fractionAt(c.x), duration() / 1000);
+  // The top screen has no digitizer: no drag recognizer there.
+  if (!wide) {
+    createGesture({
+      surface: "auxiliary",
+      axis: "x",
+      region: { node: () => capsule as never },
+      onDown: (c) => {
+        // No duration (a VBR file without a header reports 0): nothing to map the contact to, so no seek.
+        if (idle() || duration() <= 0 || !onTrack(c.x)) return;
+        scrubber.begin(fractionAt(c.x), duration() / 1000);
+        setPreview(scrubber.preview() * 1000);
+      },
+      onMove: (c) => {
+        if (!scrubber.active()) return;
+        scrubber.move(fractionAt(c.x), duration() / 1000);
+        setPreview(scrubber.preview() * 1000);
+      },
+      onUp: () => {
+        scrubber.commit();
+        setPreview(null);
+      },
+      onCancel: () => {
+        scrubber.cancel();
+        setPreview(null);
+      },
+    });
+  }
+  // Wide (top screen, swapped): A and left / right drive playback (spec §6.2). This screen is unmounted
+  // while the keyboard is open, so the handlers need no search gate; latched keeps a button that was
+  // already down at mount (A through a swap) from firing.
+  if (wide) {
+    onButtonPress(BTN.CIRCLE, () => { if (!idle()) dispatch({ type: "toggle" }); }, { latched: true });
+    // Left / right seek through the same scrubber as the capsule drag: the press previews ±5 s, each repeat
+    // ±2 s more from the preview, and the release sends the one seek. A seek is a host command that forces
+    // a status re-read and can flush the decoder, so a held button must not send one at the repeat rate.
+    const seekBy = (direction: -1 | 1, repeat: boolean) => {
+      if (idle() || duration() <= 0) return;
+      const from = repeat && scrubber.active() ? scrubber.preview() * 1000 : status().positionMs;
+      const target = seekTarget(from, duration(), direction, repeat);
+      if (target === null) return;
+      if (scrubber.active()) scrubber.move(target / duration(), duration() / 1000);
+      else scrubber.begin(target / duration(), duration() / 1000);
       setPreview(scrubber.preview() * 1000);
-    },
-    onMove: (c) => {
+    };
+    const commitSeek = () => {
       if (!scrubber.active()) return;
-      scrubber.move(fractionAt(c.x), duration() / 1000);
-      setPreview(scrubber.preview() * 1000);
-    },
-    onUp: () => {
       scrubber.commit();
       setPreview(null);
-    },
-    onCancel: () => {
-      scrubber.cancel();
-      setPreview(null);
-    },
-  });
+    };
+    onRepeat(BTN.LEFT, (repeat) => seekBy(-1, repeat), () => true, commitSeek);
+    onRepeat(BTN.RIGHT, (repeat) => seekBy(1, repeat), () => true, commitSeek);
+  }
   const position = () => preview() ?? status().positionMs;
   const SHOULDERS = BTN.LTRIGGER | BTN.RTRIGGER;
   const [diagnostics, setDiagnostics] = createSignal(false);
@@ -88,7 +121,7 @@ export function NowPlaying(props: { session: Session; onDj?: () => void }) {
 
   return (
     <View class={AQUA.bottomScreen}>
-      <Show when={!idle()} fallback={<IdlePanel />}>
+      <Show when={!idle()} fallback={<IdlePanel layout={props.layout} />}>
         <ArtFrame album={track()!.album}>
           {props.session.coverLoading() ? <CoverLoading /> : props.session.cover() > 0 ? <CoverImage handle={props.session.cover()} /> : undefined}
         </ArtFrame>
@@ -101,6 +134,7 @@ export function NowPlaying(props: { session: Session; onDj?: () => void }) {
           repeat={player().repeat}
           note={note()}
           alert={!diagnostics() && status().phase === "error"}
+          layout={props.layout}
         />
       </Show>
       <SeekCapsule
@@ -110,6 +144,7 @@ export function NowPlaying(props: { session: Session; onDj?: () => void }) {
         fraction={duration() > 0 ? position() / duration() : 0}
         enabled={!idle()}
         hours={hours()}
+        layout={props.layout}
       />
       <TransportRow
         playing={playing()}
@@ -121,7 +156,10 @@ export function NowPlaying(props: { session: Session; onDj?: () => void }) {
         onToggle={() => dispatch({ type: "toggle" })}
         onNext={() => dispatch({ type: "next" })}
         onRepeat={() => dispatch({ type: "cycleRepeat" })}
+        dj={props.dj}
         onDj={props.onDj}
+        layout={props.layout}
+        touch={!wide}
       />
     </View>
   );

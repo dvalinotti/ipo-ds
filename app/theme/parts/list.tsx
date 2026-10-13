@@ -2,22 +2,22 @@
 import { Show } from "solid-js";
 import { Image, Text, View } from "@pocketjs/framework/components";
 import { AQUA } from "../aqua.ts";
-import type { RowKind, Theme } from "../theme.ts";
+import type { Layout, RowKind, Theme } from "../theme.ts";
 import { FONT_12 } from "../fonts.ts";
 import { Gel } from "./gel.tsx";
 import { Marquee } from "./marquee.tsx";
 
 /** Title cell widths (px): beside a detail column, and spanning the row beside a count. */
-const TITLE_PX = 214;
-const WIDE_TITLE_PX = 318;
+const TITLE_PX: Record<Layout, number> = { wide: 214, narrow: 134 };
+const WIDE_TITLE_PX: Record<Layout, number> = { wide: 318, narrow: 238 };
 
 /** `lead` labels the rows' lead column ("#" over track numbers); `count` right-aligns the second label over counts. */
-export function ColumnHeader(props: { left: string; right: string; lead?: string; sorted?: boolean; count?: boolean; theme?: Theme }) {
+export function ColumnHeader(props: { left: string; right: string; lead?: string; sorted?: boolean; count?: boolean; layout?: Layout; theme?: Theme }) {
   const t = () => props.theme ?? AQUA;
   return (
     <>
       <View class={t().header}>
-        <View class={t().headerLeft(props.sorted ?? true)}>
+        <View class={t().headerLeft(props.sorted ?? true, props.layout ?? "wide")}>
           <View class={t().headerLead}>
             <Text class={t().headerText}>{props.lead ?? ""}</Text>
           </View>
@@ -48,6 +48,7 @@ export interface ListRowProps {
   /** Scroll a title too wide for its cell (the focused row). */
   marquee?: boolean;
   onPress?: () => void;
+  layout?: Layout;
   theme?: Theme;
 }
 
@@ -62,9 +63,9 @@ export function ListRow(props: ListRowProps) {
         when={props.count}
         fallback={
           <>
-            <View class={t().rowTitleCell}>
+            <View class={t().rowTitleCell(props.layout ?? "wide")}>
               <Show when={props.marquee} fallback={<Text class={t().rowTitle(props.kind)}>{props.title}</Text>}>
-                <Marquee text={props.title} class={t().rowTitle(props.kind)} slot={FONT_12} width={TITLE_PX} />
+                <Marquee text={props.title} class={t().rowTitle(props.kind)} slot={FONT_12} width={TITLE_PX[props.layout ?? "wide"]} />
               </Show>
             </View>
             <View class={t().rowDetailCell}>
@@ -75,7 +76,7 @@ export function ListRow(props: ListRowProps) {
       >
         <View class={t().rowWideCell}>
           <Show when={props.marquee} fallback={<Text class={t().rowTitle(props.kind)}>{props.title}</Text>}>
-            <Marquee text={props.title} class={t().rowTitle(props.kind)} slot={FONT_12} width={WIDE_TITLE_PX} />
+            <Marquee text={props.title} class={t().rowTitle(props.kind)} slot={FONT_12} width={WIDE_TITLE_PX[props.layout ?? "wide"]} />
           </Show>
         </View>
         <View class={t().rowCountCell}>
@@ -91,6 +92,7 @@ export function Scrollbar(props: { thumbTop: number; thumbHeight: number; theme?
   const t = () => props.theme ?? AQUA;
   return (
     <View class={t().scrollTrack}>
+      {/* inset, not translate: measured in Azahar, a translated thumb costs the wide scroll its Old budget (extra draw spikes) and buys nothing on a per-frame thumb drag (docs/perf.md, Screen Swap Plan 10). */}
       <Gel classes={t().scrollThumb} style={{ insetT: props.thumbTop, height: props.thumbHeight }} />
     </View>
   );

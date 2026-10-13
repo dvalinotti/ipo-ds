@@ -6,6 +6,8 @@ export type RowKind = "odd" | "even" | "selected";
 export type Tab = "Songs" | "Artists" | "Albums";
 /** The tabs in toolbar order; L / R step through it. */
 export const TAB_ORDER: readonly Tab[] = ["Songs", "Artists", "Albums"];
+/** Which screen a part is laid out for: wide is the 400 px top screen, narrow the 320 px bottom screen. */
+export type Layout = "wide" | "narrow";
 export type RepeatMode = "off" | "all" | "one";
 export type TransportKind = "shuffle" | "prev" | "play" | "pause" | "next" | "repeat" | "dj";
 export type IconName = "shuffle" | "repeat" | "prev" | "next" | "play" | "pause" | "dj";
@@ -38,13 +40,15 @@ export interface Theme {
   toolbar: string;
   toolbarRule: string;
   light(color: "red" | "amber" | "green"): string;
-  lcdStatus: string;
+  /** 144 px wide on the top screen, 92 px on the bottom screen. */
+  lcdStatus(layout: Layout): string;
   lcdTitle: string;
   lcdLine: string;
   tabs: string;
   /** The bordered box that joins the tabs into one segmented control. */
   tabGroup: string;
-  tab(active: boolean): GelClasses;
+  /** Tab padding is 8 px wide, 6 px narrow (the narrow toolbar has no L / R hints and must fit 320 px). */
+  tab(active: boolean, layout: Layout): GelClasses;
   /** The group's rounded border, drawn over the segments so their square corners do not cover it. */
   tabFrame: string;
   /** 1 px rule between adjacent segments. */
@@ -56,8 +60,8 @@ export interface Theme {
 
   header: string;
   headerRule: string;
-  /** First column (242 wide, holds the sort marker when sorted). */
-  headerLeft(sorted: boolean): string;
+  /** First column: 242 wide on the top screen, 162 on the bottom (holds the sort marker when sorted). */
+  headerLeft(sorted: boolean, layout: Layout): string;
   /** The header's 22 px lead column, over the rows' lead (marker / track number). */
   headerLead: string;
   headerRight: string;
@@ -70,7 +74,10 @@ export interface Theme {
   listBody: string;
   row(kind: RowKind): string;
   rowLead: string;
-  rowTitleCell: string;
+  /** 214 wide beside the detail column on the top screen, 134 on the bottom. */
+  rowTitleCell(layout: Layout): string;
+  /** The narrow footer's touch buttons (one per action); their label uses `footerText`. */
+  footerGel: GelClasses;
   rowDetailCell: string;
   /** Title cell that spans the row when the second column is a right-aligned count. */
   rowWideCell: string;
@@ -122,7 +129,8 @@ export interface Theme {
   artLoading: string;
   ring(size: "outer" | "inner"): string;
   hub: string;
-  infoLcd: string;
+  /** 192 wide on the bottom screen, 272 on the top. */
+  infoLcd(layout: Layout): string;
   infoTitle: string;
   infoArtist: string;
   infoAlbum: string;
@@ -133,23 +141,25 @@ export interface Theme {
   infoAlert: string;
   infoFlagText: string;
 
-  seekCapsule: string;
+  /** 300 wide on the bottom screen, 380 on the top. */
+  seekCapsule(layout: Layout): string;
   seekTime: string;
   seekTimeRight: string;
   /** Wider time cells and a shorter track when times read h:mm:ss. */
   seekTimeWide: string;
   seekTimeRightWide: string;
-  seekTrack: string;
-  seekTrackWide: string;
+  seekTrack(layout: Layout): string;
+  seekTrackWide(layout: Layout): string;
   seekFill: string;
   seekKnob: GelClasses;
 
-  transportRow: string;
+  /** 300 wide with a 10 px gap on the bottom screen, 380 with 20 px on the top. */
+  transportRow(layout: Layout): string;
   transport(kind: TransportKind, on: boolean, enabled: boolean): GelClasses;
   /** A 34 px grey skip gel (prev / next) for narrow places: the DJ Mode side panel. */
   transportCompact(enabled: boolean): GelClasses;
 
-  idlePanel: string;
+  idlePanel(layout: Layout): string;
   /** DJ Mode (app/dj): the platter's 200×200 box, its turning disc, the label well inside it, the
    * cover spinner's place over the label, and the still spindle. */
   platter: string;

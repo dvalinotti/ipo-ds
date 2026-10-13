@@ -8,14 +8,14 @@ import type { JSX as SolidJSX } from "solid-js";
 import { AQUA } from "../theme/aqua.ts";
 import { ColumnHeader, ListRow, Scrollbar } from "../theme/parts/list.tsx";
 import { ArtFrame, CoverLoading, InfoLcd, SeekCapsule, TransportButton, TransportRow } from "../theme/parts/deck.tsx";
-import { Breadcrumb, FooterLegend, KeyBadge, SearchStrip, type LegendItem } from "../theme/parts/strips.tsx";
+import { Breadcrumb, FooterGels, FooterLegend, KeyBadge, SearchStrip, type LegendItem, type TouchLegendItem } from "../theme/parts/strips.tsx";
 import { Gel, GelLabel } from "../theme/parts/gel.tsx";
 import { trackOffset } from "../theme/geometry.ts";
 import { REFERENCE_LABEL, REFERENCE_LABEL_SHADOW, REFERENCE_PILL } from "./reference-pill.ts";
 import { IdlePanel, PROGRESS_TRACK_PX, StatePanel } from "../theme/parts/panels.tsx";
 import { DjPanel, Platter } from "../theme/parts/platter.tsx";
 import { Toolbar } from "../theme/parts/toolbar.tsx";
-import type { RowKind, Tab } from "../theme/theme.ts";
+import type { Layout, RowKind, Tab } from "../theme/theme.ts";
 import type { GalleryStateName } from "./names.ts";
 
 export interface GalleryState {
@@ -50,13 +50,15 @@ function Top(props: {
   count?: boolean;
   scroll?: [number, number];
   body?: SolidJSX.Element;
-  legend: readonly LegendItem[];
+  legend?: readonly LegendItem[];
+  layout?: Layout;
+  gels?: readonly TouchLegendItem[];
 }) {
   return (
     <View class={AQUA.topScreen}>
-      <Toolbar title="iPoDS" line={props.line ?? LIBRARY_LINE} active={props.tab} />
+      <Toolbar title="iPoDS" line={props.line ?? LIBRARY_LINE} active={props.tab} layout={props.layout} />
       {props.strip}
-      {props.header ? <ColumnHeader left={props.header[0]} right={props.header[1]} lead={props.headerLead} count={props.count} /> : null}
+      {props.header ? <ColumnHeader left={props.header[0]} right={props.header[1]} lead={props.headerLead} count={props.count} layout={props.layout} /> : null}
       {props.body ?? (
         <View class={AQUA.listBody}>
           <For each={props.rows ?? []}>
@@ -68,13 +70,14 @@ function Top(props: {
                 lead={row[2]}
                 playing={i() === props.playing}
                 count={props.count}
+                layout={props.layout}
               />
             )}
           </For>
           {props.scroll ? <Scrollbar thumbTop={props.scroll[0]} thumbHeight={props.scroll[1]} /> : null}
         </View>
       )}
-      <FooterLegend items={props.legend} />
+      {props.gels ? <FooterGels items={props.gels} /> : <FooterLegend items={props.legend ?? []} />}
     </View>
   );
 }
@@ -93,23 +96,23 @@ function SunsetCover() {
   );
 }
 
-function NowPlaying(props: { album: string; title: string; artist: string; position: string; elapsed: string; remaining: string; fraction: number; playing: boolean; cover?: boolean; loading?: boolean }) {
+function NowPlaying(props: { layout?: Layout; album: string; title: string; artist: string; position: string; elapsed: string; remaining: string; fraction: number; playing: boolean; cover?: boolean; loading?: boolean }) {
   return (
     <View class={AQUA.bottomScreen}>
       <ArtFrame album={props.album}>{props.loading ? <CoverLoading /> : props.cover ? <SunsetCover /> : undefined}</ArtFrame>
-      <InfoLcd title={props.title} artist={props.artist} album={props.album} position={props.position} shuffle repeat="all" />
-      <SeekCapsule elapsed={props.elapsed} remaining={props.remaining} fraction={props.fraction} enabled />
-      <TransportRow playing={props.playing} shuffle repeat="all" enabled />
+      <InfoLcd layout={props.layout} title={props.title} artist={props.artist} album={props.album} position={props.position} shuffle repeat="all" />
+      <SeekCapsule layout={props.layout} elapsed={props.elapsed} remaining={props.remaining} fraction={props.fraction} enabled />
+      <TransportRow layout={props.layout} touch={props.layout !== "wide"} playing={props.playing} shuffle repeat="all" enabled />
     </View>
   );
 }
 
-function Idle() {
+function Idle(props: { layout?: Layout }) {
   return (
     <View class={AQUA.bottomScreen}>
-      <IdlePanel />
-      <SeekCapsule elapsed="--:--" remaining="--:--" fraction={0} enabled={false} />
-      <TransportRow playing={false} shuffle={false} repeat="off" enabled={false} />
+      <IdlePanel layout={props.layout} />
+      <SeekCapsule layout={props.layout} elapsed="--:--" remaining="--:--" fraction={0} enabled={false} />
+      <TransportRow layout={props.layout} touch={props.layout !== "wide"} playing={false} shuffle={false} repeat="off" enabled={false} />
     </View>
   );
 }
@@ -185,7 +188,7 @@ function GelSheetBottom() {
         <View class="flex-row items-center gap-[8] mt-[8]">
           <KeyBadge letter="A" primary />
           <KeyBadge letter="X" />
-          <View class={AQUA.seekTrack}>
+          <View class={AQUA.seekTrack("narrow")}>
             <View class={AQUA.seekFill} style={{ width: 100 }} />
             <Gel classes={AQUA.seekKnob} style={{ insetL: 92 }} />
           </View>
@@ -295,6 +298,31 @@ export const STATES: readonly GalleryState[] = [
         <Platter angle={24} cover={0} />
         <DjPanel title="One More Time" artist="Daft Punk" elapsed="1:42" remaining="-3:58" enabled />
       </View>
+    ),
+  },
+  {
+    name: "swapped",
+    top: () => <NowPlaying layout="wide" album="Discovery" title="One More Time" artist="Daft Punk" position="3 of 12" elapsed="1:42" remaining="-3:58" fraction={0.3} playing />,
+    bottom: () => (
+      <Top layout="narrow" tab="Songs" header={["Song Name", "Artist"]} rows={SONG_ROWS} selected={3} playing={6} scroll={[18, 44]}
+        gels={[{ action: "search", label: "Search" }, { action: "back", label: "Back" }]} />
+    ),
+  },
+  {
+    name: "swapped-album",
+    top: () => <NowPlaying layout="wide" album="Discovery" title="Aerodynamic" artist="Daft Punk" position="2 of 14" elapsed="0:12" remaining="-3:15" fraction={0.05} playing />,
+    bottom: () => (
+      <Top
+        layout="narrow"
+        tab="Albums"
+        strip={<Breadcrumb root="Albums" leaf="Discovery" detail="Daft Punk · 14 songs" />}
+        header={["Song Name", "Time"]}
+        headerLead="#"
+        rows={[["One More Time", "5:20", "1"], ["Aerodynamic", "3:27", "2"], ["Digital Love", "4:58", "3"], ["Harder, Better, Faster, Stronger (Extended Club Mix)", "3:44", "4"], ["Crescendolls", "3:31", "5"], ["Nightvision", "1:44", "6"], ["Superheroes", "3:57", "7"]]}
+        selected={1}
+        scroll={[4, 52]}
+        gels={[{ action: "search", label: "Search" }, { action: "back", label: "Albums" }]}
+      />
     ),
   },
   {

@@ -165,3 +165,41 @@ The DJ Mode branch (`feature/dj-mode`, `docs/superpowers/plans/2026-10-08-dj-mod
 `now-playing` stays within a few tenths of the Plan 6 rows on New (CPU mean/max 3.0/6.5 ms against 2.9/6.3 ms) and moves on Old from 8.8/19.1 ms to 9.4/15.2 ms, where the mean rises 0.6 ms and the max falls 3.9 ms. `dj` fits both budgets, with a CPU max of 3.8 ms on New against 14 ms and 16.0 ms on Old against 30 ms.
 
 The Old `now-playing` moves (mean +0.6 ms, max −3.9 ms) are run-to-run variance in the same direction-free range as earlier runs, not a ring cost: the max fell while the mean rose.
+
+## Screen Swap (Plan 9)
+
+The Screen Swap branch (`feature/screen-switch-mode`, `docs/superpowers/plans/2026-10-10-screen-swap-09-layouts.md`): hold SELECT swaps the screens; the Explorer and the deck take a `layout` prop and register only the handlers their layout owns; the shell renders both screens from `placement()` through two Switches, so the primary root gains one wrapping View; the list's first visible row is written to the store as it scrolls. Neither scenario swaps: they measure the normal-mode paths after the refactor. `bun run perf scroll --model both --check` and `bun run perf now-playing --model both --check`, one scenario per invocation; `scroll` was run twice from separate builds and both runs agree to the tenth:
+
+| Scenario | Model | JS mean/max | Tick mean/max | Draw mean/max | CPU mean/max (ms) | Scan (ms) | Within budget |
+|---|---|---|---|---|---|---|---|
+| scroll | new | 1.7/8.0 | 0.2/1.1 | 1.9/3.8 | 3.8/10.9 | cached -1, walk 5723 (324/324 read) | yes |
+| scroll | old | 5.4/18.2 | 0.8/9.3 | 5.7/11.4 | 11.9/27.1 | cached -1, walk 6008 (324/324 read) | yes |
+| now-playing | new | 1.2/4.8 | 0.0/0.1 | 1.8/2.2 | 3.0/6.7 | cached -1, walk 5739 (324/324 read) | yes |
+| now-playing | old | 3.5/8.8 | 0.0/0.3 | 6.1/11.6 | 9.5/15.6 | cached -1, walk 6008 (324/324 read) | yes |
+
+`now-playing` is within a few tenths of the Plan 8 rows on both models (New 3.0/6.7 against 3.0/6.5; Old 9.5/15.6 against 9.4/15.2). `scroll` means are within 0.4 ms of Plan 6 (New 3.8 against 3.5; Old 11.9 against 11.5); the maxes moved more (New 10.9 against 8.7; Old 27.1 against 25.6), with the Old move in a single tick spike (9.3 ms against 3.3) rather than in JS or draw. 27.1 ms sits inside the 25.6–28.6 ms range earlier Old `scroll` runs have recorded and 2.9 ms under the budget; Plan 10's touch scenarios (`touch-drag`, `touch-fling`) measure the path that matters next and carry the mitigation if a frame goes over.
+
+## Screen Swap (Plan 10)
+
+The Screen Swap branch (`feature/screen-switch-mode`, `docs/superpowers/plans/2026-10-10-screen-swap-10-touch.md`): with the screens swapped the Explorer is a 320 px touch list on the bottom screen over the framework's kinetic scroller (a settled whole-row `top`, a per-frame sub-row translate, the real fling from a capped release velocity), and the deck is 400 px wide on top with no recognizers. The host's 60-frame timing window ends at the capture frame (frames 2941–3000), so every event below lands inside it. `swapped-idle` is the swapped app at rest; `touch-drag` a finger-follow drag at 2 px per frame spanning the whole window; `touch-fling` a flick at the 5000 px/s cap lifted one frame before the window; `swap` the hold firing at frame 2959; `swap-dj` DJ Mode replacing the list (a SELECT tap released at 2977); `swap-search` the keyboard rebuilding both screens (the Search gel tapped at 2975–2976). `bun run perf <scenario> --model both --check`, one scenario per invocation:
+
+| Scenario | Model | JS mean/max | Tick mean/max | Draw mean/max | CPU mean/max (ms) | Scan (ms) | Within budget |
+|---|---|---|---|---|---|---|---|
+| swapped-idle | new | 0.4/0.5 | 0.0/0.0 | 1.3/1.4 | 1.7/1.8 | cached -1, walk 5734 (324/324 read) | yes |
+| touch-drag | new | 1.5/2.7 | 0.0/0.0 | 1.5/2.3 | 3.0/5.0 | cached -1, walk 5700 (324/324 read) | yes |
+| touch-fling | new | 3.2/5.9 | 0.0/0.0 | 2.3/2.6 | 5.5/8.5 | cached -1, walk 5728 (324/324 read) | yes |
+| swap | new | 2.6/134.7 | 0.0/0.6 | 1.4/4.6 | 4.0/139.9 | cached -1, walk 5746 (324/324 read) | no: CPU max 139.9 ms > 14 ms |
+| swap-dj | new | 0.8/26.8 | 0.0/0.1 | 1.3/1.7 | 2.0/28.7 | cached -1, walk 5747 (324/324 read) | no: CPU max 28.7 ms > 14 ms |
+| swap-search | new | 4.1/222.6 | 0.1/3.4 | 1.4/3.5 | 5.6/229.5 | cached -1, walk 5754 (324/324 read) | no: CPU max 229.5 ms > 14 ms |
+| scroll | new | 1.7/5.9 | 0.2/1.1 | 1.9/4.1 | 3.8/11.1 | cached -1, walk 5733 (324/324 read) | yes |
+| swapped-idle | old | 1.2/1.5 | 0.0/0.0 | 4.0/4.1 | 5.3/5.6 | cached -1, walk 6023 (324/324 read) | yes |
+| touch-drag | old | 4.5/8.1 | 0.0/0.1 | 4.4/6.9 | 8.9/15.1 | cached -1, walk 6011 (324/324 read) | yes |
+| touch-fling | old | 9.8/17.9 | 0.1/0.1 | 7.0/7.8 | 16.8/25.7 | cached -1, walk 6007 (324/324 read) | yes |
+| swap | old | 7.9/408.4 | 0.0/1.9 | 4.3/13.9 | 12.3/424.3 | cached -1, walk 6021 (324/324 read) | no: CPU max 424.3 ms > 30 ms |
+| swap-dj | old | 2.4/81.3 | 0.0/0.4 | 3.8/5.3 | 6.2/87.0 | cached -1, walk 6024 (324/324 read) | no: CPU max 87.0 ms > 30 ms |
+| swap-search | old | 12.4/675.2 | 0.2/10.3 | 4.3/10.6 | 17.0/696.1 | cached -1, walk 6024 (324/324 read) | no: CPU max 696.1 ms > 30 ms |
+| scroll | old | 5.4/18.0 | 0.7/3.4 | 6.0/11.5 | 12.1/27.0 | cached -1, walk 6024 (324/324 read) | yes |
+
+The touch rows are within budget on both models: `touch-fling` peaks at 25.7 ms on Old against the Plan 9 `scroll` row's 27.1, and `touch-drag` at 15.1; `FLING_MAX_PX_PER_S` stayed at 5000 and the bottom screen was not delayed. The rows were re-measured after the branch review's fix wave (a fling that would leave the range becomes a short tween to the edge row, and the drawn offset is clamped), which added a few tenths. `scroll` first measured 32.7 ms on Old on this branch (deterministic over three runs); a bisect that reverted one component at a time traced it to the scrollbar thumb moving by translate (this plan's Task 2). With the thumb back on `insetT` the row is 27.0 and the per-frame touch rows are unchanged (touch-fling 25.3, touch-drag 14.7 on Old either way), so the thumb moves by inset.
+
+The three remount rows fail the budget by an order of magnitude and are recorded as measured. Each is one frame of JS: 408 ms on Old and 135 ms on New for the swap, 81 and 27 for a DJ mount, 675 and 223 for the keyboard opening from swapped mode. A swap creates 213 nodes, a DJ mount 29, and the swapped keyboard 353 nodes plus 482 prop writes (counted in the sim), so the cost is the framework's mount cost of roughly 2 ms per node on Old; the normal-mode keyboard open (144 nodes, 451 prop writes) has always been a comparable stall and was never in a scenario. Delaying the bottom screen by one frame (the plan's fallback) cannot bring a 424 ms mount to 30 ms, so the budget was not relaxed and no exception was coded. Whether to amend the spec with a transition-frame exception, keep both layouts mounted across a swap, or speed up mounting in the framework is an open decision for the branch.

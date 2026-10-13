@@ -16,6 +16,8 @@ export interface Scenario {
   name: string;
   /** POCKETJS_CAPTURE_INPUT: frame:mask steps (the mask holds until the next step). */
   tape: string;
+  /** POCKETJS_CAPTURE_TOUCH: `frame:id,x,y` entries joined by `@`, `frame:-` lifts; one bottom-screen contact. */
+  touch?: string;
   capture: number;
   /** Frame scenarios are judged by CPU work; scan scenarios by stats.localmedia. */
   kind: "frame" | "scan";
@@ -24,13 +26,40 @@ export interface Scenario {
 }
 
 const A = 0x2000, DOWN = 0x40, SELECT = 0x1;
+/** SELECT held 66 frames from `at`: the hold fires at `at + 59` and swaps the screens. */
+const holdSelect = (at: number) => `${at}:0x${SELECT.toString(16)},${at + 66}:0x0`;
+/** One finger at x moving `step` px in y per frame from y0 for `count` frames, then lifted. */
+function dragTape(start: number, x: number, y0: number, step: number, count: number): string {
+  const entries: string[] = [];
+  for (let i = 0; i < count; i++) entries.push(`${start + i}:1,${x},${y0 + step * i}`);
+  entries.push(`${start + count}:-`);
+  return entries.join("@");
+}
+/** The narrow footer's Search gel, measured in the sim (Task 6 Step 1). */
+const SEARCH_GEL = { x: 37, y: 231 };
 // Presses wait until 40 s, well after the first scan (about 6 s in Azahar), so frame scenarios
-// measure the settled app.
+// measure the settled app. The host's 60-frame timing window ends at the capture frame: frames 2941–3000.
+// Events that must be measured land inside it. Touch tapes start inside the list body (y 51–218):
+// a contact's owner is decided where it lands.
 export const SCENARIOS: readonly Scenario[] = [
   { name: "idle", tape: "0:0x0", capture: 3000, kind: "frame" },
   { name: "scroll", tape: `0:0x0,2400:0x${A.toString(16)},2406:0x0,2700:0x${DOWN.toString(16)}`, capture: 3000, kind: "frame" },
   { name: "now-playing", tape: `0:0x0,2400:0x${A.toString(16)},2406:0x0`, capture: 3000, kind: "frame" },
   { name: "dj", tape: `0:0x0,2400:0x${A.toString(16)},2406:0x0,2460:0x${SELECT.toString(16)},2466:0x0`, capture: 3000, kind: "frame" },
+  // Swapped: the wide deck idle on top, the narrow list below.
+  { name: "swapped-idle", tape: `0:0x0,${holdSelect(2460)}`, capture: 3000, kind: "frame" },
+  // A slow finger-follow drag (2 px per frame, y 214 → 16, frames 2900–2999, lifted at 3000) down through
+  // the whole window: a sub-row shift every measured frame, a row boundary about every 10.
+  { name: "touch-drag", tape: `0:0x0,${holdSelect(2460)}`, touch: dragTape(2900, 160, 214, -2, 100), capture: 3000, kind: "frame" },
+  // The fastest flick the cap allows (83 px per frame ≈ 5000 px/s over 215 → 132 → 49), lifted one frame
+  // before the window: the fling crosses about 4 rows per frame as the window opens and decays through it.
+  { name: "touch-fling", tape: `0:0x0,${holdSelect(2460)}`, touch: dragTape(2937, 160, 215, -83, 3), capture: 3000, kind: "frame" },
+  // The swap itself: the hold fires at 2959, inside the window, so both screens' remount is measured.
+  { name: "swap", tape: `0:0x0,${holdSelect(2900)}`, capture: 3000, kind: "frame" },
+  // DJ Mode replacing the narrow Explorer: a SELECT tap at 2975, released at 2977.
+  { name: "swap-dj", tape: `0:0x0,${holdSelect(2460)},2975:0x${SELECT.toString(16)},2977:0x0`, capture: 3000, kind: "frame" },
+  // The keyboard while swapped: both screens rebuild in one frame when the Search gel is tapped.
+  { name: "swap-search", tape: `0:0x0,${holdSelect(2460)}`, touch: `2975:1,${SEARCH_GEL.x},${SEARCH_GEL.y}@2976:-`, capture: 3000, kind: "frame" },
   { name: "scan-first", tape: "0:0x0", capture: 3600, kind: "scan" },
   { name: "scan-cached", tape: "0:0x0", capture: 3600, kind: "scan", keepCard: true },
 ];
@@ -158,7 +187,7 @@ async function build(scenario: Scenario, out: string): Promise<string> {
   const log = join(out, `${scenario.name}.build.log`);
   const proc = Bun.spawn(["bun", "scripts/build.ts", "--capture"], {
     cwd: ROOT,
-    env: { ...process.env, POCKETJS_CAPTURE_INPUT: scenario.tape, POCKETJS_CAP_START: String(scenario.capture), POCKETJS_CAP_N: "1" },
+    env: { ...process.env, POCKETJS_CAPTURE_INPUT: scenario.tape, POCKETJS_CAPTURE_TOUCH: scenario.touch ?? "", POCKETJS_CAP_START: String(scenario.capture), POCKETJS_CAP_N: "1" },
     stdout: Bun.file(log), stderr: Bun.file(log),
   });
   if ((await proc.exited) !== 0) throw new Error(`perf: capture build for ${scenario.name} failed (see ${log})`);

@@ -6,7 +6,7 @@ import { AQUA } from "../aqua.ts";
 import { Gel } from "./gel.tsx";
 import { KeyBadge } from "./strips.tsx";
 import { trackOffset } from "../geometry.ts";
-import type { Theme } from "../theme.ts";
+import type { Layout, Theme } from "../theme.ts";
 
 /** Inner width of the progress track (220 wide with a 1 px border). */
 export const PROGRESS_TRACK_PX = 218;
@@ -48,12 +48,15 @@ export function StatePanel(props: { title: string; lines: readonly PanelLine[]; 
   );
 }
 
-export function IdlePanel(props: { theme?: Theme }) {
+export function IdlePanel(props: { layout?: Layout; theme?: Theme }) {
   const t = () => props.theme ?? AQUA;
+  const layout = () => props.layout ?? "narrow";
   return (
-    <View class={t().idlePanel}>
+    <View class={t().idlePanel(layout())}>
       <Text class={t().panelTitle}>Nothing playing</Text>
-      <Line line={["Pick a song above and press", "A", ""]} theme={props.theme} />
+      <Show when={layout() === "narrow"} fallback={<Text class={t().panelText}>Tap a song below to play it</Text>}>
+        <Line line={["Pick a song above and press", "A", ""]} theme={props.theme} />
+      </Show>
     </View>
   );
 }

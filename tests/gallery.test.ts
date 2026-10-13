@@ -289,6 +289,34 @@ test("dj: the platter's box and spindle; the side panel with the song, its time 
   expect(skips).toEqual([227, 269]);
 });
 
+/** Whether some node on `surface` has exactly this rect. */
+function hasRect(surface: "primary" | "auxiliary", rect: Rect): boolean {
+  const walk = (node: SimNode): boolean => node.rect?.join(",") === rect.join(",") || node.children.some(walk);
+  const root = world.tree(surface);
+  return root ? walk(root) : false;
+}
+
+test("swapped: the wide deck on top, the narrow Songs list with footer gels below", () => {
+  show("swapped");
+  expectAll(screenText(world, "primary"), ["One More Time", "Daft Punk", "3 of 12", "1:42", "-3:58"]);
+  expect(hasRect("primary", [118, 10, 272, 100])).toBe(true); // the info LCD
+  expect(hasRect("primary", [10, 120, 380, 30])).toBe(true); // the seek capsule
+  expect(hasRect("primary", [10, 160, 380, 72])).toBe(true); // the transport row
+  const bottom = screenText(world, "auxiliary");
+  expectAll(bottom, ["iPoDS", "142 songs · 9.6 hrs", "Song Name", "Artist", "Digital Love", "♪", "Search", "Back"]);
+  expect(bottom).not.toContain("Now Playing");
+  const albums = pathTo(world, "auxiliary", "Albums").at(-3)!.rect!;
+  expect(albums[0] + albums[2]).toBeLessThanOrEqual(314);
+  expect(backgroundOf(pathTo(world, "auxiliary", "Digital Love"))).toBe(SELECTED_ROW);
+  expect(pathTo(world, "auxiliary", "Aerodynamic").at(-5)!.rect![3]).toBe(168);
+});
+
+test("swapped-album: the album drill-down with its breadcrumb and an Albums gel", () => {
+  show("swapped-album");
+  expectAll(screenText(world, "auxiliary"), ["Discovery", "Daft Punk · 14 songs", "Song Name", "Time", "#", "Search", "Albums"]);
+  expectAll(screenText(world, "primary"), ["Aerodynamic", "2 of 14"]);
+});
+
 test("search: query strip with results; the classic keyboard on the bottom screen", () => {
   show("search");
   expectAll(screenText(world, "primary"), ["Search:", "daft", "4 found", "Edit search", "Clear"]);
