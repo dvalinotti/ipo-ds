@@ -8,7 +8,7 @@ const stats = (work: [number, number], localmedia?: Stats["localmedia"]): Stats 
 });
 
 test("the scenarios are the spec's, and the budgets its targets", () => {
-  expect(SCENARIOS.map((s) => s.name)).toEqual(["idle", "scroll", "now-playing", "dj", "scan-first", "scan-cached"]);
+  expect(SCENARIOS.map((s) => s.name)).toEqual(["idle", "scroll", "now-playing", "dj", "swapped-idle", "touch-drag", "touch-fling", "swap", "swap-dj", "swap-search", "scan-first", "scan-cached"]);
   expect(BUDGET_US).toEqual({ new: 14_000, old: 30_000 });
   expect(SCAN_BUDGET_MS).toEqual({ first: 10_000, cached: 1_000, confirm: 3_000 });
   expect(scenario("scan-cached").keepCard).toBe(true); // it reads the cache scan-first wrote
@@ -31,4 +31,28 @@ test("scan scenarios are judged by the scan's timings", () => {
   expect(overBudget(cached, "old", stats([0, 0], { cachedMs: -1, scanMs: 936, files: 324, parsed: 0 }))).toBe("cached list -1 ms > 1000 ms");
   expect(overBudget(cached, "old", stats([0, 0], { cachedMs: 1_001, scanMs: 936, files: 324, parsed: 0 }))).toBe("cached list 1001 ms > 1000 ms");
   expect(overBudget(cached, "old", stats([0, 0], { cachedMs: 345, scanMs: 3_001, files: 324, parsed: 0 }))).toBe("confirmation 3001 ms > 3000 ms");
+});
+
+test("the touch tapes land where they mean to: list drags inside the body, the search tap in the footer, the swap inside the window", () => {
+  const points = (name: string) => scenario(name).touch!.split("@").map((entry) => {
+    const [frame, payload] = entry.split(":");
+    if (payload === "-") return { frame: Number(frame), lift: true, x: 0, y: 0 };
+    const [, x, y] = payload!.split(",").map(Number);
+    return { frame: Number(frame), lift: false, x: x!, y: y! };
+  });
+  for (const name of ["touch-drag", "touch-fling"]) {
+    const tape = points(name);
+    expect(tape[0]!.frame).toBeGreaterThan(2525); // after the swap hold (2460–2525)
+    expect(tape[0]!.y).toBeGreaterThanOrEqual(51); // the down lands in the list body…
+    expect(tape[0]!.y).toBeLessThan(219);
+    expect(tape[0]!.x).toBeLessThan(300); // …left of the scrollbar's hit region
+    for (const p of tape) if (!p.lift) { expect(p.x).toBeGreaterThanOrEqual(0); expect(p.x).toBeLessThanOrEqual(319); expect(p.y).toBeGreaterThanOrEqual(0); expect(p.y).toBeLessThanOrEqual(239); }
+    expect(tape.at(-1)!.lift).toBe(true);
+  }
+  const search = points("swap-search");
+  expect(search[0]!.y).toBeGreaterThanOrEqual(220); // the footer
+  expect(search[0]!.frame).toBeGreaterThanOrEqual(3000); // inside the capture window
+  expect(scenario("swap").tape).toBe("0:0x0,2950:0x1,3016:0x0"); // the hold fires at 3009, inside 3000–3059
+  expect(scenario("swap-dj").tape.endsWith("3005:0x1,3007:0x0")).toBe(true);
+  expect(scenario("swapped-idle").touch).toBeUndefined();
 });
