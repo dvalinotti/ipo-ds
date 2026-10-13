@@ -21,6 +21,7 @@ Prerequisites, from the pinned runtime's `hosts/3ds/README.md`:
 git clone --recursive https://github.com/dvalinotti/ipo-ds
 cd ipo-ds
 bun install --cwd runtime --frozen-lockfile
+bun install --frozen-lockfile
 bun scripts/setup.ts
 bun run 3ds                # dist/ipo-ds-main.3dsx and dist/ipo-ds-main.pocket
 bun run 3ds --cia          # also dist/ipo-ds-main.cia

@@ -10,5 +10,14 @@
     "check": "bun runtime/node_modules/typescript/bin/tsc --noEmit",
     "test": "bun test --conditions=browser ./tests",
     "gallery": "bun scripts/gallery.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.12.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-solid": "0.18.1",
+    "prettier": "3.9.10",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.71.2"
   }
 }

@@ -14,11 +14,12 @@ A walkman-style MP3 player for the Nintendo 3DS in the Aqua / iTunes 4 look: a S
 ```sh
 git submodule update --init runtime
 bun install --cwd runtime --frozen-lockfile
-bun scripts/setup.ts          # symlinks @pocketjs/framework, solid-js, @types, bun-types in node_modules/ to runtime/
+bun install --frozen-lockfile # the lint and format tools
+bun scripts/setup.ts          # symlinks @pocketjs/framework, solid-js, @types/bun, bun-types in node_modules/ to runtime/
 bun run --cwd runtime wasm    # runtime/hosts/web/pocketjs.wasm for the sim tests; needs `rustup target add wasm32-unknown-unknown`
 ```
 
-`node_modules/` holds only those symlinks; there is no root lockfile. Re-run `bun scripts/setup.ts` (and the wasm build) after moving the submodule pin.
+The root `bun.lock` holds the lint and format tools; `typescript` there matches the runtime's. `node_modules/` holds those tools beside the symlinks. Re-run `bun scripts/setup.ts` (and the wasm build) after moving the submodule pin.
 
 ## Commands
 
