@@ -40,3 +40,6 @@ export function seekTarget(positionMs: number, durationMs: number, direction: -1
 export function controlsTable(): string[] {
   return BINDINGS.map((b) => `| ${b.button} | ${b.normal} | ${b.swapped} |`);
 }
+
+/** The fastest flick the list accepts, px per virtual second: 83 px, about 4 rows, on the fling's first frame (spec §8). */
+export const FLING_MAX_PX_PER_S = 5000;
