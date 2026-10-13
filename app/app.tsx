@@ -28,7 +28,9 @@ export default function App() {
   onButtonPress(BTN.ZL, () => session.dispatch({ type: "prev" }), { active: notSearching });
   onButtonPress(BTN.ZR, () => session.dispatch({ type: "next" }), { active: notSearching });
   // A SELECT tap flips the bottom screen to DJ Mode and back; a 1 s hold swaps the screens. Neither
-  // with L or R anywhere in the press (the host's devmenu chord is L+R+SELECT).
+  // with L or R in the press (the host's devmenu chord is L+R+SELECT): the tap fires on release, so it
+  // sees the whole press; the hold fires at 1 s and sees the press up to then. A shoulder that arrives
+  // after the swap leaves it standing, because undoing it would remount both screens again.
   const chorded = (held: number) => (held & (BTN.LTRIGGER | BTN.RTRIGGER)) !== 0;
   onTapOrHold(
     BTN.SELECT,

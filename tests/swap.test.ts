@@ -116,6 +116,19 @@ test("a SELECT tap still toggles DJ Mode; L with SELECT neither toggles nor swap
   expect(platterShown(rig.world)).toBe(false);
 }, 120_000);
 
+test("the hold fires at one second: a shoulder that arrives after the swap leaves it standing", async () => {
+  // The chord rule covers the press up to the hold time. Undoing a swap that already happened would
+  // remount both screens a second time, so a late L or R changes nothing about the placement.
+  const rig = await boot();
+  frames(rig, 62, { buttons: BTN.SELECT }); // past HOLD_FRAMES: swapped while SELECT is still down
+  expect(screenText(rig.world, "auxiliary")).toContain("iPoDS");
+  frames(rig, 10, { buttons: BTN.SELECT | L });
+  frames(rig, 3);
+  expect(screenText(rig.world, "auxiliary")).toContain("iPoDS");
+  expect(screenText(rig.world, "primary")).not.toContain("Song Name");
+  expect(platterShown(rig.world)).toBe(false);
+}, 120_000);
+
 test("the list keeps its place and its focus across a swap", async () => {
   const rig = await boot();
   // Down 12 scrolls the window to row 5; up 4 leaves the focus on row 8, still inside it. A fresh Explorer

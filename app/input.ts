@@ -27,7 +27,8 @@ export function onRepeat(button: number, fire: (repeat: boolean) => void, active
 
 /**
  * A release before the hold time is a tap; holding fires `hold` once instead. Both receive `held`, the OR
- * of every button mask seen while the button was down (a chord anywhere in the press shows there).
+ * of every button mask seen while the button was down so far: the whole press for `tap` (it fires on
+ * release), the press up to the hold time for `hold` (it fires there, not on release).
  * Latched: see stepLatch; starts latched like onRepeat.
  */
 export function onTapOrHold(button: number, tap: (held: number) => void, hold: (held: number) => void, active: () => boolean): void {
