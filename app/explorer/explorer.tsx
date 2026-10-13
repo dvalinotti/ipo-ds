@@ -17,7 +17,7 @@ import { ColumnHeader, ListRow, Scrollbar } from "../theme/parts/list.tsx";
 import { StatePanel } from "../theme/parts/panels.tsx";
 import { Breadcrumb, FooterGels, FooterLegend, SearchStrip, type TouchLegendItem } from "../theme/parts/strips.tsx";
 import { RecycledList } from "./recycled-list.tsx";
-import { bodyTopPx, centredOffset, clampVelocity, NARROW_W, rowAt, snapToRow, thumbFor, TRACK_HIT_PX } from "./scroll.ts";
+import { bodyTopPx, centredOffset, clampVelocity, NARROW_W, offsetForThumb, pageOffset, rowAt, snapToRow, thumbFor, TRACK_HIT_PX } from "./scroll.ts";
 import { nearestTop } from "./window.ts";
 import { settled } from "../reactive.ts";
 import { Toolbar } from "../theme/parts/toolbar.tsx";
@@ -249,6 +249,41 @@ export function Explorer(props: { layout: Layout; session: Session; store: Explo
         const row = list[rowDown]!;
         if (row.kind === "song") props.session.dispatch({ type: "playFrom", ids: songIds(list), startId: row.id });
         else dispatch({ type: "open", row });
+      },
+    });
+
+    // The scrollbar: a down on the thumb drags it (finger travel maps to the offset by the track ratio);
+    // a tap on the track above or below it pages. Its region exists only while a thumb does, and the
+    // list's region stops where it starts, so a contact is one recognizer's alone.
+    let grab: number | null = null; // the finger's y inside the thumb while dragging it
+    const thumbAt = (y: number) => {
+      const t = thumb();
+      if (!t) return null;
+      const local = y - bodyTop() - t.top;
+      return local >= 0 && local < t.height ? local : null;
+    };
+    createGesture({
+      surface: "auxiliary",
+      axis: "y",
+      region: { rect: () => (thumb() ? { x: NARROW_W - TRACK_HIT_PX, y: bodyTop(), w: TRACK_HIT_PX, h: bodyPx() } : null) },
+      onDown: (c) => {
+        grab = null;
+        if (!listActive()) return;
+        s.stop();
+        grab = thumbAt(c.y);
+      },
+      onPanMove: (c) => {
+        const t = thumb();
+        if (grab === null || !t || !listActive()) return;
+        s.scrollTo(offsetForThumb(c.y - bodyTop() - grab, count() * ROW_PX, bodyPx(), t.height), { immediate: true });
+      },
+      onPanEnd: () => { grab = null; },
+      onUp: () => { if (listActive()) alignToRow(); },
+      onCancel: () => { grab = null; },
+      onTap: (c) => {
+        const t = thumb();
+        if (!t || !listActive() || thumbAt(c.y) !== null) return;
+        s.scrollTo(pageOffset(s.offset(), c.y - bodyTop() < t.top ? -1 : 1, page() * ROW_PX, maxOffset()));
       },
     });
   }

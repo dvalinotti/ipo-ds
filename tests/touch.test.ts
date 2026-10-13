@@ -5,7 +5,7 @@ import { afterAll, expect, test } from "bun:test";
 import { BTN } from "@pocketjs/framework/input";
 import { LIBRARY } from "./fixtures/library.ts";
 import { disposeGuest, screenText } from "./support/app-world.ts";
-import { aligned, BODY_TOP, bootSwapped, drag, frames, holdSelect, listText, opens, press, rowTextSpanning, rowYs, ROW, scans, selectedRow, tap } from "./support/rig.ts";
+import { aligned, BODY_TOP, bootSwapped, drag, frames, holdSelect, listText, opens, press, rowTextAt, rowTextSpanning, rowYs, ROW, scans, selectedRow, tap } from "./support/rig.ts";
 
 afterAll(disposeGuest);
 
@@ -104,4 +104,29 @@ test("a rescan that drops rows under a scrolled window clamps it and shows the r
   expect(Math.min(...ys)).toBe(BODY_TOP);
   expect(aligned(ys)).toBe(true);
   expect(listText(rig.world)).toContain("Aerodynamic");
+}, 120_000);
+
+test("dragging the thumb scrolls by the track ratio, not the finger's pixels, and rests on a row", async () => {
+  const rig = await bootSwapped();
+  // 20 rows in a 168 px window: the thumb is 67 px tall, its travel 101 px for 252 px of content.
+  drag(rig, 313, BODY_TOP + 10, 0, 1); // down on the thumb
+  drag(rig, 313, BODY_TOP + 10, 10, 6); // 50 px down the track: about 125 px of content, 6 rows
+  frames(rig, 40);
+  expect(aligned(rowYs(rig.world))).toBe(true);
+  expect(rowTextAt(rig.world, BODY_TOP)).toContain("Death on Two Legs"); // row 6 at the top
+  expect(opens(rig.host)).toEqual([]);
+}, 120_000);
+
+test("a tap on the track below the thumb pages down; above it pages up; a short list has no track to tap", async () => {
+  const rig = await bootSwapped();
+  tap(rig, 313, BODY_TOP + 150); // below the thumb (0–67)
+  frames(rig, 30);
+  expect(aligned(rowYs(rig.world))).toBe(true);
+  expect(rowTextAt(rig.world, BODY_TOP)).toContain("Dirty Harry"); // row 8 at the top
+  tap(rig, 313, BODY_TOP + 2); // above the thumb now
+  frames(rig, 30);
+  expect(rowTextAt(rig.world, BODY_TOP)).toContain("Aerodynamic");
+  const short = await bootSwapped([LIBRARY[0]!, LIBRARY[1]!, LIBRARY[2]!]);
+  tap(short, 313, BODY_TOP + ROW + 10); // no thumb: the right edge belongs to the rows // row 1 of three by title: Digital Love, handle 2
+  expect(opens(short.host)).toEqual(["open(2)"]);
 }, 120_000);
