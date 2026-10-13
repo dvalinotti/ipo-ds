@@ -34,6 +34,7 @@ test("scan scenarios are judged by the scan's timings", () => {
 });
 
 test("the touch tapes land where they mean to: list drags inside the body, the search tap in the footer, the swap inside the window", () => {
+  const WINDOW = { first: 2941, last: 3000 }; // the host's timing window ends at the capture frame
   const points = (name: string) => scenario(name).touch!.split("@").map((entry) => {
     const [frame, payload] = entry.split(":");
     if (payload === "-") return { frame: Number(frame), lift: true, x: 0, y: 0 };
@@ -42,7 +43,10 @@ test("the touch tapes land where they mean to: list drags inside the body, the s
   });
   for (const name of ["touch-drag", "touch-fling"]) {
     const tape = points(name);
-    expect(tape[0]!.frame).toBeGreaterThan(2525); // after the swap hold (2460–2525)
+    expect(tape[0]!.frame).toBeGreaterThanOrEqual(2526); // after the swap hold's release (2526)
+    expect(tape.at(-1)!.frame).toBeLessThanOrEqual(WINDOW.last);
+    if (name === "touch-drag") expect(tape[0]!.frame).toBeLessThanOrEqual(WINDOW.first); // the drag spans the whole window
+    else expect(tape.at(-1)!.frame).toBeLessThan(WINDOW.first); // the fling fills the window
     expect(tape[0]!.y).toBeGreaterThanOrEqual(51); // the down lands in the list body…
     expect(tape[0]!.y).toBeLessThan(219);
     expect(tape[0]!.x).toBeLessThan(300); // …left of the scrollbar's hit region
@@ -51,8 +55,9 @@ test("the touch tapes land where they mean to: list drags inside the body, the s
   }
   const search = points("swap-search");
   expect(search[0]!.y).toBeGreaterThanOrEqual(220); // the footer
-  expect(search[0]!.frame).toBeGreaterThanOrEqual(3000); // inside the capture window
-  expect(scenario("swap").tape).toBe("0:0x0,2950:0x1,3016:0x0"); // the hold fires at 3009, inside 3000–3059
-  expect(scenario("swap-dj").tape.endsWith("3005:0x1,3007:0x0")).toBe(true);
+  expect(search[0]!.frame).toBeGreaterThanOrEqual(WINDOW.first); // inside the window
+  expect(search[0]!.frame).toBeLessThanOrEqual(WINDOW.last);
+  expect(scenario("swap").tape).toBe("0:0x0,2900:0x1,2966:0x0"); // the hold fires at 2959, inside 2941–3000
+  expect(scenario("swap-dj").tape.endsWith("2975:0x1,2977:0x0")).toBe(true);
   expect(scenario("swapped-idle").touch).toBeUndefined();
 });
