@@ -5,7 +5,7 @@ import { afterAll, expect, test } from "bun:test";
 import { BTN } from "@pocketjs/framework/input";
 import { LIBRARY } from "./fixtures/library.ts";
 import { disposeGuest, screenText } from "./support/app-world.ts";
-import { aligned, BODY_TOP, bootSwapped, drag, frames, holdSelect, listText, opens, press, rowYs, ROW, scans, selectedRow, tap } from "./support/rig.ts";
+import { aligned, BODY_TOP, bootSwapped, drag, frames, holdSelect, listText, opens, press, rowTextSpanning, rowYs, ROW, scans, selectedRow, tap } from "./support/rig.ts";
 
 afterAll(disposeGuest);
 
@@ -60,8 +60,13 @@ test("a tap during a fling stops it on a row and plays the row under the finger"
   const moving = rowYs(rig.world);
   frames(rig, 1);
   expect(rowYs(rig.world)).not.toEqual(moving);
-  tap(rig, 100, BODY_TOP + 3 * ROW + 10);
+  const y = BODY_TOP + 3 * ROW + 10;
+  frames(rig, 1, { touches: [{ x: 100, y }], surface: "auxiliary" }); // the down frame stops the fling
+  const under = rowTextSpanning(rig.world, y); // the row under the finger, before the align tween moves it
+  expect(under).not.toBe("");
+  frames(rig, 2); // lifted
   frames(rig, 30);
+  expect(selectedRow(rig.world, "auxiliary")).toContain(under);
   expect(aligned(rowYs(rig.world))).toBe(true);
   expect(opens(rig.host)).toHaveLength(1);
   expect(selectedRow(rig.world, "auxiliary")).not.toContain("Aerodynamic"); // the highlight left row 0

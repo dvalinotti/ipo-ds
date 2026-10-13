@@ -95,6 +95,12 @@ export function rowTextAt(world: BundleWorld, y: number): string {
   return row ? flat(row).map((c) => c.text).join("") : "";
 }
 
+/** The text of the striped row whose rect spans screen y (a mid-row scroll puts tops off the grid). */
+export function rowTextSpanning(world: BundleWorld, y: number): string {
+  const row = flat(world.tree("auxiliary")).find((n) => isRow(n) && n.rect![1] <= y && y < n.rect![1] + n.rect![3] && n.bgColor >>> 0 !== 0 && n.bgColor >>> 0 !== SELECTED_ROW);
+  return row ? flat(row).map((c) => c.text).join("") : "";
+}
+
 /** The text of the focused (selected) list row on a surface. */
 export function selectedRow(world: BundleWorld, surface: Surface): string {
   const row = flat(world.tree(surface)).find((node) => node.type === "view" && node.bgColor >>> 0 === SELECTED_ROW);
