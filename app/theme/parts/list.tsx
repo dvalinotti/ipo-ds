@@ -92,8 +92,8 @@ export function Scrollbar(props: { thumbTop: number; thumbHeight: number; theme?
   const t = () => props.theme ?? AQUA;
   return (
     <View class={t().scrollTrack}>
-      {/* translate, not inset: the thumb moves every frame under a finger and must not relayout */}
-      <Gel classes={t().scrollThumb} style={{ translateY: props.thumbTop, height: props.thumbHeight }} />
+      {/* inset, not translate: measured in Azahar, a translated thumb costs the wide scroll its Old budget (extra draw spikes) and buys nothing on a per-frame thumb drag (docs/perf.md, Screen Swap Plan 10). */}
+      <Gel classes={t().scrollThumb} style={{ insetT: props.thumbTop, height: props.thumbHeight }} />
     </View>
   );
 }
