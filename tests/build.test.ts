@@ -47,6 +47,8 @@ test("every class literal compiles, in the app and in the gallery (the 3DS build
       );
       const output = `${run.stdout.toString()}${run.stderr.toString()}`;
       expect(run.exitCode, output).toBe(0);
+      // The class pass ran and reported: a build that prints nothing must not pass as clean.
+      expect(output).toContain("pass 1:");
       expect(output.split("\n").filter((line) => line.includes("does not compile"))).toEqual([]);
     } finally {
       rmSync(dir, { recursive: true, force: true });
