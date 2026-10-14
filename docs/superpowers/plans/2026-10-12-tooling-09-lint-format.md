@@ -10,11 +10,15 @@
 - ESLint 10 flat config, type-aware through `tsconfig.lint.json` (`tsconfig.json` plus `noUncheckedIndexedAccess`). Presets: `strictTypeChecked` and `stylisticTypeChecked`, Solid's TypeScript preset for `app/`, then the PocketJS guest rules for `app/`, then `eslint-config-prettier`.
 - `bun run check` runs `scripts/check.ts`: `tsc` on `tsconfig.json`, then on `tsconfig.lint.json` with errors outside iPoDS's own files dropped (the runtime sources `tsc` follows are not written for that flag).
 - The 3DS pipeline does not read `--strict-classes`: it prints `class "…" does not compile` and exits 0. A test fails on that warning instead.
-- A GitHub Actions workflow runs check, lint, format check and the tests on every push to `main` and every pull request.
+- The existing `.github/workflows/build.yml` runs check, lint and format check (before its WASM and 3DS steps) and the tests on every push to `main` and every pull request, on Bun 1.4.2.
 
 **Tech Stack:** ESLint 10.12.0, `@eslint/js` 10.0.1, typescript-eslint 8.71.2, eslint-plugin-solid 0.18.1, eslint-config-prettier 10.1.8, Prettier 3.9.10, TypeScript 5.9.3 (the runtime's), Bun 1.4.2.
 
 **Spec:** the measurements under *Findings* (there is no separate spec document). Every number there comes from a trial run with the configuration in this plan on a copy of the tree at `56bfcbd`, whose TypeScript is `main`'s at `d6e8d08`.
+
+## Execution (2026-10-14, PR #10)
+
+The plan ran on `feature/style-lint` from `main` at `8c56f78`, 49 commits after the tree the Findings were measured on. Measured there: 242 baseline tests (243 after Task 6); Prettier changed 67 files; ESLint reported 45 findings (the 31 below plus 14 in Screen Swap code, all fixed under Task 5's rules); the bundle and gallery identity checks held. The tasks below are amended to what was built.
 
 ## Findings
 
@@ -55,7 +59,7 @@
 
 - **Branch:** `chore/lint-format` from `main`. The merge is the user's call after review.
 - **No fork changes.** The `runtime` pin does not move. The 3DS pipeline's ignored `--strict-classes` is a PocketJS change (CLAUDE.md); Task 6 works around it here.
-- **No behaviour change.** Task 2's bundle is identical to Task 0's. After Task 5, `bun run test` passes with the same 189 tests, and `bun run gallery` writes images byte-identical to Task 0's.
+- **No behaviour change.** Task 2's bundle is identical to Task 0's. After Task 5, `bun run test` passes with the same 242 tests, and `bun run gallery` writes images byte-identical to Task 0's.
 - **Scope is TypeScript.** Prettier and ESLint never walk `runtime/` (CLAUDE.md): Prettier gets explicit globs, and ESLint's global ignore stops it from descending. JSON, Markdown, HTML and YAML stay hand-formatted.
 - **Exact versions** in `package.json` (no ranges), so `bun install --frozen-lockfile` in CI matches local runs. `typescript` matches `runtime/node_modules/typescript/package.json`; move it with the runtime pin.
 - **Commits:** Conventional Commits (`build:`, `style:`, `fix:`, `test:`, `ci:`, `docs:`).
@@ -74,8 +78,8 @@
 | `eslint.config.js` | 4 | the flat config |
 | `app/**`, `scripts/sim.ts`, `tests/**` | 5 | the 31 findings |
 | `tests/build.test.ts` | 6 | class literals compile in both manifests |
-| `.github/workflows/check.yml` | 7 | CI |
-| `AGENTS.md`, `README.md` | 8 | setup, commands, standards |
+| `.github/workflows/build.yml`, `release.yml` | 7 | CI |
+| `AGENTS.md`, `DEVELOPING.md` | 1, 8 | setup, commands, standards |
 
 ---
 
@@ -91,7 +95,7 @@ bun scripts/setup.ts
 bun run --cwd runtime wasm
 ```
 
-- [ ] **Step 2: Confirm the baseline is green.** `bun run check` → clean. `bun run test` → **189 pass, 0 fail**.
+- [ ] **Step 2: Confirm the baseline is green.** `bun run check` → clean. `bun run test` → **242 pass, 0 fail**.
 
 - [ ] **Step 3: Record the baselines** (outside Git):
 
@@ -104,7 +108,7 @@ bun run gallery && cp -R dist/gallery .local/gallery-baseline
 
 ## Task 1: Root dev dependencies
 
-**Files:** `package.json`, `bun.lock` (new), `scripts/setup.ts`, `README.md` (Build), `AGENTS.md` (Setup)
+**Files:** `package.json`, `bun.lock` (new), `scripts/setup.ts`, `DEVELOPING.md` (Build), `AGENTS.md` (Setup)
 
 - [ ] **Step 1: Narrow the `@types` link.** In `scripts/setup.ts`, replace the `"@types": "runtime/node_modules/@types"` entry with `"@types/bun": "runtime/node_modules/@types/bun"`, and before the loop drop a checkout's old directory link:
 
@@ -137,9 +141,9 @@ bun install
 bun scripts/setup.ts
 ```
 
-Expected: `node_modules/@pocketjs/framework`, `solid-js`, `bun-types` and `@types/bun` are links into `runtime/`; `node_modules/@types` is a directory; `git -C runtime status --short` is empty and `ls runtime/node_modules/@types` lists no `esrecurse` or `json-schema`. `bun run check` → clean; `bun run test` → 189 pass.
+Expected: `node_modules/@pocketjs/framework`, `solid-js`, `bun-types` and `@types/bun` are links into `runtime/`; `node_modules/@types` is a directory; `git -C runtime status --short` is empty and `ls runtime/node_modules/@types` lists no `esrecurse` or `json-schema`. `bun run check` → clean; `bun run test` → 242 pass.
 
-- [ ] **Step 4: Document the install.** In the README's Build block and AGENTS.md's Setup block, add `bun install --frozen-lockfile` after the runtime install. In AGENTS.md, replace "there is no root lockfile" with: the root `bun.lock` holds the lint and format tools; `typescript` there matches the runtime's.
+- [ ] **Step 4: Document the install.** In DEVELOPING.md's Build block and AGENTS.md's Setup block, add `bun install --frozen-lockfile` after the runtime install. In AGENTS.md, replace "there is no root lockfile" with: the root `bun.lock` holds the lint and format tools; `typescript` there matches the runtime's.
 
 - [ ] **Step 5: Commit** `build: root dev dependencies for lint and format`.
 
@@ -188,7 +192,7 @@ cmp .local/baseline/guest/ipo-ds-main.js .local/formatted/guest/ipo-ds-main.js
 cmp .local/baseline/guest/ipo-ds-main.pak .local/formatted/guest/ipo-ds-main.pak
 ```
 
-Expected: both identical. `bun run check` clean; `bun run test` 189 pass; `bun run format:check` clean.
+Expected: both identical. `bun run check` clean; `bun run test` 242 pass; `bun run format:check` clean.
 
 - [ ] **Step 4: Commit** `style: format TypeScript with Prettier`. This commit holds only Prettier's output.
 
@@ -216,8 +220,13 @@ Expected: both identical. `bun run check` clean; `bun run test` 189 pass; `bun r
 // Type-checks iPoDS twice: with tsconfig.json, as the build sees it, and with
 // tsconfig.lint.json, which adds noUncheckedIndexedAccess. tsc also checks the
 // runtime sources the app imports, which are not written for that flag, so the
-// second pass fails only on errors in iPoDS's own files.
-const OWN = /^(app|scripts|tests)\/|^pocket\.config\.ts\(/;
+// second pass fails only on errors in iPoDS's own files. Errors without a file
+// (an unreadable tsconfig) fail both passes, and so does a tsc that exits
+// non-zero without reporting an error (it did not run).
+import { resolve } from "node:path";
+
+const ERROR = /(^|: )error TS/;
+const OWN = /^(app|scripts|tests)\/|^pocket\.config\.ts\(|^error TS/;
 const PASSES = [
   ["tsconfig.json", () => true],
   ["tsconfig.lint.json", (line: string) => OWN.test(line)],
@@ -225,16 +234,17 @@ const PASSES = [
 
 let failed = false;
 for (const [project, keep] of PASSES) {
-  const run = Bun.spawnSync(["bun", "runtime/node_modules/typescript/bin/tsc", "--noEmit", "--pretty", "false", "-p", project], {
-    cwd: new URL("..", import.meta.url).pathname,
-    stdout: "pipe",
-    stderr: "inherit",
-  });
-  const errors = run.stdout
-    .toString()
-    .split("\n")
-    .filter((line) => line.includes(": error TS") && keep(line));
-  if (errors.length > 0) {
+  const run = Bun.spawnSync(
+    [process.execPath, "runtime/node_modules/typescript/bin/tsc", "--noEmit", "--pretty", "false", "-p", project],
+    { cwd: resolve(import.meta.dir, ".."), stdout: "pipe", stderr: "inherit" },
+  );
+  const output = run.stdout.toString();
+  const all = output.split("\n").filter((line) => ERROR.test(line));
+  const errors = all.filter(keep);
+  if (run.exitCode !== 0 && all.length === 0) {
+    failed = true;
+    console.error(`${project}: tsc exited ${run.exitCode} without reporting an error\n${output}`);
+  } else if (errors.length > 0) {
     failed = true;
     console.error(`${project}: ${errors.length} error(s)\n${errors.join("\n")}`);
   }
@@ -282,7 +292,7 @@ const NO_TIMERS =
 const LITERAL_CLASSES = "Class strings compile only as complete literals: choose between literals with a ternary.";
 
 export default defineConfig(
-  { ignores: ["runtime/", "dist/", "node_modules/", "app/library/compose-table.ts"] },
+  { ignores: ["runtime/", "dist/", ".local/", "node_modules/", "app/library/compose-table.ts"] },
   js.configs.recommended,
   tseslint.configs.strictTypeChecked,
   tseslint.configs.stylisticTypeChecked,
@@ -383,7 +393,7 @@ export default defineConfig(
 
 - [ ] **Step 1: Apply the table.** Run `bun run lint:fix` first (rows 11–15), then edit the rest by hand, then `bun run format`.
 
-- [ ] **Step 2: Confirm.** `bun run lint` → 0 problems. `bun run check` → clean. `bun run format:check` → clean. `bun run test` → **189 pass, 0 fail**.
+- [ ] **Step 2: Confirm.** `bun run lint` → 0 problems. `bun run check` → clean. `bun run format:check` → clean. `bun run test` → **242 pass, 0 fail**.
 
 - [ ] **Step 3: Gallery unchanged.** `bun run gallery`, then `cmp` every file in `dist/gallery` against `.local/gallery-baseline` → all identical.
 
@@ -408,6 +418,8 @@ test("every class literal compiles, in the app and in the gallery (the 3DS build
       );
       const output = `${run.stdout.toString()}${run.stderr.toString()}`;
       expect(run.exitCode, output).toBe(0);
+      // The class pass ran and reported: a build that prints nothing must not pass as clean.
+      expect(output).toContain("pass 1:");
       expect(output.split("\n").filter((line) => line.includes("does not compile"))).toEqual([]);
     } finally {
       rmSync(dir, { recursive: true, force: true });
@@ -426,52 +438,23 @@ test("every class literal compiles, in the app and in the gallery (the 3DS build
 
 ## Task 7: CI
 
-**Files:** `.github/workflows/check.yml`
+**Files:** `.github/workflows/build.yml`, `.github/workflows/release.yml`
 
-- [ ] **Step 1: Add the workflow.** Pin each action to its current major at implementation time.
+- [ ] **Step 1: Extend the existing workflow** (it already type-checks, tests and builds the 3DS binaries on every push to `main` and every pull request; a second workflow would run the tests twice). In `build.yml`: the install step also runs `bun install --frozen-lockfile` before `bun scripts/setup.ts`; Typecheck moves up, and Lint (`bun run lint`) and Format check (`bun run format:check`) follow it, all before the cargo cache and WASM steps. Move `bun-version` from 1.3.14 to 1.4.2 in `build.yml` and `release.yml`: Bun 1.3.14 ignores a lockfile written by 1.4.2 and fails `--frozen-lockfile`.
 
-```yaml
-name: check
-on:
-  push:
-    branches: [main]
-  pull_request:
-jobs:
-  check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          submodules: true
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.4.2
-      - run: bun install --cwd runtime --frozen-lockfile
-      - run: bun install --frozen-lockfile
-      - run: bun scripts/setup.ts
-      - run: bun run check
-      - run: bun run lint
-      - run: bun run format:check
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
-      - run: bun run --cwd runtime wasm
-      - run: bun run test
-```
+- [ ] **Step 2: Confirm** that the pull request's run is green, and that a formatting slip (an extra space in an `app/` file) pushed to a throwaway branch and run through `workflow_dispatch` turns Format check red; delete the branch.
 
-- [ ] **Step 2: Confirm on the pull request** that the run is green, and that a pushed formatting slip (an extra space in any `app/` file) turns `format:check` red; revert it.
-
-- [ ] **Step 3: Commit** `ci: check, lint, format and test on pushes and pull requests`.
+- [ ] **Step 3: Commit** `ci: lint and format check in the build workflow, on Bun 1.4.2`.
 
 ---
 
 ## Task 8: Documentation
 
-**Files:** `AGENTS.md`, `README.md`
+**Files:** `AGENTS.md`, `DEVELOPING.md`
 
 - [ ] **Step 1: AGENTS.md Commands.** Add `bun run lint`, `bun run lint:fix`, `bun run format`, `bun run format:check`, and describe `bun run check` as the two `tsc` passes. Add one line under Code standards: ESLint and Prettier enforce the mechanical rules; run `bun run format` and `bun run lint` before committing.
 
-- [ ] **Step 2: README Develop.** Add `bun run lint` and `bun run format` to the command block.
+- [ ] **Step 2: DEVELOPING.md Develop.** Add `bun run lint` and `bun run format` to the command block, `lints, checks the format` to the Release section's description of `build.yml`, and a note on `git config blame.ignoreRevsFile .git-blame-ignore-revs`.
 
 - [ ] **Step 3: Commit** `docs: lint and format commands`.
 
@@ -479,7 +462,7 @@ jobs:
 
 ## Task 9: Branch verification
 
-- [ ] **Step 1:** From a clean clone of the branch, run the Setup block in AGENTS.md, then `bun run check`, `bun run lint`, `bun run format:check` → clean; `bun run test` → 190 pass (189 plus Task 6's).
+- [ ] **Step 1:** From a clean clone of the branch, run the Setup block in AGENTS.md, then `bun run check`, `bun run lint`, `bun run format:check` → clean; `bun run test` → 243 pass (242 plus Task 6's).
 - [ ] **Step 2:** `bun run 3ds` builds the `.3dsx` (Docker) and it boots in Azahar to the Songs list; play a song and enter DJ Mode.
 - [ ] **Step 3:** `git -C runtime status --short` is empty; `git status --short` shows nothing under `dist/` or `.local/`.
 
