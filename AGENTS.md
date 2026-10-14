@@ -19,7 +19,7 @@ bun scripts/setup.ts          # symlinks @pocketjs/framework, solid-js, @types/b
 bun run --cwd runtime wasm    # runtime/hosts/web/pocketjs.wasm for the sim tests; needs `rustup target add wasm32-unknown-unknown`
 ```
 
-The root `bun.lock` holds the lint and format tools; `typescript` there matches the runtime's. `node_modules/` holds those tools beside the symlinks. Re-run `bun scripts/setup.ts` (and the wasm build) after moving the submodule pin.
+The root `bun.lock` holds the lint and format tools; `typescript` there matches the runtime's. `node_modules/` holds those tools beside the symlinks; a checkout set up before the root `bun.lock` runs `bun scripts/setup.ts` once before its first root install, or that install writes into `runtime/node_modules/@types` through the old link. Re-run `bun scripts/setup.ts` (and the wasm build) after moving the submodule pin.
 
 ## Commands
 

@@ -48,6 +48,10 @@ bun run perf           # frame and scan timings in Azahar (docs/perf.md)
 states built from `app/theme/parts`. L / R flip states on a device or in the
 sim. Design notes, specs and plans live in `docs/`.
 
+`.git-blame-ignore-revs` lists formatting-only commits. GitHub skips them in
+blame; for local `git blame`, run
+`git config blame.ignoreRevsFile .git-blame-ignore-revs` once.
+
 ## Updating PocketJS
 
 ```sh
