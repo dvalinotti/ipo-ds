@@ -8,7 +8,15 @@ import type { JSX as SolidJSX } from "solid-js";
 import { AQUA } from "../theme/aqua.ts";
 import { ColumnHeader, ListRow, Scrollbar } from "../theme/parts/list.tsx";
 import { ArtFrame, CoverLoading, InfoLcd, SeekCapsule, TransportButton, TransportRow } from "../theme/parts/deck.tsx";
-import { Breadcrumb, FooterGels, FooterLegend, KeyBadge, SearchStrip, type LegendItem, type TouchLegendItem } from "../theme/parts/strips.tsx";
+import {
+  Breadcrumb,
+  FooterGels,
+  FooterLegend,
+  KeyBadge,
+  SearchStrip,
+  type LegendItem,
+  type TouchLegendItem,
+} from "../theme/parts/strips.tsx";
 import { Gel, GelLabel } from "../theme/parts/gel.tsx";
 import { trackOffset } from "../theme/geometry.ts";
 import { REFERENCE_LABEL, REFERENCE_LABEL_SHADOW, REFERENCE_PILL } from "./reference-pill.ts";
@@ -58,7 +66,15 @@ function Top(props: {
     <View class={AQUA.topScreen}>
       <Toolbar title="iPoDS" line={props.line ?? LIBRARY_LINE} active={props.tab} layout={props.layout} />
       {props.strip}
-      {props.header ? <ColumnHeader left={props.header[0]} right={props.header[1]} lead={props.headerLead} count={props.count} layout={props.layout} /> : null}
+      {props.header ? (
+        <ColumnHeader
+          left={props.header[0]}
+          right={props.header[1]}
+          lead={props.headerLead}
+          count={props.count}
+          layout={props.layout}
+        />
+      ) : null}
       {props.body ?? (
         <View class={AQUA.listBody}>
           <For each={props.rows ?? []}>
@@ -96,13 +112,48 @@ function SunsetCover() {
   );
 }
 
-function NowPlaying(props: { layout?: Layout; album: string; title: string; artist: string; position: string; elapsed: string; remaining: string; fraction: number; playing: boolean; cover?: boolean; loading?: boolean }) {
+function NowPlaying(props: {
+  layout?: Layout;
+  album: string;
+  title: string;
+  artist: string;
+  position: string;
+  elapsed: string;
+  remaining: string;
+  fraction: number;
+  playing: boolean;
+  cover?: boolean;
+  loading?: boolean;
+}) {
   return (
     <View class={AQUA.bottomScreen}>
-      <ArtFrame album={props.album}>{props.loading ? <CoverLoading /> : props.cover ? <SunsetCover /> : undefined}</ArtFrame>
-      <InfoLcd layout={props.layout} title={props.title} artist={props.artist} album={props.album} position={props.position} shuffle repeat="all" />
-      <SeekCapsule layout={props.layout} elapsed={props.elapsed} remaining={props.remaining} fraction={props.fraction} enabled />
-      <TransportRow layout={props.layout} touch={props.layout !== "wide"} playing={props.playing} shuffle repeat="all" enabled />
+      <ArtFrame album={props.album}>
+        {props.loading ? <CoverLoading /> : props.cover ? <SunsetCover /> : undefined}
+      </ArtFrame>
+      <InfoLcd
+        layout={props.layout}
+        title={props.title}
+        artist={props.artist}
+        album={props.album}
+        position={props.position}
+        shuffle
+        repeat="all"
+      />
+      <SeekCapsule
+        layout={props.layout}
+        elapsed={props.elapsed}
+        remaining={props.remaining}
+        fraction={props.fraction}
+        enabled
+      />
+      <TransportRow
+        layout={props.layout}
+        touch={props.layout !== "wide"}
+        playing={props.playing}
+        shuffle
+        repeat="all"
+        enabled
+      />
     </View>
   );
 }
@@ -112,7 +163,14 @@ function Idle(props: { layout?: Layout }) {
     <View class={AQUA.bottomScreen}>
       <IdlePanel layout={props.layout} />
       <SeekCapsule layout={props.layout} elapsed="--:--" remaining="--:--" fraction={0} enabled={false} />
-      <TransportRow layout={props.layout} touch={props.layout !== "wide"} playing={false} shuffle={false} repeat="off" enabled={false} />
+      <TransportRow
+        layout={props.layout}
+        touch={props.layout !== "wide"}
+        playing={false}
+        shuffle={false}
+        repeat="off"
+        enabled={false}
+      />
     </View>
   );
 }
@@ -125,8 +183,14 @@ function SearchKeyboard() {
 }
 
 const SONG_ROWS: Row[] = [
-  ["Aerodynamic", "Daft Punk"], ["Around the World", "Daft Punk"], ["Clint Eastwood", "Gorillaz"], ["Digital Love", "Daft Punk"],
-  ["Feel Good Inc.", "Gorillaz"], ["Hoppípolla", "Sigur Rós"], ["One More Time", "Daft Punk"], ["Starálfur", "Sigur Rós"],
+  ["Aerodynamic", "Daft Punk"],
+  ["Around the World", "Daft Punk"],
+  ["Clint Eastwood", "Gorillaz"],
+  ["Digital Love", "Daft Punk"],
+  ["Feel Good Inc.", "Gorillaz"],
+  ["Hoppípolla", "Sigur Rós"],
+  ["One More Time", "Daft Punk"],
+  ["Starálfur", "Sigur Rós"],
 ];
 
 /** Every gel state (spec §6.2) on the list area: the reference pill, progress fills, scroll thumbs. */
@@ -201,8 +265,30 @@ function GelSheetBottom() {
 export const STATES: readonly GalleryState[] = [
   {
     name: "main",
-    top: () => <Top tab="Songs" header={["Song Name", "Artist"]} rows={SONG_ROWS} selected={3} playing={6} scroll={[18, 44]} legend={SONGS_LEGEND} />,
-    bottom: () => <NowPlaying album="Discovery" title="One More Time" artist="Daft Punk" position="3 of 12" elapsed="1:42" remaining="-3:58" fraction={0.3} playing cover />,
+    top: () => (
+      <Top
+        tab="Songs"
+        header={["Song Name", "Artist"]}
+        rows={SONG_ROWS}
+        selected={3}
+        playing={6}
+        scroll={[18, 44]}
+        legend={SONGS_LEGEND}
+      />
+    ),
+    bottom: () => (
+      <NowPlaying
+        album="Discovery"
+        title="One More Time"
+        artist="Daft Punk"
+        position="3 of 12"
+        elapsed="1:42"
+        remaining="-3:58"
+        fraction={0.3}
+        playing
+        cover
+      />
+    ),
   },
   {
     name: "artists",
@@ -210,11 +296,25 @@ export const STATES: readonly GalleryState[] = [
       <Top
         tab="Artists"
         header={["Artist", "Songs"]}
-        rows={[["Beyoncé", "3"], ["Daft Punk", "12"], ["Gorillaz", "9"], ["Queen", "14"], ["Radiohead", "22"], ["Sigur Rós", "7"], ["The Strokes", "11"], ["Unknown Artist", "2"]]}
+        rows={[
+          ["Beyoncé", "3"],
+          ["Daft Punk", "12"],
+          ["Gorillaz", "9"],
+          ["Queen", "14"],
+          ["Radiohead", "22"],
+          ["Sigur Rós", "7"],
+          ["The Strokes", "11"],
+          ["Unknown Artist", "2"],
+        ]}
         selected={3}
         count
         scroll={[4, 60]}
-        legend={[{ key: "A", label: "Open", primary: true }, { key: "X", label: "Search" }, { key: "B", label: "Back" }, { key: "Y", label: "Now Playing" }]}
+        legend={[
+          { key: "A", label: "Open", primary: true },
+          { key: "X", label: "Search" },
+          { key: "B", label: "Back" },
+          { key: "Y", label: "Now Playing" },
+        ]}
       />
     ),
     bottom: () => <Idle />,
@@ -227,22 +327,65 @@ export const STATES: readonly GalleryState[] = [
         strip={<Breadcrumb root="Albums" leaf="Discovery" detail="Daft Punk · 14 songs" />}
         header={["Song Name", "Time"]}
         headerLead="#"
-        rows={[["One More Time", "5:20", "1"], ["Aerodynamic", "3:27", "2"], ["Digital Love", "4:58", "3"], ["Harder, Better, Faster, Stronger (Extended Club Mix)", "3:44", "4"], ["Crescendolls", "3:31", "5"], ["Nightvision", "1:44", "6"], ["Superheroes", "3:57", "7"]]}
+        rows={[
+          ["One More Time", "5:20", "1"],
+          ["Aerodynamic", "3:27", "2"],
+          ["Digital Love", "4:58", "3"],
+          ["Harder, Better, Faster, Stronger (Extended Club Mix)", "3:44", "4"],
+          ["Crescendolls", "3:31", "5"],
+          ["Nightvision", "1:44", "6"],
+          ["Superheroes", "3:57", "7"],
+        ]}
         selected={1}
         scroll={[4, 52]}
-        legend={[{ key: "A", label: "Play", primary: true }, { key: "X", label: "Search" }, { key: "B", label: "Albums" }, { key: "Y", label: "Now Playing" }]}
+        legend={[
+          { key: "A", label: "Play", primary: true },
+          { key: "X", label: "Search" },
+          { key: "B", label: "Albums" },
+          { key: "Y", label: "Now Playing" },
+        ]}
       />
     ),
-    bottom: () => <NowPlaying album="Discovery" title="Aerodynamic" artist="Daft Punk" position="2 of 14" elapsed="0:12" remaining="-3:15" fraction={0.05} playing />,
+    bottom: () => (
+      <NowPlaying
+        album="Discovery"
+        title="Aerodynamic"
+        artist="Daft Punk"
+        position="2 of 14"
+        elapsed="0:12"
+        remaining="-3:15"
+        fraction={0.05}
+        playing
+      />
+    ),
   },
   {
     name: "scanning",
-    top: () => <Top tab="Songs" line="Scanning…" body={<StatePanel title="Scanning your music…" lines={["sdmc:/music/ · 87 of 142 files"]} progress={0.46} />} legend={[{ key: "Y", label: "Now Playing" }]} />,
+    top: () => (
+      <Top
+        tab="Songs"
+        line="Scanning…"
+        body={<StatePanel title="Scanning your music…" lines={["sdmc:/music/ · 87 of 142 files"]} progress={0.46} />}
+        legend={[{ key: "Y", label: "Now Playing" }]}
+      />
+    ),
     bottom: () => <Idle />,
   },
   {
     name: "empty",
-    top: () => <Top tab="Songs" line="0 songs" body={<StatePanel title="No music found" lines={["Copy .mp3 files to the /music folder on your SD card,", ["then press", "X", "to scan again."]]} />} legend={[{ key: "X", label: "Scan again", primary: true }]} />,
+    top: () => (
+      <Top
+        tab="Songs"
+        line="0 songs"
+        body={
+          <StatePanel
+            title="No music found"
+            lines={["Copy .mp3 files to the /music folder on your SD card,", ["then press", "X", "to scan again."]]}
+          />
+        }
+        legend={[{ key: "X", label: "Scan again", primary: true }]}
+      />
+    ),
     bottom: () => <Idle />,
   },
   {
@@ -256,12 +399,20 @@ export const STATES: readonly GalleryState[] = [
         strip={
           <>
             <SearchStrip query="the masterplan live at knebworth 1996 remastered" count={1} />
-            <Breadcrumb root="Albums" leaf="(What’s the Story) Morning Glory? (Remastered Deluxe Edition)" detail="Oasis · 12 songs" />
+            <Breadcrumb
+              root="Albums"
+              leaf="(What’s the Story) Morning Glory? (Remastered Deluxe Edition)"
+              detail="Oasis · 12 songs"
+            />
           </>
         }
         header={["Song Name", "Time"]}
         headerLead="#"
-        rows={[["Don’t Look Back in Anger", "4:48", "4"], ["Wonderwall", "4:18", "3"], ["Champagne Supernova – Extended Remastered Version", "7:31", "12"]]}
+        rows={[
+          ["Don’t Look Back in Anger", "4:48", "4"],
+          ["Wonderwall", "4:18", "3"],
+          ["Champagne Supernova – Extended Remastered Version", "7:31", "12"],
+        ]}
         selected={1}
         playing={2}
         legend={SONGS_LEGEND}
@@ -282,8 +433,30 @@ export const STATES: readonly GalleryState[] = [
   },
   {
     name: "loading",
-    top: () => <Top tab="Songs" header={["Song Name", "Artist"]} rows={SONG_ROWS} selected={4} playing={4} scroll={[18, 44]} legend={SONGS_LEGEND} />,
-    bottom: () => <NowPlaying album="Discovery" title="Digital Love" artist="Daft Punk" position="4 of 12" elapsed="0:00" remaining="-4:58" fraction={0} playing loading />,
+    top: () => (
+      <Top
+        tab="Songs"
+        header={["Song Name", "Artist"]}
+        rows={SONG_ROWS}
+        selected={4}
+        playing={4}
+        scroll={[18, 44]}
+        legend={SONGS_LEGEND}
+      />
+    ),
+    bottom: () => (
+      <NowPlaying
+        album="Discovery"
+        title="Digital Love"
+        artist="Daft Punk"
+        position="4 of 12"
+        elapsed="0:00"
+        remaining="-4:58"
+        fraction={0}
+        playing
+        loading
+      />
+    ),
   },
   {
     name: "gels",
@@ -292,7 +465,17 @@ export const STATES: readonly GalleryState[] = [
   },
   {
     name: "dj",
-    top: () => <Top tab="Songs" header={["Song Name", "Artist"]} rows={SONG_ROWS} selected={3} playing={6} scroll={[18, 44]} legend={SONGS_LEGEND} />,
+    top: () => (
+      <Top
+        tab="Songs"
+        header={["Song Name", "Artist"]}
+        rows={SONG_ROWS}
+        selected={3}
+        playing={6}
+        scroll={[18, 44]}
+        legend={SONGS_LEGEND}
+      />
+    ),
     bottom: () => (
       <View class={AQUA.bottomScreen}>
         <Platter angle={24} cover={0} />
@@ -302,15 +485,50 @@ export const STATES: readonly GalleryState[] = [
   },
   {
     name: "swapped",
-    top: () => <NowPlaying layout="wide" album="Discovery" title="One More Time" artist="Daft Punk" position="3 of 12" elapsed="1:42" remaining="-3:58" fraction={0.3} playing />,
+    top: () => (
+      <NowPlaying
+        layout="wide"
+        album="Discovery"
+        title="One More Time"
+        artist="Daft Punk"
+        position="3 of 12"
+        elapsed="1:42"
+        remaining="-3:58"
+        fraction={0.3}
+        playing
+      />
+    ),
     bottom: () => (
-      <Top layout="narrow" tab="Songs" header={["Song Name", "Artist"]} rows={SONG_ROWS} selected={3} playing={6} scroll={[18, 44]}
-        gels={[{ action: "search", label: "Search" }, { action: "back", label: "Back" }]} />
+      <Top
+        layout="narrow"
+        tab="Songs"
+        header={["Song Name", "Artist"]}
+        rows={SONG_ROWS}
+        selected={3}
+        playing={6}
+        scroll={[18, 44]}
+        gels={[
+          { action: "search", label: "Search" },
+          { action: "back", label: "Back" },
+        ]}
+      />
     ),
   },
   {
     name: "swapped-album",
-    top: () => <NowPlaying layout="wide" album="Discovery" title="Aerodynamic" artist="Daft Punk" position="2 of 14" elapsed="0:12" remaining="-3:15" fraction={0.05} playing />,
+    top: () => (
+      <NowPlaying
+        layout="wide"
+        album="Discovery"
+        title="Aerodynamic"
+        artist="Daft Punk"
+        position="2 of 14"
+        elapsed="0:12"
+        remaining="-3:15"
+        fraction={0.05}
+        playing
+      />
+    ),
     bottom: () => (
       <Top
         layout="narrow"
@@ -318,10 +536,21 @@ export const STATES: readonly GalleryState[] = [
         strip={<Breadcrumb root="Albums" leaf="Discovery" detail="Daft Punk · 14 songs" />}
         header={["Song Name", "Time"]}
         headerLead="#"
-        rows={[["One More Time", "5:20", "1"], ["Aerodynamic", "3:27", "2"], ["Digital Love", "4:58", "3"], ["Harder, Better, Faster, Stronger (Extended Club Mix)", "3:44", "4"], ["Crescendolls", "3:31", "5"], ["Nightvision", "1:44", "6"], ["Superheroes", "3:57", "7"]]}
+        rows={[
+          ["One More Time", "5:20", "1"],
+          ["Aerodynamic", "3:27", "2"],
+          ["Digital Love", "4:58", "3"],
+          ["Harder, Better, Faster, Stronger (Extended Club Mix)", "3:44", "4"],
+          ["Crescendolls", "3:31", "5"],
+          ["Nightvision", "1:44", "6"],
+          ["Superheroes", "3:57", "7"],
+        ]}
         selected={1}
         scroll={[4, 52]}
-        gels={[{ action: "search", label: "Search" }, { action: "back", label: "Albums" }]}
+        gels={[
+          { action: "search", label: "Search" },
+          { action: "back", label: "Albums" },
+        ]}
       />
     ),
   },
@@ -333,10 +562,20 @@ export const STATES: readonly GalleryState[] = [
         tab="Songs"
         strip={<SearchStrip query="daft" count={4} />}
         header={["Song Name", "Artist"]}
-        rows={[["Aerodynamic", "Daft Punk"], ["Around the World", "Daft Punk"], ["Digital Love", "Daft Punk"], ["One More Time", "Daft Punk"]]}
+        rows={[
+          ["Aerodynamic", "Daft Punk"],
+          ["Around the World", "Daft Punk"],
+          ["Digital Love", "Daft Punk"],
+          ["One More Time", "Daft Punk"],
+        ]}
         selected={2}
         playing={3}
-        legend={[{ key: "A", label: "Play", primary: true }, { key: "X", label: "Edit search" }, { key: "B", label: "Clear" }, { key: "Y", label: "Now Playing" }]}
+        legend={[
+          { key: "A", label: "Play", primary: true },
+          { key: "X", label: "Edit search" },
+          { key: "B", label: "Clear" },
+          { key: "Y", label: "Now Playing" },
+        ]}
       />
     ),
     bottom: () => <SearchKeyboard />,

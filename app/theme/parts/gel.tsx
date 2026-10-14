@@ -6,9 +6,14 @@ import { Text, View, type ViewProps } from "@pocketjs/framework/components";
 import { createGesture } from "@pocketjs/framework/gesture";
 import type { GelClasses } from "../theme.ts";
 
-export function Gel(props: { classes: GelClasses; style?: ViewProps["style"]; ref?: ViewProps["ref"]; children?: JSX.Element }) {
+export function Gel(props: {
+  classes: GelClasses;
+  style?: ViewProps["style"];
+  ref?: ViewProps["ref"];
+  children?: JSX.Element;
+}) {
   return (
-    <View class={props.classes.body} style={props.style} ref={props.ref as never}>
+    <View class={props.classes.body} style={props.style} ref={props.ref}>
       <View class={props.classes.gloss} />
       {props.children}
     </View>
@@ -20,7 +25,7 @@ export function GelLabel(props: { text: string; class: string; shadow?: string }
   return (
     <Show when={props.shadow} fallback={<Text class={props.class}>{props.text}</Text>}>
       <View class="relative">
-        <Text class={props.shadow!}>{props.text}</Text>
+        <Text class={props.shadow}>{props.text}</Text>
         <Text class={props.class}>{props.text}</Text>
       </View>
     </Show>

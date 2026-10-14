@@ -23,10 +23,17 @@ export function buildBundle(manifest: string): BuiltBundle {
   const output = (JSON.parse(readFileSync(resolve(ROOT, manifest), "utf8")) as { app: { output: string } }).app.output;
   const dir = mkdtempSync(join(tmpdir(), `${output}-`));
   const run = Bun.spawnSync(
-    [process.execPath, "scripts/build.ts", "--pocket-only", `--manifest=${manifest}`, `--outdir=${join(dir, "guest")}`, `--package-outdir=${dir}`],
+    [
+      process.execPath,
+      "scripts/build.ts",
+      "--pocket-only",
+      `--manifest=${manifest}`,
+      `--outdir=${join(dir, "guest")}`,
+      `--package-outdir=${dir}`,
+    ],
     { cwd: ROOT, stdout: "pipe", stderr: "pipe" },
   );
-  if (run.exitCode !== 0) throw new Error(`${output} build failed\n${run.stdout}${run.stderr}`);
+  if (run.exitCode !== 0) throw new Error(`${output} build failed\n${run.stdout.toString()}${run.stderr.toString()}`);
   const bundle = { dir, js: join(dir, "guest", `${output}.js`), pak: join(dir, "guest", `${output}.pak`) };
   built.set(manifest, bundle);
   return bundle;
@@ -38,5 +45,10 @@ export function disposeBundles(): void {
 }
 
 export function bootBuilt(bundle: BuiltBundle, extraGlobals?: Record<string, unknown>): Promise<BundleWorld> {
-  return bootBundle({ js: bundle.js, pak: bundle.pak, extraGlobals, viewport: { width: 400, height: 240, auxiliary: [320, 240] } });
+  return bootBundle({
+    js: bundle.js,
+    pak: bundle.pak,
+    extraGlobals,
+    viewport: { width: 400, height: 240, auxiliary: [320, 240] },
+  });
 }

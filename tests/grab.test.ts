@@ -22,7 +22,8 @@ function fakeHost(takes = true) {
 }
 
 /** The point at `deg` clockwise from 12 o'clock, 60 px out. */
-const at = (deg: number) => [cx + 60 * Math.sin((deg * Math.PI) / 180), cy - 60 * Math.cos((deg * Math.PI) / 180)] as const;
+const at = (deg: number) =>
+  [cx + 60 * Math.sin((deg * Math.PI) / 180), cy - 60 * Math.cos((deg * Math.PI) / 180)] as const;
 
 test("a down on the record grabs it; off the record or over the corners it does not", () => {
   const host = fakeHost();

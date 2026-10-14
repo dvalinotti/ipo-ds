@@ -4,7 +4,11 @@ import { createSimLocalMedia, type SimLocalTrack } from "../runtime/hosts/sim/lo
 import { createPlayerController } from "../app/player/controller.ts";
 import { currentId } from "../app/player/reducer.ts";
 
-const song = (file: string, extra: Partial<SimLocalTrack> = {}): SimLocalTrack => ({ file, durationMs: 1000, ...extra });
+const song = (file: string, extra: Partial<SimLocalTrack> = {}): SimLocalTrack => ({
+  file,
+  durationMs: 1000,
+  ...extra,
+});
 
 function setup(library: SimLocalTrack[]) {
   const host = createSimLocalMedia(library);
@@ -143,5 +147,9 @@ test("scratch grabs and lets go with the status read back; the rate only sends",
   expect(player.state().status.positionMs).toBe(300);
   player.scratch(false);
   expect(player.state().status.scratching).toBe(false);
-  expect(host.log.filter((entry) => entry.startsWith("scratch"))).toEqual(["scratchBegin()", "scratchRate(-1)", "scratchEnd()"]);
+  expect(host.log.filter((entry) => entry.startsWith("scratch"))).toEqual([
+    "scratchBegin()",
+    "scratchRate(-1)",
+    "scratchEnd()",
+  ]);
 });

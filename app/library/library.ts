@@ -1,8 +1,18 @@
 import type { LocalTrack } from "@pocketjs/framework/localmedia";
 import { normalize } from "./normalize.ts";
 
-export interface Artist { key: string; name: string; trackIds: number[] }
-export interface Album { key: string; name: string; /** Folded name, for search. */ nameKey: string; artist: string; trackIds: number[] }
+export interface Artist {
+  key: string;
+  name: string;
+  trackIds: number[];
+}
+export interface Album {
+  key: string;
+  name: string;
+  /** Folded name, for search. */ nameKey: string;
+  artist: string;
+  trackIds: number[];
+}
 export interface Library {
   tracks: Map<number, LocalTrack>;
   songs: number[];
@@ -16,8 +26,11 @@ export interface Library {
 }
 
 export type View =
-  | { kind: "songs" } | { kind: "artists" } | { kind: "albums" }
-  | { kind: "artist"; key: string } | { kind: "album"; key: string };
+  | { kind: "songs" }
+  | { kind: "artists" }
+  | { kind: "albums" }
+  | { kind: "artist"; key: string }
+  | { kind: "album"; key: string };
 export type Row = { kind: "song"; id: number } | { kind: "artist"; key: string } | { kind: "album"; key: string };
 
 const stem = (file: string) => file.replace(/\.[^.]*$/, "");
@@ -48,7 +61,8 @@ export function buildLibrary(input: readonly LocalTrack[]): Library {
   }
   const byTitle = (a: number, b: number) => compare(titleKey.get(a)!, titleKey.get(b)!) || a - b;
   const byAlbumTrack = (a: number, b: number) => {
-    const x = tracks.get(a)!, y = tracks.get(b)!;
+    const x = tracks.get(a)!,
+      y = tracks.get(b)!;
     return trackOrder(x.track) - trackOrder(y.track) || byTitle(a, b);
   };
 
@@ -72,22 +86,36 @@ export function buildLibrary(input: readonly LocalTrack[]): Library {
   albums.forEach((album, rank) => album.trackIds.forEach((id) => albumRank.set(id, rank)));
 
   const artists = [...artistMap.values()].sort((a, b) => compare(a.key, b.key));
-  for (const artist of artists) artist.trackIds.sort((a, b) => albumRank.get(a)! - albumRank.get(b)! || byAlbumTrack(a, b));
+  for (const artist of artists)
+    artist.trackIds.sort((a, b) => albumRank.get(a)! - albumRank.get(b)! || byAlbumTrack(a, b));
 
-  return { tracks, songs: [...tracks.keys()].sort(byTitle), artists, albums, artistByKey: artistMap, albumByKey: albumMap, searchKeys };
+  return {
+    tracks,
+    songs: [...tracks.keys()].sort(byTitle),
+    artists,
+    albums,
+    artistByKey: artistMap,
+    albumByKey: albumMap,
+    searchKeys,
+  };
 }
 
 export function rows(library: Library, view: View, query: string): Row[] {
   const q = normalize(query);
   const songs = (list: readonly number[]): Row[] =>
-    (q === "" ? list : list.filter((id) => library.searchKeys.get(id)!.includes(q))).map((id) => ({ kind: "song", id }));
+    (q === "" ? list : list.filter((id) => library.searchKeys.get(id)!.includes(q))).map((id) => ({
+      kind: "song",
+      id,
+    }));
   switch (view.kind) {
     case "songs":
       return songs(library.songs);
     case "artists":
       return library.artists.filter((a) => q === "" || a.key.includes(q)).map((a) => ({ kind: "artist", key: a.key }));
     case "albums":
-      return library.albums.filter((a) => q === "" || a.nameKey.includes(q)).map((a) => ({ kind: "album", key: a.key }));
+      return library.albums
+        .filter((a) => q === "" || a.nameKey.includes(q))
+        .map((a) => ({ kind: "album", key: a.key }));
     case "artist":
       return songs(library.artistByKey.get(view.key)?.trackIds ?? []);
     case "album":

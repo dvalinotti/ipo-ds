@@ -2,7 +2,7 @@
 // transport buttons (shuffle, previous, play/pause, next, repeat, and the DJ
 // Mode gel). Each transport button owns its touch recognizer and calls
 // `onPress`; the screen (app/now-playing) wires the seek drag and the actions.
-import { children, Show } from "solid-js";
+import { children, Show, untrack } from "solid-js";
 import { Image, Sprite, Text, View } from "@pocketjs/framework/components";
 import { createGesture } from "@pocketjs/framework/gesture";
 import { ready, ResourceImage } from "@pocketjs/framework/resource";
@@ -47,7 +47,13 @@ export function ArtFrame(props: { album: string; children?: SolidJSX.Element; th
 
 /** An uploaded cover texture (128×128) drawn at the art frame's 98×98 interior. */
 export function CoverImage(props: { handle: number }) {
-  return <ResourceImage class="w-[98] h-[98]" state={() => ready({ handle: props.handle, width: 98, height: 98 })} fallback={() => null} />;
+  return (
+    <ResourceImage
+      class="w-[98] h-[98]"
+      state={() => ready({ handle: props.handle, width: 98, height: 98 })}
+      fallback={() => null}
+    />
+  );
 }
 
 /** The art frame's interior while a cover decodes: the Aqua spinner on soft grey. */
@@ -84,7 +90,12 @@ export function InfoLcd(props: {
         when={!props.note}
         fallback={
           <View class={t().infoStatus}>
-            <Marquee text={props.note!} class={props.alert ? t().infoAlert : t().infoNote} slot={props.alert ? FONT_12_BOLD : FONT_12} width={INFO_TEXT_PX[layout()]} />
+            <Marquee
+              text={props.note!}
+              class={props.alert ? t().infoAlert : t().infoNote}
+              slot={props.alert ? FONT_12_BOLD : FONT_12}
+              width={INFO_TEXT_PX[layout()]}
+            />
           </View>
         }
       >
@@ -133,7 +144,7 @@ export function SeekCapsule(props: {
   const layout = () => props.layout ?? "narrow";
   const x = () => trackOffset(props.fraction, seekTrackPx(props.hours ?? false, layout()));
   return (
-    <View class={t().seekCapsule(layout())} ref={props.ref as never}>
+    <View class={t().seekCapsule(layout())} ref={props.ref}>
       <Text class={props.hours ? t().seekTimeWide : t().seekTime}>{props.elapsed}</Text>
       <View class={props.hours ? t().seekTrackWide(layout()) : t().seekTrack(layout())}>
         <Show when={props.enabled}>
@@ -147,17 +158,29 @@ export function SeekCapsule(props: {
 }
 
 /** `compact` draws prev / next as a 34 px grey gel (the DJ Mode side panel); other kinds ignore it. */
-export function TransportButton(props: { kind: TransportKind; on?: boolean; enabled?: boolean; compact?: boolean; touch?: boolean; onPress?: () => void; theme?: Theme }) {
+export function TransportButton(props: {
+  kind: TransportKind;
+  on?: boolean;
+  enabled?: boolean;
+  compact?: boolean;
+  touch?: boolean;
+  onPress?: () => void;
+  theme?: Theme;
+}) {
   const t = () => props.theme ?? AQUA;
   const enabled = () => props.enabled ?? true;
   const big = () => props.kind === "play" || props.kind === "pause";
   // Aqua gels carry white ink: play/pause, and shuffle/repeat while on. Graphite carries dark ink.
-  const ink = () => (enabled() && (big() || ((props.kind === "shuffle" || props.kind === "repeat" || props.kind === "dj") && props.on)) ? "white" : "ink");
+  const ink = () =>
+    enabled() && (big() || ((props.kind === "shuffle" || props.kind === "repeat" || props.kind === "dj") && props.on))
+      ? "white"
+      : "ink";
   // A View's onPress answers the focused node's A press; a touch on the bottom
   // screen needs its own recognizer over this button. On the top screen (touch false) there is no
   // digitizer: no recognizer.
   let node: unknown = null;
-  if (props.touch ?? true) {
+  // Whether the button has a touch recognizer is decided once, at mount.
+  if (untrack(() => props.touch) ?? true) {
     createGesture({
       surface: "auxiliary",
       region: { node: () => node as never },
@@ -168,14 +191,18 @@ export function TransportButton(props: { kind: TransportKind; on?: boolean; enab
   }
   return (
     <Gel
-      classes={props.compact && (props.kind === "prev" || props.kind === "next") ? t().transportCompact(enabled()) : t().transport(props.kind, props.on ?? false, enabled())}
+      classes={
+        props.compact && (props.kind === "prev" || props.kind === "next")
+          ? t().transportCompact(enabled())
+          : t().transport(props.kind, props.on ?? false, enabled())
+      }
       ref={(n: unknown) => (node = n)}
     >
-      <Show
-        when={big()}
-        fallback={<Image class="w-[16] h-[16]" src={t().icon(props.kind as "shuffle" | "repeat" | "prev" | "next" | "dj", ink())} />}
-      >
-        <Image class="w-[32] h-[32]" src={t().iconLarge(props.kind as "play" | "pause", ink() === "white" ? "white" : "ink")} />
+      <Show when={big()} fallback={<Image class="w-[16] h-[16]" src={t().icon(props.kind, ink())} />}>
+        <Image
+          class="w-[32] h-[32]"
+          src={t().iconLarge(props.kind as "play" | "pause", ink() === "white" ? "white" : "ink")}
+        />
       </Show>
     </Gel>
   );
@@ -200,11 +227,43 @@ export function TransportRow(props: {
   const t = () => props.theme ?? AQUA;
   return (
     <View class={t().transportRow(props.layout ?? "narrow")}>
-      <TransportButton kind="shuffle" on={props.shuffle} enabled={props.enabled} onPress={props.onShuffle} touch={props.touch} theme={props.theme} />
-      <TransportButton kind="prev" enabled={props.enabled} onPress={props.onPrev} touch={props.touch} theme={props.theme} />
-      <TransportButton kind={props.playing ? "pause" : "play"} enabled={props.enabled} onPress={props.onToggle} touch={props.touch} theme={props.theme} />
-      <TransportButton kind="next" enabled={props.enabled} onPress={props.onNext} touch={props.touch} theme={props.theme} />
-      <TransportButton kind="repeat" on={props.repeat !== "off"} enabled={props.enabled} onPress={props.onRepeat} touch={props.touch} theme={props.theme} />
+      <TransportButton
+        kind="shuffle"
+        on={props.shuffle}
+        enabled={props.enabled}
+        onPress={props.onShuffle}
+        touch={props.touch}
+        theme={props.theme}
+      />
+      <TransportButton
+        kind="prev"
+        enabled={props.enabled}
+        onPress={props.onPrev}
+        touch={props.touch}
+        theme={props.theme}
+      />
+      <TransportButton
+        kind={props.playing ? "pause" : "play"}
+        enabled={props.enabled}
+        onPress={props.onToggle}
+        touch={props.touch}
+        theme={props.theme}
+      />
+      <TransportButton
+        kind="next"
+        enabled={props.enabled}
+        onPress={props.onNext}
+        touch={props.touch}
+        theme={props.theme}
+      />
+      <TransportButton
+        kind="repeat"
+        on={props.repeat !== "off"}
+        enabled={props.enabled}
+        onPress={props.onRepeat}
+        touch={props.touch}
+        theme={props.theme}
+      />
       <TransportButton kind="dj" on={props.dj ?? false} onPress={props.onDj} touch={props.touch} theme={props.theme} />
     </View>
   );

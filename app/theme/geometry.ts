@@ -20,6 +20,7 @@ export function marqueeOffset(frame: number, overflow: number): number {
   const cycle = MARQUEE_HOLD_FRAMES + scroll + MARQUEE_HOLD_FRAMES;
   const f = ((frame % cycle) + cycle) % cycle;
   if (f < MARQUEE_HOLD_FRAMES) return 0;
-  if (f < MARQUEE_HOLD_FRAMES + scroll) return 0 - Math.min(overflow, Math.round((f - MARQUEE_HOLD_FRAMES) * MARQUEE_PX_PER_FRAME));
+  if (f < MARQUEE_HOLD_FRAMES + scroll)
+    return 0 - Math.min(overflow, Math.round((f - MARQUEE_HOLD_FRAMES) * MARQUEE_PX_PER_FRAME));
   return -overflow;
 }

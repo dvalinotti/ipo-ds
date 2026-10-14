@@ -23,7 +23,11 @@ export interface HoldState {
 export const HOLD_UP: HoldState = { held: -1, fired: false };
 
 /** One frame of a tap-or-hold button: "hold" once at `holdFrames`, "tap" on a release before it. */
-export function stepHold(state: HoldState, down: boolean, holdFrames = HOLD_FRAMES): { state: HoldState; event: "tap" | "hold" | null } {
+export function stepHold(
+  state: HoldState,
+  down: boolean,
+  holdFrames = HOLD_FRAMES,
+): { state: HoldState; event: "tap" | "hold" | null } {
   if (!down) return { state: HOLD_UP, event: state.held >= 0 && !state.fired ? "tap" : null };
   const held = state.held + 1;
   // held counts from 0 on the down frame, so the hold fires on the holdFrames-th frame down.
@@ -83,8 +87,14 @@ export function stepShoulders(
   const events: ShoulderEvent[] = [];
   let chorded = yWas ? state.chorded : false;
   if (yDown) {
-    if (pressed & bits.l) { events.push("prev"); chorded = true; }
-    if (pressed & bits.r) { events.push("next"); chorded = true; }
+    if (pressed & bits.l) {
+      events.push("prev");
+      chorded = true;
+    }
+    if (pressed & bits.r) {
+      events.push("next");
+      chorded = true;
+    }
   } else {
     if (yWas && !chorded) events.push("reveal");
     // Both shoulders down is the diagnostics chord (Now Playing): no tab step.

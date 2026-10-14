@@ -29,22 +29,115 @@ function gelCases(): Case[] {
     const big = kind === "play" || kind === "pause";
     const small = kind === "shuffle" || kind === "repeat" || kind === "dj";
     for (const on of [true, false]) {
-      out.push({ name: `transport ${kind} on=${on}`, gel: AQUA.transport(kind, on, true), tone: big || (small && on) ? "blue" : "grey", outline: true, shadow: big });
-      out.push({ name: `transport ${kind} on=${on} disabled`, gel: AQUA.transport(kind, on, false), tone: "grey", outline: true, shadow: false, disabled: true });
+      out.push({
+        name: `transport ${kind} on=${on}`,
+        gel: AQUA.transport(kind, on, true),
+        tone: big || (small && on) ? "blue" : "grey",
+        outline: true,
+        shadow: big,
+      });
+      out.push({
+        name: `transport ${kind} on=${on} disabled`,
+        gel: AQUA.transport(kind, on, false),
+        tone: "grey",
+        outline: true,
+        shadow: false,
+        disabled: true,
+      });
     }
   }
   out.push({ name: "badge primary", gel: AQUA.badge(true), tone: "blue", outline: true, shadow: false });
   out.push({ name: "badge", gel: AQUA.badge(false), tone: "grey", outline: true, shadow: false });
   out.push({ name: "transport compact", gel: AQUA.transportCompact(true), tone: "grey", outline: true, shadow: false });
-  out.push({ name: "transport compact disabled", gel: AQUA.transportCompact(false), tone: "grey", outline: true, shadow: false, disabled: true });
+  out.push({
+    name: "transport compact disabled",
+    gel: AQUA.transportCompact(false),
+    tone: "grey",
+    outline: true,
+    shadow: false,
+    disabled: true,
+  });
   out.push({ name: "seek knob", gel: AQUA.seekKnob, tone: "blue", outline: true, shadow: false });
-  out.push({ name: "scroll thumb", gel: AQUA.scrollThumb, tone: "blue", outline: true, shadow: false, sizes: [[11, 16], [11, 40], [11, 166]] });
-  out.push({ name: "progress fill", gel: AQUA.progressFill, tone: "blue", outline: false, shadow: false, sizes: [[0, 10], [10, 10], [22, 10], [PROGRESS_TRACK_PX, 10]] });
-  out.push({ name: "tab active", gel: AQUA.tab(true, "wide"), tone: "blue", outline: false, shadow: false, sizes: [[40, 18], [60, 18]] });
-  out.push({ name: "tab", gel: AQUA.tab(false, "wide"), tone: "grey", outline: false, shadow: false, sizes: [[40, 18], [60, 18]] });
-  out.push({ name: "tab active narrow", gel: AQUA.tab(true, "narrow"), tone: "blue", outline: false, shadow: false, sizes: [[36, 18], [56, 18]] });
-  out.push({ name: "tab narrow", gel: AQUA.tab(false, "narrow"), tone: "grey", outline: false, shadow: false, sizes: [[36, 18], [56, 18]] });
-  out.push({ name: "footer gel", gel: AQUA.footerGel, tone: "grey", outline: true, shadow: false, sizes: [[40, 18], [80, 18]] });
+  out.push({
+    name: "scroll thumb",
+    gel: AQUA.scrollThumb,
+    tone: "blue",
+    outline: true,
+    shadow: false,
+    sizes: [
+      [11, 16],
+      [11, 40],
+      [11, 166],
+    ],
+  });
+  out.push({
+    name: "progress fill",
+    gel: AQUA.progressFill,
+    tone: "blue",
+    outline: false,
+    shadow: false,
+    sizes: [
+      [0, 10],
+      [10, 10],
+      [22, 10],
+      [PROGRESS_TRACK_PX, 10],
+    ],
+  });
+  out.push({
+    name: "tab active",
+    gel: AQUA.tab(true, "wide"),
+    tone: "blue",
+    outline: false,
+    shadow: false,
+    sizes: [
+      [40, 18],
+      [60, 18],
+    ],
+  });
+  out.push({
+    name: "tab",
+    gel: AQUA.tab(false, "wide"),
+    tone: "grey",
+    outline: false,
+    shadow: false,
+    sizes: [
+      [40, 18],
+      [60, 18],
+    ],
+  });
+  out.push({
+    name: "tab active narrow",
+    gel: AQUA.tab(true, "narrow"),
+    tone: "blue",
+    outline: false,
+    shadow: false,
+    sizes: [
+      [36, 18],
+      [56, 18],
+    ],
+  });
+  out.push({
+    name: "tab narrow",
+    gel: AQUA.tab(false, "narrow"),
+    tone: "grey",
+    outline: false,
+    shadow: false,
+    sizes: [
+      [36, 18],
+      [56, 18],
+    ],
+  });
+  out.push({
+    name: "footer gel",
+    gel: AQUA.footerGel,
+    tone: "grey",
+    outline: true,
+    shadow: false,
+    sizes: [
+      [40, 18],
+      [80, 18],
+    ],
+  });
   out.push({ name: "reference pill", gel: REFERENCE_PILL, tone: "blue", outline: true, shadow: true });
   return out;
 }
@@ -96,8 +189,16 @@ function clearance(gel: GelClasses, W: number, H: number): number | null {
 }
 
 const COLOURS = {
-  blue: { body: ["from-[#4a80da]", "via-[#4a80da]", "to-[#c8daf6]"], gloss: ["from-[#f5f8fe]", "via-[#d3e1f8]", "to-[#93b4eb]"], outline: "border-[#2b4f8c]" },
-  grey: { body: ["from-[#c4c4c4]", "via-[#c4c4c4]", "to-[#f4f4f4]"], gloss: ["from-[#fdfdfd]", "via-[#ececec]", "to-[#d6d6d6]"], outline: "border-[#6e6e6e]" },
+  blue: {
+    body: ["from-[#4a80da]", "via-[#4a80da]", "to-[#c8daf6]"],
+    gloss: ["from-[#f5f8fe]", "via-[#d3e1f8]", "to-[#93b4eb]"],
+    outline: "border-[#2b4f8c]",
+  },
+  grey: {
+    body: ["from-[#c4c4c4]", "via-[#c4c4c4]", "to-[#f4f4f4]"],
+    gloss: ["from-[#fdfdfd]", "via-[#ececec]", "to-[#d6d6d6]"],
+    outline: "border-[#6e6e6e]",
+  },
 } as const;
 
 test("every gloss lies inside its body, at least 0.25 px clear of an outline", () => {

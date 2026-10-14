@@ -21,6 +21,7 @@ Prerequisites, from the pinned runtime's `hosts/3ds/README.md`:
 git clone --recursive https://github.com/dvalinotti/ipo-ds
 cd ipo-ds
 bun install --cwd runtime --frozen-lockfile
+bun install --frozen-lockfile
 bun scripts/setup.ts
 bun run 3ds                # dist/ipo-ds-main.3dsx and dist/ipo-ds-main.pocket
 bun run 3ds --cia          # also dist/ipo-ds-main.cia
@@ -35,6 +36,8 @@ on a console.
 
 ```sh
 bun run check          # TypeScript
+bun run lint           # ESLint
+bun run format         # Prettier
 bun run test           # unit and sim tests
 bun run gallery        # dist/gallery/<n>-<state>-{top,bottom}@2x.png
 bun run test-library   # dist/test-music/: 324 tagged MP3s for a device or Azahar
@@ -44,6 +47,10 @@ bun run perf           # frame and scan timings in Azahar (docs/perf.md)
 `gallery.pocket.json` builds `app/gallery.tsx`, a storyboard of the theme's
 states built from `app/theme/parts`. L / R flip states on a device or in the
 sim. Design notes, specs and plans live in `docs/`.
+
+`.git-blame-ignore-revs` lists formatting-only commits. GitHub skips them in
+blame; for local `git blame`, run
+`git config blame.ignoreRevsFile .git-blame-ignore-revs` once.
 
 ## Updating PocketJS
 
@@ -56,9 +63,9 @@ git add runtime
 
 ## Release
 
-`.github/workflows/build.yml` typechecks, tests and builds the `.3dsx` and
-`.cia` for every pull request and push to `main`, and uploads them as the
-`ipo-ds-3ds` workflow artifact. To release:
+`.github/workflows/build.yml` typechecks, lints, checks the format, tests and
+builds the `.3dsx` and `.cia` for every pull request and push to `main`, and
+uploads them as the `ipo-ds-3ds` workflow artifact. To release:
 
 1. Set the same version in `package.json` and `pocket.json` and merge it.
 2. Tag the merge commit and push the tag:

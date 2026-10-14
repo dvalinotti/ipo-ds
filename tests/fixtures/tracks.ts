@@ -1,7 +1,13 @@
 import type { LocalTrack } from "@pocketjs/framework/localmedia";
 
-const t = (id: number, title: string, artist: string, album: string, track: number, durationMs = 180_000): LocalTrack =>
-  ({ id, file: `${id}.mp3`, title, artist, album, track, durationMs, hasArt: false });
+const t = (
+  id: number,
+  title: string,
+  artist: string,
+  album: string,
+  track: number,
+  durationMs = 180_000,
+): LocalTrack => ({ id, file: `${id}.mp3`, title, artist, album, track, durationMs, hasArt: false });
 
 export const TRACKS: LocalTrack[] = [
   t(0, "One More Time", "Daft Punk", "Discovery", 1),

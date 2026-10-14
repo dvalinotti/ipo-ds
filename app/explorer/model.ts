@@ -34,7 +34,11 @@ export function initialExplorer(): ExplorerState {
   return { tab: "Songs", drill: { Songs: null, Artists: null, Albums: null }, focus: {}, query: "" };
 }
 
-const BASE_VIEW: Readonly<Record<Tab, View>> = { Songs: { kind: "songs" }, Artists: { kind: "artists" }, Albums: { kind: "albums" } };
+const BASE_VIEW: Readonly<Record<Tab, View>> = {
+  Songs: { kind: "songs" },
+  Artists: { kind: "artists" },
+  Albums: { kind: "albums" },
+};
 
 export function currentView(state: ExplorerState): View {
   return state.drill[state.tab] ?? BASE_VIEW[state.tab];
@@ -64,7 +68,8 @@ export function reduceExplorer(state: ExplorerState, action: ExplorerAction): Ex
       return action.tab === state.tab ? state : { ...state, tab: action.tab };
     case "open": {
       if (action.row.kind === "song") return state;
-      const view: View = action.row.kind === "artist" ? { kind: "artist", key: action.row.key } : { kind: "album", key: action.row.key };
+      const view: View =
+        action.row.kind === "artist" ? { kind: "artist", key: action.row.key } : { kind: "album", key: action.row.key };
       return { ...state, drill: { ...state.drill, [state.tab]: view } };
     }
     case "back":
@@ -83,12 +88,17 @@ export function reduceExplorer(state: ExplorerState, action: ExplorerAction): Ex
         if (view.kind === "album") return action.library.albums.some((a) => a.key === view.key) ? view : null;
         return view;
       };
-      const drill = { Songs: alive(state.drill.Songs), Artists: alive(state.drill.Artists), Albums: alive(state.drill.Albums) };
+      const drill = {
+        Songs: alive(state.drill.Songs),
+        Artists: alive(state.drill.Artists),
+        Albums: alive(state.drill.Albums),
+      };
       return TAB_ORDER.every((tab) => drill[tab] === state.drill[tab]) ? state : { ...state, drill };
     }
     case "reveal": {
       const songs: ExplorerState = { ...state, tab: "Songs" };
-      const visible = (s: ExplorerState) => rows(action.library, BASE_VIEW.Songs, s.query).findIndex((row) => row.kind === "song" && row.id === action.id);
+      const visible = (s: ExplorerState) =>
+        rows(action.library, BASE_VIEW.Songs, s.query).findIndex((row) => row.kind === "song" && row.id === action.id);
       let at = visible(songs);
       let next = songs;
       if (at < 0) {
@@ -163,7 +173,13 @@ export function rowCellsIn(library: Library, view: View, row: Row): RowCells {
   }
   const track = library.tracks.get(row.id)!;
   if (view.kind === "artist") return { title: track.title, detail: track.album, count: false };
-  if (view.kind === "album") return { title: track.title, detail: formatTime(track.durationMs), lead: track.track > 0 ? String(track.track) : "", count: false };
+  if (view.kind === "album")
+    return {
+      title: track.title,
+      detail: formatTime(track.durationMs),
+      lead: track.track > 0 ? String(track.track) : "",
+      count: false,
+    };
   return { title: track.title, detail: track.artist, count: false };
 }
 
@@ -182,7 +198,9 @@ export function crumbOfView(library: Library, view: View): CrumbSpec | null {
   }
   if (view.kind === "album") {
     const album = library.albumByKey.get(view.key);
-    return album ? { root: "Albums", leaf: album.name, detail: `${album.artist} · ${songsLabel(album.trackIds.length)}` } : null;
+    return album
+      ? { root: "Albums", leaf: album.name, detail: `${album.artist} · ${songsLabel(album.trackIds.length)}` }
+      : null;
   }
   return null;
 }
@@ -224,7 +242,10 @@ function backLabel(state: ExplorerState): string {
 export function touchLegendOf(state: ExplorerState, panel: ListPanel | null): TouchLegendItem[] {
   if (panel === "unavailable" || panel === "scanning") return [];
   if (panel === "readError" || panel === "empty") return [{ action: "rescan", label: "Scan again" }];
-  return [{ action: "search", label: state.query ? "Edit search" : "Search" }, { action: "back", label: backLabel(state) }];
+  return [
+    { action: "search", label: state.query ? "Edit search" : "Search" },
+    { action: "back", label: backLabel(state) },
+  ];
 }
 
 /** The toolbar LCD's second line. */

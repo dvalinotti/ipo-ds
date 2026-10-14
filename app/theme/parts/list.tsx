@@ -12,7 +12,15 @@ const TITLE_PX: Record<Layout, number> = { wide: 214, narrow: 134 };
 const WIDE_TITLE_PX: Record<Layout, number> = { wide: 318, narrow: 238 };
 
 /** `lead` labels the rows' lead column ("#" over track numbers); `count` right-aligns the second label over counts. */
-export function ColumnHeader(props: { left: string; right: string; lead?: string; sorted?: boolean; count?: boolean; layout?: Layout; theme?: Theme }) {
+export function ColumnHeader(props: {
+  left: string;
+  right: string;
+  lead?: string;
+  sorted?: boolean;
+  count?: boolean;
+  layout?: Layout;
+  theme?: Theme;
+}) {
   const t = () => props.theme ?? AQUA;
   return (
     <>
@@ -57,7 +65,9 @@ export function ListRow(props: ListRowProps) {
   return (
     <View class={t().row(props.kind)} onPress={props.onPress}>
       <View class={t().rowLead}>
-        <Text class={props.playing ? t().rowMarker(props.kind) : t().rowMuted(props.kind)}>{props.playing ? "♪" : props.lead ?? ""}</Text>
+        <Text class={props.playing ? t().rowMarker(props.kind) : t().rowMuted(props.kind)}>
+          {props.playing ? "♪" : (props.lead ?? "")}
+        </Text>
       </View>
       <Show
         when={props.count}
@@ -65,7 +75,12 @@ export function ListRow(props: ListRowProps) {
           <>
             <View class={t().rowTitleCell(props.layout ?? "wide")}>
               <Show when={props.marquee} fallback={<Text class={t().rowTitle(props.kind)}>{props.title}</Text>}>
-                <Marquee text={props.title} class={t().rowTitle(props.kind)} slot={FONT_12} width={TITLE_PX[props.layout ?? "wide"]} />
+                <Marquee
+                  text={props.title}
+                  class={t().rowTitle(props.kind)}
+                  slot={FONT_12}
+                  width={TITLE_PX[props.layout ?? "wide"]}
+                />
               </Show>
             </View>
             <View class={t().rowDetailCell}>
@@ -76,7 +91,12 @@ export function ListRow(props: ListRowProps) {
       >
         <View class={t().rowWideCell}>
           <Show when={props.marquee} fallback={<Text class={t().rowTitle(props.kind)}>{props.title}</Text>}>
-            <Marquee text={props.title} class={t().rowTitle(props.kind)} slot={FONT_12} width={WIDE_TITLE_PX[props.layout ?? "wide"]} />
+            <Marquee
+              text={props.title}
+              class={t().rowTitle(props.kind)}
+              slot={FONT_12}
+              width={WIDE_TITLE_PX[props.layout ?? "wide"]}
+            />
           </Show>
         </View>
         <View class={t().rowCountCell}>

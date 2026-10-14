@@ -50,7 +50,15 @@ export function createPlayerController(
     // the reducer's skip-and-stop rules apply. Each refusal raises the
     // failure count, which bounds this recursion by the queue length.
     if (refused >= 0) {
-      const failed = { ...media.status(), phase: "error" as const, trackId: refused, openSerial: state.serial, positionMs: 0, durationMs: 0, error: "Track is not in the library" };
+      const failed = {
+        ...media.status(),
+        phase: "error" as const,
+        trackId: refused,
+        openSerial: state.serial,
+        positionMs: 0,
+        durationMs: 0,
+        error: "Track is not in the library",
+      };
       apply({ type: "hostStatus", status: failed });
     }
     return reduced.commands.length;

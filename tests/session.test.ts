@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, expectTypeOf, test } from "bun:test";
 import { createRoot } from "solid-js";
 import { createSession } from "../app/session.ts";
 
@@ -19,8 +19,7 @@ test("without media.local the session is unavailable and every call is inert", (
     expect(session.player().index).toBe(-1);
     expect(session.track()).toBeNull();
     // The player view carries no status: screens read status(), which moves every frame of playback.
-    // @ts-expect-error the status is not part of the player view
-    session.player().status;
+    expectTypeOf(session.player()).not.toHaveProperty("status");
     dispose();
   });
 });

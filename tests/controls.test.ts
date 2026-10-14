@@ -15,7 +15,19 @@ test("the README's controls table is the bindings table, row for row", () => {
   const rows = lines.slice(2, lines.indexOf("", 2));
   expect(rows).toEqual(controlsTable());
   expect(BINDINGS.map((b) => b.button)).toEqual([
-    "D-pad up / down", "Circle pad", "D-pad left / right", "A", "B", "X", "Y", "L / R", "Y + L / R", "ZL / ZR", "START", "SELECT", "L + R (hold)",
+    "D-pad up / down",
+    "Circle pad",
+    "D-pad left / right",
+    "A",
+    "B",
+    "X",
+    "Y",
+    "L / R",
+    "Y + L / R",
+    "ZL / ZR",
+    "START",
+    "SELECT",
+    "L + R (hold)",
   ]);
 });
 

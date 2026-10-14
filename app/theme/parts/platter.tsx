@@ -16,14 +16,24 @@ export const DJ_TEXT_PX = 78;
 
 /** The record. One View turns: the label (cover or generated) under the vinyl. The spindle and the
  * cover spinner stay still on top. */
-export function Platter(props: { angle: number; cover: number; loading?: boolean; ref?: (node: unknown) => void; theme?: Theme }) {
+export function Platter(props: {
+  angle: number;
+  cover: number;
+  loading?: boolean;
+  ref?: (node: unknown) => void;
+  theme?: Theme;
+}) {
   const t = () => props.theme ?? AQUA;
   return (
-    <View class={t().platter} ref={props.ref as never}>
+    <View class={t().platter} ref={props.ref}>
       <View class={t().platterDisc} style={{ rotate: props.angle }}>
         <View class={t().platterLabel}>
           <Show when={props.cover > 0} fallback={<Image class="w-[88] h-[88]" src={t().labelArt} />}>
-            <ResourceImage class="w-[88] h-[88]" state={() => ready({ handle: props.cover, width: 88, height: 88 })} fallback={() => null} />
+            <ResourceImage
+              class="w-[88] h-[88]"
+              state={() => ready({ handle: props.cover, width: 88, height: 88 })}
+              fallback={() => null}
+            />
           </Show>
         </View>
         <Image class="absolute left-[0] top-[0] w-[200] h-[200]" src={t().vinylArt} />

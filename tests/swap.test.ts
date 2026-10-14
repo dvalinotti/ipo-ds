@@ -10,7 +10,11 @@ import { bootApp, disposeGuest, pathsTo, pathTo, screenText } from "./support/ap
 
 afterAll(disposeGuest);
 
-const A = BTN.CIRCLE, B = BTN.CROSS, X = BTN.TRIANGLE, Y = BTN.SQUARE, L = BTN.LTRIGGER;
+const A = BTN.CIRCLE,
+  B = BTN.CROSS,
+  X = BTN.TRIANGLE,
+  Y = BTN.SQUARE,
+  L = BTN.LTRIGGER;
 const SELECTED_ROW = 0xffd77538;
 type Surface = "primary" | "auxiliary";
 
@@ -60,22 +64,31 @@ function flat(node: SimNode | null, out: SimNode[] = []): SimNode[] {
 /** The text of the focused (selected) list row on a surface. */
 function selectedRow(world: BundleWorld, surface: Surface): string {
   const row = flat(world.tree(surface)).find((node) => node.type === "view" && node.bgColor >>> 0 === SELECTED_ROW);
-  return row ? flat(row).map((node) => node.text).join("") : "";
+  return row
+    ? flat(row)
+        .map((node) => node.text)
+        .join("")
+    : "";
 }
 
-const platterShown = (world: BundleWorld) => flat(world.tree("auxiliary")).some((node) => node.rect?.join(",") === "10,20,200,200");
+const platterShown = (world: BundleWorld) =>
+  flat(world.tree("auxiliary")).some((node) => node.rect?.join(",") === "10,20,200,200");
 /** The top deck's DJ gel is lit: its body pixels differ from the (off) shuffle gel's, which has the same size and class set. */
 function djGelOn(world: BundleWorld): boolean {
-  const row = flat(world.tree("primary")).find((node) => node.children.length === 6 && node.children.every((child) => child.rect));
+  const row = flat(world.tree("primary")).find(
+    (node) => node.children.length === 6 && node.children.every((child) => child.rect),
+  );
   const { width, rgba } = world.pixels("primary");
   const body = (gel: SimNode) => {
     const [x, y, w, h] = gel.rect!;
-    const at = (px: number, py: number) => Array.from(rgba.slice((py * width + px) * 4, (py * width + px) * 4 + 4)).join(",");
+    const at = (px: number, py: number) =>
+      Array.from(rgba.slice((py * width + px) * 4, (py * width + px) * 4 + 4)).join(",");
     return [at(x + 4, y + h - 6), at(x + w - 5, y + h - 6)].join("|");
   };
   return body(row!.children[5]!) !== body(row!.children[0]!);
 }
-const seeks = (host: SimLocalMediaHost) => host.log.filter((entry) => entry.startsWith("seek(")).map((entry) => Number(entry.slice(5, -1)));
+const seeks = (host: SimLocalMediaHost) =>
+  host.log.filter((entry) => entry.startsWith("seek(")).map((entry) => Number(entry.slice(5, -1)));
 
 test("holding SELECT swaps the screens: the wide deck on top, the narrow list below; holding again swaps back", async () => {
   const rig = await boot();
@@ -254,7 +267,12 @@ function recordOps(): { calls: string[]; stop(): void } {
       return (fn as (...args: unknown[]) => unknown).apply(ui, args);
     };
   }
-  return { calls, stop: () => { for (const [key, fn] of originals) ui[key] = fn; } };
+  return {
+    calls,
+    stop: () => {
+      for (const [key, fn] of originals) ui[key] = fn;
+    },
+  };
 }
 
 test("swapped presses touch no nodes: A, A and a held RIGHT create nothing; X and Y mount only their LCD icon", async () => {

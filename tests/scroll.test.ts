@@ -2,7 +2,17 @@
 import { expect, test } from "bun:test";
 import { FLING_MAX_PX_PER_S } from "../app/controls.ts";
 import {
-  bodyTopPx, centredOffset, clampVelocity, NARROW_W, offsetForThumb, pageOffset, rowAt, snapToRow, splitOffset, thumbFor, TRACK_HIT_PX,
+  bodyTopPx,
+  centredOffset,
+  clampVelocity,
+  NARROW_W,
+  offsetForThumb,
+  pageOffset,
+  rowAt,
+  snapToRow,
+  splitOffset,
+  thumbFor,
+  TRACK_HIT_PX,
 } from "../app/explorer/scroll.ts";
 
 test("an offset splits into whole rows and a sub-row shift", () => {

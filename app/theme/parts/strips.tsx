@@ -1,6 +1,6 @@
 // Bars that sit between the toolbar and the list (search, breadcrumb) and the
 // footer legend of button hints.
-import { For } from "solid-js";
+import { For, untrack } from "solid-js";
 import { Text, View } from "@pocketjs/framework/components";
 import { AQUA } from "../aqua.ts";
 import type { Theme } from "../theme.ts";
@@ -36,7 +36,7 @@ export function Breadcrumb(props: { root: string; leaf: string; detail: string; 
   const t = () => props.theme ?? AQUA;
   return (
     <>
-      <View class={t().crumb} ref={tapTarget(props.onBack) as never}>
+      <View class={t().crumb} ref={tapTarget(props.onBack)}>
         <Text class={t().crumbLink}>{props.root}</Text>
         <Text class={t().crumbText}>›</Text>
         <View class={t().crumbLeaf}>
@@ -53,7 +53,11 @@ export function KeyBadge(props: { letter: string; primary?: boolean; theme?: The
   const t = () => props.theme ?? AQUA;
   return (
     <Gel classes={t().badge(props.primary ?? false)}>
-      <GelLabel text={props.letter} class={t().badgeText(props.primary ?? false)} shadow={props.primary ? t().badgeTextShadow : undefined} />
+      <GelLabel
+        text={props.letter}
+        class={t().badgeText(props.primary ?? false)}
+        shadow={props.primary ? t().badgeTextShadow : undefined}
+      />
     </Gel>
   );
 }
@@ -93,16 +97,21 @@ export interface TouchLegendItem {
 /** One footer gel; with `onPress` it is a tap target. */
 function FooterGel(props: { item: TouchLegendItem; onPress?: (action: TouchAction) => void; theme?: Theme }) {
   const t = () => props.theme ?? AQUA;
-  const onPress = props.onPress;
+  // Whether the gel is a tap target is decided once, at mount.
+  const onPress = untrack(() => props.onPress);
   return (
-    <Gel classes={t().footerGel} ref={tapTarget(onPress && (() => onPress(props.item.action))) as never}>
+    <Gel classes={t().footerGel} ref={tapTarget(onPress && (() => onPress(props.item.action)))}>
       <GelLabel text={props.item.label} class={t().footerText} />
     </Gel>
   );
 }
 
 /** The narrow (touch) footer: a gel per action. */
-export function FooterGels(props: { items: readonly TouchLegendItem[]; onPress?: (action: TouchAction) => void; theme?: Theme }) {
+export function FooterGels(props: {
+  items: readonly TouchLegendItem[];
+  onPress?: (action: TouchAction) => void;
+  theme?: Theme;
+}) {
   const t = () => props.theme ?? AQUA;
   return (
     <>

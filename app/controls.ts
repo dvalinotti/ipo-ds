@@ -15,14 +15,26 @@ export const BINDINGS: readonly Binding[] = [
   { button: "D-pad left / right", normal: "Page", swapped: "Seek back / forward: 5 s, then 2 s while held" },
   { button: "A", normal: "Play the song, or open the artist or album", swapped: "Play / pause" },
   { button: "B", normal: "Back; clear the search", swapped: "Back; clear the search" },
-  { button: "X", normal: "Search; hold to scan the card again", swapped: "Shuffle on / off; hold to scan the card again" },
+  {
+    button: "X",
+    normal: "Search; hold to scan the card again",
+    swapped: "Shuffle on / off; hold to scan the card again",
+  },
   { button: "Y", normal: "Jump to the song that is playing", swapped: "Repeat off / all / one" },
   { button: "L / R", normal: "Switch tabs", swapped: "Switch tabs" },
   { button: "Y + L / R", normal: "Previous / next song", swapped: "Previous / next song" },
   { button: "ZL / ZR", normal: "Previous / next song", swapped: "Previous / next song" },
   { button: "START", normal: "Play / pause", swapped: "Play / pause" },
-  { button: "SELECT", normal: "DJ Mode on / off; hold to swap the screens", swapped: "DJ Mode on / off; hold to swap the screens" },
-  { button: "L + R (hold)", normal: "Diagnostics in the Now Playing LCD", swapped: "Diagnostics in the Now Playing LCD" },
+  {
+    button: "SELECT",
+    normal: "DJ Mode on / off; hold to swap the screens",
+    swapped: "DJ Mode on / off; hold to swap the screens",
+  },
+  {
+    button: "L + R (hold)",
+    normal: "Diagnostics in the Now Playing LCD",
+    swapped: "Diagnostics in the Now Playing LCD",
+  },
 ];
 
 /** A left / right tap seeks this far; each repeat while held (every 80 ms after 300 ms) this far. */

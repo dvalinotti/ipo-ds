@@ -3,7 +3,17 @@
 // size, so scrolling one row rebinds one slot (its texts and its top) and
 // moves the list by a transform; no row is created or destroyed while the
 // list scrolls. The Explorer owns focus and the scroll position (`top`).
-import { createComputed, createMemo, createSignal, Index, Show, type Accessor, type JSX, type Setter } from "solid-js";
+import {
+  createComputed,
+  createMemo,
+  createSignal,
+  Index,
+  Show,
+  untrack,
+  type Accessor,
+  type JSX,
+  type Setter,
+} from "solid-js";
 import { View } from "@pocketjs/framework/components";
 import { slotIndex } from "./window.ts";
 
@@ -31,17 +41,24 @@ export function RecycledList(props: {
   const indices: [Accessor<number>, Setter<number>][] = [];
   const slotSignal = (k: number) => (indices[k] ??= createSignal(slotIndex(k, props.top, Math.max(1, pool()))));
   createComputed(() => {
-    const n = pool(), top = props.top;
+    const n = pool(),
+      top = props.top;
     for (let k = 0; k < n; k++) slotSignal(k)[1](slotIndex(k, top, n));
   });
   return (
-    <View class="absolute left-[0] top-[0] w-full" style={{ translateY: -(props.top * props.rowHeight + (props.shift ?? 0)) }}>
+    <View
+      class="absolute left-[0] top-[0] w-full"
+      style={{ translateY: -(props.top * props.rowHeight + (props.shift ?? 0)) }}
+    >
       <Index each={slots()}>
         {(slot) => {
-          const index = slotSignal(slot())[0];
+          const index = slotSignal(untrack(slot))[0];
           return (
             <Show when={index() < props.count}>
-              <View class="absolute left-[0] w-full" style={{ insetT: index() * props.rowHeight, height: props.rowHeight }}>
+              <View
+                class="absolute left-[0] w-full"
+                style={{ insetT: index() * props.rowHeight, height: props.rowHeight }}
+              >
                 {props.slot(index, slot())}
               </View>
             </Show>

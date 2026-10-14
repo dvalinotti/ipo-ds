@@ -22,25 +22,52 @@ export interface PlayerState {
 }
 export type PlayerAction =
   | { type: "playFrom"; ids: readonly number[]; startId: number }
-  | { type: "toggle" } | { type: "next" } | { type: "prev" }
+  | { type: "toggle" }
+  | { type: "next" }
+  | { type: "prev" }
   | { type: "seek"; ms: number }
-  | { type: "toggleShuffle" } | { type: "cycleRepeat" }
+  | { type: "toggleShuffle" }
+  | { type: "cycleRepeat" }
   | { type: "hostStatus"; status: LocalStatus }
   /** The host accepted the latest open command and returned this serial. */
   | { type: "opened"; serial: number }
   /** A rescan listed these ids; drop the rest from the queue (the current song stays). */
   | { type: "prune"; ids: readonly number[] };
-export type PlayerCommand = { type: "open"; id: number } | { type: "paused"; value: boolean } | { type: "seek"; ms: number };
-export interface Reduced { state: PlayerState; commands: PlayerCommand[] }
+export type PlayerCommand =
+  { type: "open"; id: number } | { type: "paused"; value: boolean } | { type: "seek"; ms: number };
+export interface Reduced {
+  state: PlayerState;
+  commands: PlayerCommand[];
+}
 
 export const RESTART_THRESHOLD_MS = 3000;
 export const IDLE_STATUS: LocalStatus = Object.freeze({
-  phase: "idle", trackId: -1, openSerial: 0, positionMs: 0, durationMs: 0, scanning: false, scanGeneration: 0, underruns: 0, error: "",
-  decodeLoad: 0, artHandles: 0, scanMs: 0, scratching: false,
+  phase: "idle",
+  trackId: -1,
+  openSerial: 0,
+  positionMs: 0,
+  durationMs: 0,
+  scanning: false,
+  scanGeneration: 0,
+  underruns: 0,
+  error: "",
+  decodeLoad: 0,
+  artHandles: 0,
+  scanMs: 0,
+  scratching: false,
 });
 
 export function initialPlayer(): PlayerState {
-  return { queue: [], order: [], index: -1, shuffle: false, repeat: "off", status: IDLE_STATUS, failures: 0, serial: 0 };
+  return {
+    queue: [],
+    order: [],
+    index: -1,
+    shuffle: false,
+    repeat: "off",
+    status: IDLE_STATUS,
+    failures: 0,
+    serial: 0,
+  };
 }
 
 export function currentId(state: Pick<PlayerState, "index" | "order">): number {
@@ -58,8 +85,10 @@ export function shuffled(ids: readonly number[], random: () => number): number[]
 }
 
 const none = (state: PlayerState): Reduced => ({ state, commands: [] });
-const openAt = (state: PlayerState, index: number): Reduced =>
-  ({ state: { ...state, index, serial: 0 }, commands: [{ type: "open", id: state.order[index]! }] });
+const openAt = (state: PlayerState, index: number): Reduced => ({
+  state: { ...state, index, serial: 0 },
+  commands: [{ type: "open", id: state.order[index]! }],
+});
 
 /** auto: the host finished or failed the song; failed: it failed. */
 function advance(state: PlayerState, auto: boolean, failed: boolean): Reduced {
@@ -67,7 +96,13 @@ function advance(state: PlayerState, auto: boolean, failed: boolean): Reduced {
   if (state.index + 1 < state.order.length) return openAt(state, state.index + 1);
   if (state.repeat === "all") return openAt(state, 0);
   if (!auto || failed) return none(state);
-  return { state, commands: [{ type: "seek", ms: 0 }, { type: "paused", value: true }] };
+  return {
+    state,
+    commands: [
+      { type: "seek", ms: 0 },
+      { type: "paused", value: true },
+    ],
+  };
 }
 
 export function reducePlayer(state: PlayerState, action: PlayerAction, random: () => number = Math.random): Reduced {
@@ -76,14 +111,21 @@ export function reducePlayer(state: PlayerState, action: PlayerAction, random: (
       if (!action.ids.includes(action.startId)) return none(state);
       const queue = [...action.ids];
       const order = state.shuffle
-        ? [action.startId, ...shuffled(queue.filter((id) => id !== action.startId), random)]
+        ? [
+            action.startId,
+            ...shuffled(
+              queue.filter((id) => id !== action.startId),
+              random,
+            ),
+          ]
         : queue;
       return openAt({ ...state, queue, order, failures: 0 }, order.indexOf(action.startId));
     }
     case "toggle": {
       if (state.index < 0) return none(state);
       const { phase, trackId } = state.status;
-      if (trackId !== currentId(state) || phase === "idle" || phase === "error" || phase === "ended") return openAt(state, state.index);
+      if (trackId !== currentId(state) || phase === "idle" || phase === "error" || phase === "ended")
+        return openAt(state, state.index);
       if (phase === "paused") return { state, commands: [{ type: "paused", value: false }] };
       return { state, commands: [{ type: "paused", value: true }] };
     }
@@ -104,8 +146,12 @@ export function reducePlayer(state: PlayerState, action: PlayerAction, random: (
     }
     case "toggleShuffle": {
       const id = currentId(state);
-      if (state.shuffle) return none({ ...state, shuffle: false, order: state.queue, index: id < 0 ? -1 : state.queue.indexOf(id) });
-      const rest = shuffled(state.queue.filter((queued) => queued !== id), random);
+      if (state.shuffle)
+        return none({ ...state, shuffle: false, order: state.queue, index: id < 0 ? -1 : state.queue.indexOf(id) });
+      const rest = shuffled(
+        state.queue.filter((queued) => queued !== id),
+        random,
+      );
       return none({ ...state, shuffle: true, order: id < 0 ? rest : [id, ...rest], index: id < 0 ? -1 : 0 });
     }
     case "opened":
@@ -124,7 +170,8 @@ export function reducePlayer(state: PlayerState, action: PlayerAction, random: (
     case "hostStatus": {
       const next = { ...state, status: action.status };
       // A snapshot of another track, or of an earlier open of this one, is stored but never acted on.
-      const stale = action.status.trackId !== currentId(state) || (state.serial > 0 && action.status.openSerial !== state.serial);
+      const stale =
+        action.status.trackId !== currentId(state) || (state.serial > 0 && action.status.openSerial !== state.serial);
       if (state.index < 0 || stale) return none(next);
       if (action.status.phase === "playing") return none({ ...next, failures: 0 });
       if (action.status.phase === "ended") return advance({ ...next, failures: 0 }, true, false);

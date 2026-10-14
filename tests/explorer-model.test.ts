@@ -1,8 +1,23 @@
 import { expect, test } from "bun:test";
 import { buildLibrary } from "../app/library/library.ts";
 import {
-  crumbOfView, currentView, focusOf, headerOfView, initialExplorer, lcdLine, legendOf, panelOf, reduceExplorer, rowCellsIn, rowsKey, touchLegendOf, visibleRows, songIds,
-  type ExplorerAction, type ExplorerState, type ListPanel,
+  crumbOfView,
+  currentView,
+  focusOf,
+  headerOfView,
+  initialExplorer,
+  lcdLine,
+  legendOf,
+  panelOf,
+  reduceExplorer,
+  rowCellsIn,
+  rowsKey,
+  touchLegendOf,
+  visibleRows,
+  songIds,
+  type ExplorerAction,
+  type ExplorerState,
+  type ListPanel,
 } from "../app/explorer/model.ts";
 import { TRACKS } from "./fixtures/tracks.ts";
 
@@ -20,7 +35,12 @@ test("tabs step Songs → Artists → Albums without wrapping", () => {
 
 test("each tab remembers its drill-down and focused row", () => {
   let state = run(initialExplorer(), { type: "move", delta: 3, count: 7 });
-  state = run(state, { type: "tab", delta: 1 }, { type: "move", delta: 1, count: 5 }, { type: "open", row: { kind: "artist", key: "daft punk" } });
+  state = run(
+    state,
+    { type: "tab", delta: 1 },
+    { type: "move", delta: 1, count: 5 },
+    { type: "open", row: { kind: "artist", key: "daft punk" } },
+  );
   expect(currentView(state)).toEqual({ kind: "artist", key: "daft punk" });
   state = run(state, { type: "tab", delta: -1 });
   expect([state.tab, focusOf(state)]).toEqual(["Songs", 3]);
@@ -61,8 +81,16 @@ test("the rows depend on the view and query only, not on focus", () => {
 });
 
 test("reconcile drops drill-downs whose artist or album a rescan removed", () => {
-  let state = run(initialExplorer(), { type: "tab", delta: 1 }, { type: "open", row: { kind: "artist", key: "gorillaz" } });
-  state = run(state, { type: "tab", delta: 1 }, { type: "open", row: { kind: "album", key: "discovery\u0000daft punk" } });
+  let state = run(
+    initialExplorer(),
+    { type: "tab", delta: 1 },
+    { type: "open", row: { kind: "artist", key: "gorillaz" } },
+  );
+  state = run(
+    state,
+    { type: "tab", delta: 1 },
+    { type: "open", row: { kind: "album", key: "discovery\u0000daft punk" } },
+  );
   const withoutGorillaz = buildLibrary(TRACKS.filter((track) => track.artist !== "Gorillaz"));
   state = run(state, { type: "reconcile", library: withoutGorillaz });
   expect(state.drill.Artists).toBeNull();
@@ -85,36 +113,69 @@ test("reveal jumps to the playing song in Songs, clearing a query that hides it"
 });
 
 const headerOf = (state: ExplorerState) => headerOfView(currentView(state));
-const rowCells = (lib: typeof library, state: ExplorerState, row: Parameters<typeof rowCellsIn>[2]) => rowCellsIn(lib, currentView(state), row);
+const rowCells = (lib: typeof library, state: ExplorerState, row: Parameters<typeof rowCellsIn>[2]) =>
+  rowCellsIn(lib, currentView(state), row);
 const crumbOf = (lib: typeof library, state: ExplorerState) => crumbOfView(lib, currentView(state));
 
 test("headers, row cells and breadcrumbs follow the view", () => {
   let state = initialExplorer();
   expect(headerOf(state)).toEqual({ left: "Song Name", right: "Artist", count: false });
-  expect(rowCells(library, state, { kind: "song", id: 0 })).toEqual({ title: "One More Time", detail: "Daft Punk", count: false });
+  expect(rowCells(library, state, { kind: "song", id: 0 })).toEqual({
+    title: "One More Time",
+    detail: "Daft Punk",
+    count: false,
+  });
   state = run(state, { type: "tab", delta: 1 });
   expect(headerOf(state)).toEqual({ left: "Artist", right: "Songs", count: true });
-  expect(rowCells(library, state, { kind: "artist", key: "daft punk" })).toEqual({ title: "Daft Punk", detail: "3", count: true });
+  expect(rowCells(library, state, { kind: "artist", key: "daft punk" })).toEqual({
+    title: "Daft Punk",
+    detail: "3",
+    count: true,
+  });
   state = run(state, { type: "open", row: { kind: "artist", key: "daft punk" } });
   expect(headerOf(state)).toEqual({ left: "Song Name", right: "Album", count: false });
-  expect(rowCells(library, state, { kind: "song", id: 1 })).toEqual({ title: "Aerodynamic", detail: "Discovery", count: false });
+  expect(rowCells(library, state, { kind: "song", id: 1 })).toEqual({
+    title: "Aerodynamic",
+    detail: "Discovery",
+    count: false,
+  });
   expect(crumbOf(library, state)).toEqual({ root: "Artists", leaf: "Daft Punk", detail: "3 songs" });
   state = run(state, { type: "tab", delta: 1 });
   expect(headerOf(state)).toEqual({ left: "Album", right: "Artist", count: false });
   state = run(state, { type: "open", row: { kind: "album", key: "discovery\u0000daft punk" } });
   expect(headerOf(state)).toEqual({ left: "Song Name", right: "Time", lead: "#", count: false });
-  expect(rowCells(library, state, { kind: "song", id: 2 })).toEqual({ title: "Digital Love", detail: "3:00", lead: "3", count: false });
+  expect(rowCells(library, state, { kind: "song", id: 2 })).toEqual({
+    title: "Digital Love",
+    detail: "3:00",
+    lead: "3",
+    count: false,
+  });
   expect(crumbOf(library, state)).toEqual({ root: "Albums", leaf: "Discovery", detail: "Daft Punk · 3 songs" });
   expect(crumbOf(library, initialExplorer())).toBeNull();
   expect(count(state)).toBe(3);
 });
 
 test("legends name what each button does in this view, or what a panel asks for", () => {
-  const labels = (state: ExplorerState, panel: ListPanel | null = null) => legendOf(state, panel).map((item) => `${item.key} ${item.label}`);
+  const labels = (state: ExplorerState, panel: ListPanel | null = null) =>
+    legendOf(state, panel).map((item) => `${item.key} ${item.label}`);
   expect(labels(initialExplorer())).toEqual(["A Play", "X Search", "B Back", "Y Now Playing"]);
-  expect(labels(run(initialExplorer(), { type: "setQuery", query: "x" }))).toEqual(["A Play", "X Edit search", "B Clear", "Y Now Playing"]);
-  expect(labels(run(initialExplorer(), { type: "tab", delta: 1 }))).toEqual(["A Open", "X Search", "B Back", "Y Now Playing"]);
-  expect(labels(run(initialExplorer(), { type: "tab", delta: 1 }, { type: "open", row: { kind: "artist", key: "queen" } }))[2]).toBe("B Artists");
+  expect(labels(run(initialExplorer(), { type: "setQuery", query: "x" }))).toEqual([
+    "A Play",
+    "X Edit search",
+    "B Clear",
+    "Y Now Playing",
+  ]);
+  expect(labels(run(initialExplorer(), { type: "tab", delta: 1 }))).toEqual([
+    "A Open",
+    "X Search",
+    "B Back",
+    "Y Now Playing",
+  ]);
+  expect(
+    labels(
+      run(initialExplorer(), { type: "tab", delta: 1 }, { type: "open", row: { kind: "artist", key: "queen" } }),
+    )[2],
+  ).toBe("B Artists");
   expect(labels(initialExplorer(), "empty")).toEqual(["X Scan again"]);
   expect(labels(initialExplorer(), "scanning")).toEqual(["Y Now Playing"]);
   expect(labels(initialExplorer(), "readError")).toEqual(["X Hold to scan again"]);
@@ -146,13 +207,29 @@ test("setTab jumps straight to a tab and keeps the state object when it is alrea
 
 test("the touch footer offers Search and Back with the same labels as the badges, or Scan again over a panel", () => {
   let state = initialExplorer();
-  expect(touchLegendOf(state, null)).toEqual([{ action: "search", label: "Search" }, { action: "back", label: "Back" }]);
+  expect(touchLegendOf(state, null)).toEqual([
+    { action: "search", label: "Search" },
+    { action: "back", label: "Back" },
+  ]);
   state = run(state, { type: "setQuery", query: "da" });
-  expect(touchLegendOf(state, null)).toEqual([{ action: "search", label: "Edit search" }, { action: "back", label: "Clear" }]);
-  state = run(initialExplorer(), { type: "setTab", tab: "Artists" }, { type: "open", row: { kind: "artist", key: "daft punk" } });
+  expect(touchLegendOf(state, null)).toEqual([
+    { action: "search", label: "Edit search" },
+    { action: "back", label: "Clear" },
+  ]);
+  state = run(
+    initialExplorer(),
+    { type: "setTab", tab: "Artists" },
+    { type: "open", row: { kind: "artist", key: "daft punk" } },
+  );
   expect(touchLegendOf(state, null).at(-1)).toEqual({ action: "back", label: "Artists" });
-  state = run(initialExplorer(), { type: "setTab", tab: "Albums" }, { type: "open", row: { kind: "album", key: "discovery\u0000daft punk" } });
+  state = run(
+    initialExplorer(),
+    { type: "setTab", tab: "Albums" },
+    { type: "open", row: { kind: "album", key: "discovery\u0000daft punk" } },
+  );
   expect(touchLegendOf(state, null).at(-1)).toEqual({ action: "back", label: "Albums" });
-  for (const panel of ["empty", "readError"] as ListPanel[]) expect(touchLegendOf(initialExplorer(), panel)).toEqual([{ action: "rescan", label: "Scan again" }]);
-  for (const panel of ["scanning", "unavailable"] as ListPanel[]) expect(touchLegendOf(initialExplorer(), panel)).toEqual([]);
+  for (const panel of ["empty", "readError"] as ListPanel[])
+    expect(touchLegendOf(initialExplorer(), panel)).toEqual([{ action: "rescan", label: "Scan again" }]);
+  for (const panel of ["scanning", "unavailable"] as ListPanel[])
+    expect(touchLegendOf(initialExplorer(), panel)).toEqual([]);
 });

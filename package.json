@@ -7,8 +7,21 @@
     "3ds": "bun scripts/build.ts",
     "test-library": "bun scripts/make-test-library.ts",
     "perf": "bun scripts/perf.ts",
-    "check": "bun runtime/node_modules/typescript/bin/tsc --noEmit",
+    "check": "bun scripts/check.ts",
     "test": "bun test --conditions=browser ./tests",
-    "gallery": "bun scripts/gallery.ts"
+    "gallery": "bun scripts/gallery.ts",
+    "format": "prettier --write \"app/**/*.{ts,tsx}\" \"scripts/**/*.ts\" \"tests/**/*.ts\" \"*.{ts,js}\"",
+    "format:check": "prettier --check \"app/**/*.{ts,tsx}\" \"scripts/**/*.ts\" \"tests/**/*.ts\" \"*.{ts,js}\"",
+    "lint": "bun --bun eslint .",
+    "lint:fix": "bun --bun eslint . --fix"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.12.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-solid": "0.18.1",
+    "prettier": "3.9.10",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.71.2"
   }
 }
