@@ -4,7 +4,7 @@
   "id": "io.github.dvalinotti.ipods",
   "name": "ipo-ds",
   "title": "iPoDS",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engine": {
     "capabilities": {
       "requires": [
