@@ -54,15 +54,17 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            runtime/engine/wasm/target
+            runtime/programs/web/wasm/target
             runtime/.pocket-build/native/3ds
           key: ${{ runner.os }}-cargo-${{ steps.pin.outputs.runtime }}
           restore-keys: ${{ runner.os }}-cargo-
 
-      # The sim tests boot the guest on runtime/platforms/web/pocketjs.wasm.
+      # The sim tests boot the guest on runtime/platforms/web/pocketjs.wasm, which
+      # runtime/tools/wasm.ts builds on the runtime's pinned stable toolchain.
       - name: Build the WASM core
         run: |
-          rustup target add wasm32-unknown-unknown
+          channel=$(bun -e 'import { STABLE_RUST_TOOLCHAIN } from "./runtime/tools/build/toolchains/rust.ts"; console.log(STABLE_RUST_TOOLCHAIN)')
+          rustup toolchain install "$channel" --profile minimal --target wasm32-unknown-unknown
           bun run --cwd runtime wasm
 
       - name: Test
