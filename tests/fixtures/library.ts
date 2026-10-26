@@ -1,4 +1,4 @@
-import type { SimLocalTrack } from "../../runtime/hosts/sim/localmedia.ts";
+import type { SimLocalTrack } from "../../runtime/platforms/sim/localmedia.ts";
 
 const song = (
   file: string,

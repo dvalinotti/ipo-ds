@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { localMedia, type LocalMediaOps } from "@pocketjs/framework/localmedia";
-import { createSimLocalMedia, type SimLocalTrack } from "../runtime/hosts/sim/localmedia.ts";
+import { createSimLocalMedia, type SimLocalTrack } from "../runtime/platforms/sim/localmedia.ts";
 import { createPlayerController } from "../app/player/controller.ts";
 import { currentId } from "../app/player/reducer.ts";
 

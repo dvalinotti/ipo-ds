@@ -5,8 +5,12 @@
 // Digital Love, Dirty Harry, Feel Good Inc., Glósóli, Gong, … (20 songs: content 420, window 168).
 import { expect } from "bun:test";
 import { BTN } from "@pocketjs/framework/input";
-import type { BundleWorld, SimNode, StepInput } from "../../runtime/hosts/sim/sim.ts";
-import { createSimLocalMedia, type SimLocalMediaHost, type SimLocalTrack } from "../../runtime/hosts/sim/localmedia.ts";
+import type { BundleWorld, SimNode, StepInput } from "../../runtime/programs/sim/sim.ts";
+import {
+  createSimLocalMedia,
+  type SimLocalMediaHost,
+  type SimLocalTrack,
+} from "../../runtime/platforms/sim/localmedia.ts";
 import { LIBRARY } from "../fixtures/library.ts";
 import { bootApp, screenText } from "./app-world.ts";
 

@@ -1,7 +1,7 @@
 import { afterAll, expect, test } from "bun:test";
 import { BTN } from "@pocketjs/framework/input";
-import type { BundleWorld, SimNode, StepInput } from "../runtime/hosts/sim/sim.ts";
-import { createSimLocalMedia, type SimLocalMediaHost } from "../runtime/hosts/sim/localmedia.ts";
+import type { BundleWorld, SimNode, StepInput } from "../runtime/programs/sim/sim.ts";
+import { createSimLocalMedia, type SimLocalMediaHost } from "../runtime/platforms/sim/localmedia.ts";
 import { PLATTER } from "../app/dj/platter.ts";
 import { LIBRARY } from "./fixtures/library.ts";
 import { bootApp, disposeGuest, screenText } from "./support/app-world.ts";

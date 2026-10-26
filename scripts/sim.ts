@@ -4,7 +4,7 @@
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { bootBundle, type BundleWorld } from "../runtime/hosts/sim/sim.ts";
+import { bootBundle, type BundleWorld } from "../runtime/programs/sim/sim.ts";
 
 export const ROOT = resolve(import.meta.dir, "..");
 

@@ -55,11 +55,11 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             runtime/engine/wasm/target
-            runtime/hosts/3ds/core/target
+            runtime/.pocket-build/native/3ds
           key: ${{ runner.os }}-cargo-${{ steps.pin.outputs.runtime }}
           restore-keys: ${{ runner.os }}-cargo-
 
-      # The sim tests boot the guest on runtime/hosts/web/pocketjs.wasm.
+      # The sim tests boot the guest on runtime/platforms/web/pocketjs.wasm.
       - name: Build the WASM core
         run: |
           rustup target add wasm32-unknown-unknown
@@ -69,12 +69,11 @@ jobs:
         run: bun run test
 
       # The 3DS core builds host-side with -Z build-std on the nightly that
-      # rust-toolchain.toml names; runtime/tools/3ds.ts checks for it and for
-      # rust-src but does not install either.
+      # runtime/tools/build/toolchains/rust.ts pins; the 3DS build checks for
+      # it and for rust-src but does not install either.
       - name: Install the 3DS Rust toolchain
-        working-directory: runtime/hosts/3ds/core
         run: |
-          channel=$(sed -n 's/^channel = "\(.*\)"$/\1/p' rust-toolchain.toml)
+          channel=$(bun -e 'import { RUST_TOOLCHAINS } from "./runtime/tools/build/toolchains/rust.ts"; console.log(RUST_TOOLCHAINS.threeDs)')
           rustup toolchain install "$channel" --profile minimal --component rust-src
 
       # The build refuses to pull the digest-pinned devkitARM image itself.
