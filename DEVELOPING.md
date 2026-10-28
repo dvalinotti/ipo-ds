@@ -10,12 +10,12 @@ art) lives in the [PocketJS](https://github.com/dvalinotti/pocketjs) fork, on it
 
 ## Build
 
-Prerequisites, from the pinned runtime's `hosts/3ds/README.md`:
+Prerequisites, from the pinned runtime's `products/3ds/README.md`:
 
 - [Bun](https://bun.sh).
 - Docker, with the digest-pinned `devkitpro/devkitarm` image the build names.
-- rustup. The build installs `nightly-2026-07-02` from
-  `runtime/hosts/3ds/core/rust-toolchain.toml`.
+- rustup with `nightly-2026-07-02` and its `rust-src` component, pinned in
+  `runtime/tools/build/toolchains/rust.ts`; the build checks for both.
 
 ```sh
 git clone --recursive https://github.com/dvalinotti/ipo-ds

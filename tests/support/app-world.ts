@@ -1,6 +1,6 @@
 // Boots the ipo-ds app or the theme gallery in the PocketJS sim (bundles are
 // built once per test process by scripts/sim.ts) and reads what a screen shows.
-import type { BundleWorld, SimNode } from "../../runtime/hosts/sim/sim.ts";
+import type { BundleWorld, SimNode } from "../../runtime/programs/sim/sim.ts";
 import { bootBuilt, buildBundle, disposeBundles } from "../../scripts/sim.ts";
 
 export function bootApp(extraGlobals?: Record<string, unknown>): Promise<BundleWorld> {

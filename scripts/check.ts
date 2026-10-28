@@ -7,7 +7,7 @@
 import { resolve } from "node:path";
 
 const ERROR = /(^|: )error TS/;
-const OWN = /^(app|scripts|tests)\/|^pocket\.config\.ts\(|^error TS/;
+const OWN = /^(app|scripts|tests)\/|^error TS/;
 const PASSES = [
   ["tsconfig.json", () => true],
   ["tsconfig.lint.json", (line: string) => OWN.test(line)],

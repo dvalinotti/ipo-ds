@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { BTN } from "@pocketjs/framework/input";
-import type { BundleWorld, SimNode } from "../runtime/hosts/sim/sim.ts";
+import type { BundleWorld, SimNode } from "../runtime/programs/sim/sim.ts";
 import { GALLERY_STATES, type GalleryStateName } from "../app/gallery/names.ts";
 import {
   backgroundOf,

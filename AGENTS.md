@@ -16,7 +16,7 @@ git submodule update --init runtime
 bun install --cwd runtime --frozen-lockfile
 bun install --frozen-lockfile # the lint and format tools
 bun scripts/setup.ts          # symlinks @pocketjs/framework, solid-js, @types/bun, bun-types in node_modules/ to runtime/
-bun run --cwd runtime wasm    # runtime/hosts/web/pocketjs.wasm for the sim tests; needs `rustup target add wasm32-unknown-unknown`
+bun run --cwd runtime wasm    # runtime/platforms/web/pocketjs.wasm for the sim tests; needs `rustup target add wasm32-unknown-unknown`
 ```
 
 The root `bun.lock` holds the lint and format tools; `typescript` there matches the runtime's. `node_modules/` holds those tools beside the symlinks; a checkout set up before the root `bun.lock` runs `bun scripts/setup.ts` once before its first root install, or that install writes into `runtime/node_modules/@types` through the old link. Re-run `bun scripts/setup.ts` (and the wasm build) after moving the submodule pin.
@@ -40,7 +40,7 @@ bun run gallery                                        # theme states as PNGs in
 ## Tests
 
 - **Unit tests** import the pure modules directly (reducers, models, platter math, input steppers, library building).
-- **Sim tests** (`app`, `dj`, `gallery`, `build`) build a `--pocket-only` bundle once per test process (`scripts/sim.ts`) and boot it on the PocketJS WASM core with both screens. `tests/support/app-world.ts` boots it and reads text, colours (0xAABBGGRR) and node paths off a surface. App tests pass a fake media host from `runtime/hosts/sim/localmedia.ts` (`createSimLocalMedia`) as the `localmedia` global and advance its clock with each frame.
+- **Sim tests** (`app`, `dj`, `gallery`, `build`) build a `--pocket-only` bundle once per test process (`scripts/sim.ts`) and boot it on the PocketJS WASM core with both screens. `tests/support/app-world.ts` boots it and reads text, colours (0xAABBGGRR) and node paths off a surface. App tests pass a fake media host from `runtime/platforms/sim/localmedia.ts` (`createSimLocalMedia`) as the `localmedia` global and advance its clock with each frame.
 - 3DS face buttons map by position: A = `BTN.CIRCLE`, B = `BTN.CROSS`, X = `BTN.TRIANGLE`, Y = `BTN.SQUARE`.
 - `tests/fonts.test.ts` fails when any non-ASCII character in `app/` source (outside comments) is not baked by `app/fonts.json`; add new symbols there.
 
@@ -98,7 +98,7 @@ ESLint and Prettier enforce the mechanical rules; run `bun run format` and `bun 
 - State changes are discriminated unions (`{ type }` actions and commands, `{ kind }` rows and views) handled by `switch`es in pure reducers.
 - Inputs and shared tables are `readonly` arrays and `Readonly<Record<…>>`; module-level objects that are handed out are frozen (`IDLE_STATUS`).
 - No classes or `this`: a `createX()` factory returns an interface of closures, so callers pass methods unbound (`onUp: grab.release`).
-- Named exports only, except where an entry point expects a default (`App` for `main.tsx`, `pocket.config.ts`).
+- Named exports only, except where an entry point expects a default (`App` for `main.tsx`).
 
 ### Naming and comments
 

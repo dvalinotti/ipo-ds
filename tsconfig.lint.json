@@ -1,5 +1,5 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": { "noUncheckedIndexedAccess": true },
-  "include": ["app", "scripts", "tests", "pocket.config.ts", "runtime/framework/src/jsx.d.ts"]
+  "include": ["app", "scripts", "tests", "runtime/framework/src/jsx.d.ts"]
 }
