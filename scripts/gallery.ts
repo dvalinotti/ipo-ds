@@ -1,4 +1,4 @@
-// Renders every theme gallery state (gallery.pocket.json) in the PocketJS sim
+// Renders every theme gallery state (gallery.pocket.app.json) in the PocketJS sim
 // and writes both screens as 2× PNGs to dist/gallery/, for comparison with the
 // approved mockups in docs/design/aqua/.
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -11,7 +11,7 @@ import { bootBuilt, buildBundle, disposeBundles, ROOT } from "./sim.ts";
 const out = join(ROOT, "dist", "gallery");
 mkdirSync(out, { recursive: true });
 try {
-  const world = await bootBuilt(buildBundle("gallery.pocket.json"));
+  const world = await bootBuilt(buildBundle("gallery.pocket.app.json"));
   for (let f = 0; f < 6; f++) world.step();
   for (const [index, name] of GALLERY_STATES.entries()) {
     for (const [surface, label] of [

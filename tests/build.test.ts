@@ -8,15 +8,15 @@ const ROOT = new URL("..", import.meta.url).pathname;
 test("--manifest builds the bundle that manifest names and keeps it out of dist/", () => {
   const dir = mkdtempSync(join(tmpdir(), "ipo-ipo-dsifest-"));
   try {
-    const manifest = JSON.parse(readFileSync(join(ROOT, "pocket.json"), "utf8")) as { app: { output: string } };
+    const manifest = JSON.parse(readFileSync(join(ROOT, "pocket.app.json"), "utf8")) as { app: { output: string } };
     manifest.app.output = "ipo-ds-probe";
-    writeFileSync(join(dir, "probe.pocket.json"), JSON.stringify(manifest));
+    writeFileSync(join(dir, "probe.pocket.app.json"), JSON.stringify(manifest));
     const run = Bun.spawnSync(
       [
         process.execPath,
         "scripts/build.ts",
         "--pocket-only",
-        `--manifest=${join(dir, "probe.pocket.json")}`,
+        `--manifest=${join(dir, "probe.pocket.app.json")}`,
         `--outdir=${join(dir, "guest")}`,
         `--package-outdir=${dir}`,
       ],
@@ -31,7 +31,7 @@ test("--manifest builds the bundle that manifest names and keeps it out of dist/
 }, 120_000);
 
 test("every class literal compiles, in the app and in the gallery (the 3DS build only warns)", () => {
-  for (const manifest of ["pocket.json", "gallery.pocket.json"]) {
+  for (const manifest of ["pocket.app.json", "gallery.pocket.app.json"]) {
     const dir = mkdtempSync(join(tmpdir(), "ipo-ds-classes-"));
     try {
       const run = Bun.spawnSync(

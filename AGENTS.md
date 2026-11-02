@@ -4,7 +4,7 @@ A walkman-style MP3 player for the Nintendo 3DS in the Aqua / iTunes 4 look: a S
 
 - Framework code belongs in the PocketJS repository; update the `runtime` submodule pin here.
 - Import framework APIs from `@pocketjs/framework/*` and Solid primitives and control flow from `solid-js`.
-- The 3DS host drives both screens: `pocket.json` declares the 400x240 top viewport and the 320x240 `surfaces.auxiliary` together with `display.auxiliary`.
+- The 3DS host drives both screens: `pocket.app.json` declares the 400x240 top viewport and the 320x240 `surfaces.auxiliary` together with `display.auxiliary`.
 - Name commits and pull requests in Conventional Commits format (`feat: …`, `fix(scope): …`).
 - Do not recursively discover tests or sources through the runtime submodule.
 - Keep build products, logs and captures out of Git.
@@ -66,7 +66,7 @@ bun run gallery                                        # theme states as PNGs in
   - `app/library/compose-table.ts` ← `bun scripts/gen-compose-table.ts`
   - `app/theme/icons/spinner-atlas.svg` ← `bun scripts/spinner-atlas.ts`
   - `app/theme/vinyl.png`, `label.png` ← `bun scripts/vinyl-png.ts`
-- `gallery.pocket.json` builds `app/gallery.tsx`, a storyboard of theme states from fixture data; L / R cycle them. A new state needs its name in `app/gallery/names.ts` (cycle order) and a builder in `app/gallery/states.tsx`; `tests/gallery.test.ts` visits states in that order. Compare `bun run gallery` output with the approved mockups in `docs/design/aqua/`.
+- `gallery.pocket.app.json` builds `app/gallery.tsx`, a storyboard of theme states from fixture data; L / R cycle them. A new state needs its name in `app/gallery/names.ts` (cycle order) and a builder in `app/gallery/states.tsx`; `tests/gallery.test.ts` visits states in that order. Compare `bun run gallery` output with the approved mockups in `docs/design/aqua/`.
 
 ## Code standards
 
