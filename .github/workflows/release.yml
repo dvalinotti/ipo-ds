@@ -1,7 +1,7 @@
 name: Release
 
 # Pushing a version tag (`git tag v0.2.0 && git push origin v0.2.0`) checks the
-# tag against package.json and pocket.json, runs build.yml on the tagged
+# tag against package.json and pocket.app.json, runs build.yml on the tagged
 # commit, and creates a draft GitHub Release holding iPoDS-<tag>.3dsx,
 # iPoDS-<tag>.cia and their SHA-256 sums. Install the draft's build on a
 # console or in Azahar before publishing it. A tag with a SemVer prerelease

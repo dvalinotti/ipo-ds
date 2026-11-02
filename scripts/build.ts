@@ -1,4 +1,4 @@
-// Resolve a manifest (pocket.json, or --manifest=<path> such as the theme
+// Resolve a manifest (pocket.app.json, or --manifest=<path> such as the theme
 // gallery's) against the runtime's 3DS profile, build through the runtime's
 // 3DS pipeline, and copy the products from runtime/dist/3ds to dist/. Other
 // arguments (--cia, --pocket-only, --capture, --outdir, --package-outdir,
@@ -9,7 +9,7 @@ import { resolve3dsBuildPlan } from "../runtime/tools/3ds-profile.ts";
 import { build3ds } from "../runtime/tools/3ds.ts";
 const root = resolve(import.meta.dir, "..");
 const manifestArg = process.argv.find((a) => a.startsWith("--manifest="));
-const manifest = resolve(manifestArg ? manifestArg.slice("--manifest=".length) : resolve(root, "pocket.json"));
+const manifest = resolve(manifestArg ? manifestArg.slice("--manifest=".length) : resolve(root, "pocket.app.json"));
 const passthrough = process.argv.slice(2).filter((a) => !a.startsWith("--manifest="));
 const plan = resolve3dsBuildPlan(await Bun.file(manifest).json());
 mkdirSync(resolve(root, "dist"), { recursive: true });
