@@ -32,18 +32,18 @@ test("a tag carrying build metadata is refused, including a hyphen inside it", (
 
 test("every file that disagrees with the tag, or has no version, is reported", () => {
   expect(
-    versionMismatches("0.2.0", { "package.json": { version: "0.2.0" }, "pocket.json": { version: "0.2.0" } }),
+    versionMismatches("0.2.0", { "package.json": { version: "0.2.0" }, "pocket.app.json": { version: "0.2.0" } }),
   ).toEqual([]);
   expect(
-    versionMismatches("0.2.0", { "package.json": { version: "0.2.0" }, "pocket.json": { version: "0.1.0" } }),
-  ).toEqual(["  pocket.json: 0.1.0"]);
-  expect(versionMismatches("0.2.0", { "package.json": {}, "pocket.json": null })).toEqual([
+    versionMismatches("0.2.0", { "package.json": { version: "0.2.0" }, "pocket.app.json": { version: "0.1.0" } }),
+  ).toEqual(["  pocket.app.json: 0.1.0"]);
+  expect(versionMismatches("0.2.0", { "package.json": {}, "pocket.app.json": null })).toEqual([
     "  package.json: no .version string",
-    "  pocket.json: no .version string",
+    "  pocket.app.json: no .version string",
   ]);
 });
 
-test("package.json and pocket.json declare the same version", () => {
+test("package.json and pocket.app.json declare the same version", () => {
   const [first, ...rest] = RELEASE_VERSION_FILES.map(
     (path) => (JSON.parse(readFileSync(resolve(ROOT, path), "utf8")) as { version: unknown }).version,
   );

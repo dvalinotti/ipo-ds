@@ -1,11 +1,11 @@
 // `bun scripts/release-check.ts <tag>` — refuse a release whose tag disagrees
-// with the version in package.json or pocket.json. The release workflow runs it
+// with the version in package.json or pocket.app.json. The release workflow runs it
 // before building, so a tag can publish only the version the commit declares.
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 /** Files whose `.version` must equal the tag's version. */
-export const RELEASE_VERSION_FILES = ["package.json", "pocket.json"] as const;
+export const RELEASE_VERSION_FILES = ["package.json", "pocket.app.json"] as const;
 
 // MAJOR.MINOR.PATCH with an optional SemVer 2.0.0 prerelease. A numeric
 // identifier has no leading zero (`-0` but not `-01`); one holding a letter or

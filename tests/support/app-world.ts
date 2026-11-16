@@ -4,11 +4,11 @@ import type { BundleWorld, SimNode } from "../../runtime/programs/sim/sim.ts";
 import { bootBuilt, buildBundle, disposeBundles } from "../../scripts/sim.ts";
 
 export function bootApp(extraGlobals?: Record<string, unknown>): Promise<BundleWorld> {
-  return bootBuilt(buildBundle("pocket.json"), extraGlobals);
+  return bootBuilt(buildBundle("pocket.app.json"), extraGlobals);
 }
 
 export function bootGallery(): Promise<BundleWorld> {
-  return bootBuilt(buildBundle("gallery.pocket.json"));
+  return bootBuilt(buildBundle("gallery.pocket.app.json"));
 }
 
 export function disposeGuest(): void {

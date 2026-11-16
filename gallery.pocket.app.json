@@ -2,7 +2,6 @@
   "$schema": "https://pocketjs.dev/schema/pocket-2.json",
   "pocket": 2,
   "id": "io.github.dvalinotti.ipods.gallery",
-  "name": "ipo-ds-gallery",
   "title": "iPoDS Gallery",
   "version": "0.1.0",
   "engine": {

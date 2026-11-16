@@ -44,7 +44,7 @@ bun run test-library   # dist/test-music/: 324 tagged MP3s for a device or Azaha
 bun run perf           # frame and scan timings in Azahar (docs/perf.md)
 ```
 
-`gallery.pocket.json` builds `app/gallery.tsx`, a storyboard of the theme's
+`gallery.pocket.app.json` builds `app/gallery.tsx`, a storyboard of the theme's
 states built from `app/theme/parts`. L / R flip states on a device or in the
 sim. Design notes, specs and plans live in `docs/`.
 
@@ -67,7 +67,7 @@ git add runtime
 builds the `.3dsx` and `.cia` for every pull request and push to `main`, and
 uploads them as the `ipo-ds-3ds` workflow artifact. To release:
 
-1. Set the same version in `package.json` and `pocket.json` and merge it.
+1. Set the same version in `package.json` and `pocket.app.json` and merge it.
 2. Tag the merge commit and push the tag:
    `git tag v0.2.0 && git push origin v0.2.0`.
 3. `.github/workflows/release.yml` runs `bun scripts/release-check.ts <tag>`,
@@ -79,5 +79,5 @@ uploads them as the `ipo-ds-3ds` workflow artifact. To release:
 4. Install the draft's `.cia` on a console or in Azahar, then publish the draft.
 
 A tag with a prerelease suffix (`v0.2.0-beta.1`) is marked as a prerelease.
-Keep `id` in `pocket.json` fixed: the CIA's title id is derived from it, and a
+Keep `id` in `pocket.app.json` fixed: the CIA's title id is derived from it, and a
 changed id installs as a second title beside the old one.
